@@ -1,0 +1,79 @@
+=====================================
+ REGLAS - Dashboard iPhone Julio 2026
+=====================================
+
+--- ARCHIVOS ---
+- Fuente: excels/Iphone (1).xlsx → Hoja "Sharep"
+- BD: pruebas/iphone_julio.db
+- Dashboard: pruebas/dashboard_iphone_julio.html
+- Pipeline: pruebas/pipeline_iphone_julio.py
+- Reglas: pruebas/reglas_dashboard_iphone.txt (este archivo)
+
+--- FILTRADO DE DATOS ---
+- Solo registros de julio 2026 (Created entre 2026-07-01 y 2026-07-31)
+- Solo modelos que contengan "IPHONE" (insensible a mayúsculas)
+- Supervisores incluidos: Manuel García, Jonathan Ortega
+- Solo clientes con status que contenga "RENOVACIÓN EXITOSA JULIO 26"
+
+--- MODELOS PERMITIDOS ---
+- IPHONE 17 256GB (Black)
+- iPhone 17 256GB Black
+- IPHONE 17 256GB (Blue)
+- IPHONE 17E 256GB (Black)
+- iPhone 17e 256GB Black
+- Iphone 17e
+(Se agrupan por contención de texto, no por match exacto)
+
+--- MODO DE VISTA ---
+- CREACION: registros donde Dia Crea coincide con Created
+- FACTURADAS: registros donde Dia Mod coincide con Modified
+- AMBAS: muestra los dos tipos apilados
+
+--- TABLA PIVOTE ---
+- Filas: Asesor
+- Columnas: Modelo del equipo
+- Valores: Conteo de registros
+- Filtros interactivos (comboboxes):
+  1. Supervisor (todos / Manuel García / Jonathan Ortega)
+  2. Dia Creación (todos / días específicos)
+  3. Dia Modificación (todos / días específicos)
+  4. Modelo (todos / modelos específicos)
+  5. Modo (CREACION / FACTURADAS / AMBAS)
+
+--- COLORES ---
+- Dorado (#FFD700): mayor cantidad en fila
+- Verde (#D4EDDA): fila total
+- Amarillo (#FFF3CD): columna total
+- Azul (#cce5ff): badge creación
+- Verde claro (#d4edda): badge facturada
+
+--- BASE DE DATOS SQLite ---
+- Se recrea desde cero cada vez que se ejecuta el pipeline
+- 6 tablas normalizadas:
+  1. supervisores (id, nombre)
+  2. asesores (id, nombre, supervisor_id)
+  3. modelos (id, nombre)
+  4. status_cliente (id, nombre)
+  5. clientes (id, nombre, telefono, status_id, asesor_id, modelo_id)
+  6. ventas (id, cliente_id, fecha_creacion, fecha_modificacion, dia_crea, dia_mod, modo, supervisor_id)
+- Peso: ~56 KB (vs 35.72 MB Excel original)
+
+--- DASHBOARD ---
+- Datos embebidos como JSON en el HTML (sin servidor)
+- Gráfico de barras: Chart.js
+- responsive: se adapta a móvil
+- Botón "Inicio" fijo arriba a la derecha → index.html
+
+--- DIFERENCIA CON TABLA EXCEL ---
+- Nuestros datos (todos los días): 38 registros (MG=22, JO=16)
+- Tabla Excel: 31 registros (MG=18, JO=13)
+- Diferencia: 7 registros (causa: Tabla Excel tiene filtro Dia Crea específico)
+- Para coincidir exacto, excluir días 01/jul y 03/jul (o combinación equivalente)
+- Actualmente NO se excluyen días (dashboard muestra todos)
+
+--- ACTUALIZACIÓN ---
+1. Recibir nuevo Iphone.xlsx
+2. Reemplazar en excels/
+3. Ejecutar: python pruebas/pipeline_iphone_julio.py
+4. Se regenera BD y dashboard automáticamente
+5. Verificar coincidencia con Tabla de referencia
