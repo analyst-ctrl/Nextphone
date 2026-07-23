@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabla Dinamica iPhone - Julio 2026</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333;padding:20px}
+.container{max-width:1400px;margin:0 auto}
+h1{color:#1F4E79;font-size:22px;margin-bottom:3px}
+.subtitle{color:#666;font-size:13px;margin-bottom:20px}
+.card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px;margin-bottom:20px}
+.card h2{color:#1F4E79;font-size:17px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #1F4E79}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;font-weight:600;font-size:12px}
+td{padding:6px 10px;border-bottom:1px solid #e0e0e0;text-align:center;font-size:13px}
+td.left{text-align:left}
+tr:nth-child(even){background:#f8f9fa}
+.gold{background:#FFD700!important;font-weight:bold}
+.total-row{background:#D4EDDA!important;font-weight:bold}
+.total-col{background:#FFF3CD!important;font-weight:bold}
+.filters{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-weight:600;font-size:12px;color:#555}
+.filter-group select{padding:8px 12px;border:2px solid #1F4E79;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;min-width:180px}
+.filter-group select:focus{outline:none;box-shadow:0 0 0 2px rgba(31,78,121,0.3)}
+.metric{display:inline-block;background:#fff;border-radius:10px;padding:15px 25px;margin-right:15px;box-shadow:0 2px 8px rgba(0,0,0,0.08);text-align:center}
+.metric .num{font-size:28px;font-weight:bold;color:#1F4E79}
+.metric .label{font-size:11px;color:#666;margin-top:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.mode-btn{padding:8px 20px;border:2px solid #1F4E79;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;background:#fff;color:#1F4E79}
+.mode-btn.active{background:#1F4E79;color:#fff}
+.mode-btn:hover{opacity:0.9}
+.status-facturada{color:#28a745;font-weight:bold}
+.status-cancelada{color:#dc3545}
+.badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold}
+.badge-creacion{background:#cce5ff;color:#004085}
+.badge-facturada{background:#d4edda;color:#155724}
+@media(max-width:768px){.grid2{grid-template-columns:1fr}.filters{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Tabla Dinamica iPhone - Julio 2026</h1>
+<p class="subtitle">SQLite: 4.0 KB | Corte: 2026-07-23</p>
+
+<div class="filters">
+  <div class="filter-group">
+    <label>Supervisor</label>
+    <select id="filterSup"><option value="todos">Todos</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Dia Creacion</label>
+    <select id="filterDiaCrea"><option value="todos">Todos</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Dia Modificacion</label>
+    <select id="filterDiaMod"><option value="todos">Todos</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Modelo</label>
+    <select id="filterModelo"><option value="todos">Todos</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Modo Vista</label>
+    <div style="display:flex;gap:5px">
+      <button class="mode-btn active" onclick="setMode('creacion')">CREACION</button>
+      <button class="mode-btn" onclick="setMode('facturadas')">FACTURADAS</button>
+      <button class="mode-btn" onclick="setMode('ambas')">AMBAS</button>
+    </div>
+  </div>
+</div>
+
+<div id="metricsContainer" style="margin-bottom:20px"></div>
+
+<div id="pivotContainer" class="card">
+  <h2>Pivot: Asesor x Modelo</h2>
+  <div style="overflow-x:auto" id="pivotTable"></div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Resumen por Supervisor</h2>
+    <div id="resumenSup"></div>
+  </div>
+  <div class="card">
+    <h2>Resumen por Modelo</h2>
+    <div id="resumenMod"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Detalle de Registros</h2>
+  <div style="max-height:400px;overflow-y:auto" id="detalleTable"></div>
+</div>
+
+</div>
+
+<script>
+const DATA = {"ventas": [{"id": 1, "supervisor": "Jonathan Ortega", "asesor": "Yahaira Yorlenes Vega Castañedas", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (MENSAJERIA- SOC POST ENTREGA)", "fecha_creacion": "2026-07-18 11:04:31", "fecha_entrega": "2026-07-18 00:00:00", "dia_crea": "18/jul/26", "dia_mod": "22/jul/26", "cliente": "Gabriel Batista"}, {"id": 2, "supervisor": "Milliceth Ortega", "asesor": "Karla Landau", "modelo": "Iphone 17 E 256 GB", "status": "VENTAS (MENSAJERIA- SOC POST ENTREGA)", "fecha_creacion": "2026-07-17 15:18:41", "fecha_entrega": "2026-07-17 02:00:00", "dia_crea": "17/jul/26", "dia_mod": "22/jul/26", "cliente": "YADEVAVY MARELSY SERMEÑO AVILA"}, {"id": 3, "supervisor": "Manuel García", "asesor": "Alma Rosa Delago Garcia", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (CLIENTE REPROGRAMA)", "fecha_creacion": "2026-07-20 16:09:38", "fecha_entrega": "2026-07-20 00:00:00", "dia_crea": "20/jul/26", "dia_mod": "22/jul/26", "cliente": "Alfredo Franco"}, {"id": 4, "supervisor": "Milliceth Ortega", "asesor": "Alisson Grau", "modelo": "Iphone 17E 256 GB", "status": "VENTAS (CLIENTE REPROGRAMA)", "fecha_creacion": "2026-07-20 15:59:46", "fecha_entrega": "2026-07-21 00:00:00", "dia_crea": "20/jul/26", "dia_mod": "22/jul/26", "cliente": "Segundo Gudiño Zaldivar"}, {"id": 5, "supervisor": "Milliceth Ortega", "asesor": "Karla Landau", "modelo": "Iphone 17 E 256 GB", "status": "VENTAS (CLIENTE REPROGRAMA)", "fecha_creacion": "2026-07-20 11:08:03", "fecha_entrega": "2026-07-20 00:00:00", "dia_crea": "20/jul/26", "dia_mod": "22/jul/26", "cliente": "Mario Alberto Trujillo"}, {"id": 6, "supervisor": "Milliceth Ortega", "asesor": "Joan Guardia", "modelo": "IPHONE 17E 256GB", "status": "VENTAS (CLIENTE REPROGRAMA)", "fecha_creacion": "2026-07-16 16:21:12", "fecha_entrega": "2026-07-16 00:00:00", "dia_crea": "16/jul/26", "dia_mod": "22/jul/26", "cliente": "Juan Bautista Cocio Cruz"}, {"id": 7, "supervisor": "Milliceth Ortega", "asesor": "Karla Landau", "modelo": "Iphone 17 E 256 GB", "status": "VENTAS (CLIENTE REPROGRAMA)", "fecha_creacion": "2026-07-15 10:39:29", "fecha_entrega": "2026-07-15 00:00:00", "dia_crea": "15/jul/26", "dia_mod": "18/jul/26", "cliente": "Moises Edgardo Rioseco Quiñones"}, {"id": 8, "supervisor": "Manuel García", "asesor": "Mónica Pérez", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (CLIENTE REPROGRAMA)", "fecha_creacion": "2026-07-14 11:30:32", "fecha_entrega": "2026-07-20 00:00:00", "dia_crea": "14/jul/26", "dia_mod": "21/jul/26", "cliente": "stiven jose perez alvis"}, {"id": 9, "supervisor": "Jonathan Ortega", "asesor": "Ediany Delgado", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (CLIENTE NO CONTACTADO)", "fecha_creacion": "2026-07-02 11:03:28", "fecha_entrega": "2026-07-02 00:00:00", "dia_crea": "02/jul/26", "dia_mod": "08/jul/26", "cliente": "Jose Alberto Robles Rico"}, {"id": 10, "supervisor": "Jonathan Ortega", "asesor": "Yatzari Pimentel", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (CLIENTE DESISTE)", "fecha_creacion": "2026-07-07 11:43:42", "fecha_entrega": "2026-07-07 00:00:00", "dia_crea": "07/jul/26", "dia_mod": "16/jul/26", "cliente": "Diego Alvarez A."}, {"id": 11, "supervisor": "Jonathan Ortega", "asesor": "Amarilis Ramos", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (CLIENTE DESISTE)", "fecha_creacion": "2026-07-04 10:02:11", "fecha_entrega": "2026-07-04 00:00:00", "dia_crea": "04/jul/26", "dia_mod": "08/jul/26", "cliente": "Jose DeLaCruz Quintero Martinez"}, {"id": 12, "supervisor": "Manuel García", "asesor": "Yosuany Muñoz", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (CLIENTE DESISTE)", "fecha_creacion": "2026-07-02 12:20:45", "fecha_entrega": "2026-07-02 10:00:00", "dia_crea": "02/jul/26", "dia_mod": "13/jul/26", "cliente": "Yamileth Gonzalez"}, {"id": 13, "supervisor": "Jonathan Ortega", "asesor": "Modeiza Rivas", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-20 11:38:58", "fecha_entrega": "2026-07-20 00:00:00", "dia_crea": "20/jul/26", "dia_mod": "21/jul/26", "cliente": "Jadiel Ulises Mejía Rivera"}, {"id": 14, "supervisor": "Manuel García", "asesor": "Abdiel Alberto Vanega Simpson", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-19 10:45:17", "fecha_entrega": "2026-07-19 00:00:00", "dia_crea": "19/jul/26", "dia_mod": "21/jul/26", "cliente": "Carlos Gomez Vargas"}, {"id": 15, "supervisor": "Manuel García", "asesor": "Abdiel Alberto Vanega Simpson", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-19 10:45:14", "fecha_entrega": "2026-07-19 00:00:00", "dia_crea": "19/jul/26", "dia_mod": "21/jul/26", "cliente": "Carlos Gomez Vargas"}, {"id": 16, "supervisor": "Jonathan Ortega", "asesor": "Cristian Vega", "modelo": "IPHONE 17 256GB (Blue)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-16 15:34:36", "fecha_entrega": "2026-07-16 00:00:00", "dia_crea": "16/jul/26", "dia_mod": "20/jul/26", "cliente": "Yanilka Arias"}, {"id": 17, "supervisor": "Milliceth Ortega", "asesor": "Alisson Grau", "modelo": "Iphone 17E 256 GB", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-16 12:46:19", "fecha_entrega": "2026-07-16 00:00:00", "dia_crea": "16/jul/26", "dia_mod": "18/jul/26", "cliente": "Angie Tatiana Jimenez Catrellon"}, {"id": 18, "supervisor": "Milliceth Ortega", "asesor": "Ashley Lee", "modelo": "iPhone 17e 256GB", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-15 11:07:49", "fecha_entrega": "2026-07-15 09:00:00", "dia_crea": "15/jul/26", "dia_mod": "21/jul/26", "cliente": "Leydy Viviana Garcia Torres"}, {"id": 19, "supervisor": "Manuel García", "asesor": "Sanneth Soberon", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-14 16:37:13", "fecha_entrega": "2026-07-14 00:00:00", "dia_crea": "14/jul/26", "dia_mod": "16/jul/26", "cliente": "yuranis roman"}, {"id": 20, "supervisor": "Jonathan Ortega", "asesor": "Yeimy Caicedo", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-14 16:21:14", "fecha_entrega": "2026-07-14 00:00:00", "dia_crea": "14/jul/26", "dia_mod": "21/jul/26", "cliente": "Briseida Campos Pitty"}, {"id": 21, "supervisor": "Milliceth Ortega", "asesor": "Josseling Grau", "modelo": "Iphone 17e de 256gb color negro", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-14 14:42:04", "fecha_entrega": "2026-07-15 00:00:00", "dia_crea": "14/jul/26", "dia_mod": "17/jul/26", "cliente": "ANDERSON BEITIA"}, {"id": 22, "supervisor": "Milliceth Ortega", "asesor": "Josseling Grau", "modelo": "Iphone 17e de 256gb color negro", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-14 10:05:49", "fecha_entrega": "2026-07-15 00:00:00", "dia_crea": "14/jul/26", "dia_mod": "15/jul/26", "cliente": "AMBAR QUINTERO"}, {"id": 23, "supervisor": "Manuel García", "asesor": "Kevin Torres", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-13 16:59:35", "fecha_entrega": "2026-07-13 00:00:00", "dia_crea": "13/jul/26", "dia_mod": "18/jul/26", "cliente": "ROLANDO R BERMUDEZ"}, {"id": 24, "supervisor": "Milliceth Ortega", "asesor": "Zachy Hernández", "modelo": "iphone 17e  256 GB", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-11 10:06:00", "fecha_entrega": "2026-07-11 00:00:00", "dia_crea": "11/jul/26", "dia_mod": "15/jul/26", "cliente": "Jeiber Mauricio Murillo Leal"}, {"id": 25, "supervisor": "Manuel García", "asesor": "Valeri Ambulo", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-10 16:42:02", "fecha_entrega": "2026-07-10 17:00:00", "dia_crea": "10/jul/26", "dia_mod": "20/jul/26", "cliente": "MARIA ALEXANDRA M COLMENARES BERMUDEZ"}, {"id": 26, "supervisor": "Milliceth Ortega", "asesor": "Génesis Caicedo", "modelo": "IPHONE 17 E 256GB Negro", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-10 11:43:14", "fecha_entrega": "2026-07-10 16:00:00", "dia_crea": "10/jul/26", "dia_mod": "13/jul/26", "cliente": "DARIO ENRIQUE D TOVAR PENA"}, {"id": 27, "supervisor": "Manuel García", "asesor": "Aleshka Ambulo", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-09 11:21:09", "fecha_entrega": "2026-07-09 00:00:00", "dia_crea": "09/jul/26", "dia_mod": "14/jul/26", "cliente": "Erika yaneth Peralta cortez"}, {"id": 28, "supervisor": "Manuel García", "asesor": "Milen Dayanis Julio De La Cruz", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-08 16:07:30", "fecha_entrega": "2026-07-08 00:00:00", "dia_crea": "08/jul/26", "dia_mod": "16/jul/26", "cliente": "Jose Franklin Montenegro lezcano"}, {"id": 29, "supervisor": "Jonathan Ortega", "asesor": "Josue Vasquez", "modelo": "Iphone 17e", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-08 14:52:19", "fecha_entrega": "2026-07-08 00:00:00", "dia_crea": "08/jul/26", "dia_mod": "15/jul/26", "cliente": "Michael Steven Mara?a Serrud"}, {"id": 30, "supervisor": "Milliceth Ortega", "asesor": "Alisson Grau", "modelo": "Iphone 17E 256 GB", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-08 14:40:59", "fecha_entrega": "2026-07-08 00:00:00", "dia_crea": "08/jul/26", "dia_mod": "13/jul/26", "cliente": "Gladys Judith Trejos Trejos"}, {"id": 31, "supervisor": "Jonathan Ortega", "asesor": "Gladis Peralta", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-08 10:58:39", "fecha_entrega": "2026-07-08 00:00:00", "dia_crea": "08/jul/26", "dia_mod": "14/jul/26", "cliente": "Daniel Viveros"}, {"id": 32, "supervisor": "Milliceth Ortega", "asesor": "Karla Landau", "modelo": "Iphone 17 E 256 GB", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-07 16:02:38", "fecha_entrega": "2026-07-07 00:00:00", "dia_crea": "07/jul/26", "dia_mod": "10/jul/26", "cliente": "Lia Stephanie de leon ortega"}, {"id": 33, "supervisor": "Manuel García", "asesor": "Frank Joseph Castillo Morales", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-06 17:32:55", "fecha_entrega": "2026-07-06 00:00:00", "dia_crea": "06/jul/26", "dia_mod": "18/jul/26", "cliente": "Josue Praadi"}, {"id": 34, "supervisor": "Jonathan Ortega", "asesor": "Valentina Ochoa", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-06 15:12:42", "fecha_entrega": "2026-07-06 00:00:00", "dia_crea": "06/jul/26", "dia_mod": "10/jul/26", "cliente": "Maria Brigida Barria Terrado"}, {"id": 35, "supervisor": "Jonathan Ortega", "asesor": "Ediany Delgado", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-06 13:31:30", "fecha_entrega": "2026-07-06 00:00:00", "dia_crea": "06/jul/26", "dia_mod": "11/jul/26", "cliente": "Dina Maria Caballero Gonzalez de Menendez"}, {"id": 36, "supervisor": "Manuel García", "asesor": "Abdiel Alberto Vanega Simpson", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-04 12:22:38", "fecha_entrega": "2026-07-04 00:00:00", "dia_crea": "04/jul/26", "dia_mod": "10/jul/26", "cliente": "Luis saavedra"}, {"id": 37, "supervisor": "Manuel García", "asesor": "Kamaris Rogers", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-03 18:27:56", "fecha_entrega": "2026-07-03 00:00:00", "dia_crea": "03/jul/26", "dia_mod": "09/jul/26", "cliente": "Ambar Vargas De Arosemena"}, {"id": 38, "supervisor": "Manuel García", "asesor": "Milen Dayanis Julio De La Cruz", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-03 17:12:52", "fecha_entrega": "2026-07-03 00:00:00", "dia_crea": "03/jul/26", "dia_mod": "07/jul/26", "cliente": "Jezabel Aguilar Aguilar"}, {"id": 39, "supervisor": "Jonathan Ortega", "asesor": "Emily Forero", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-03 10:27:42", "fecha_entrega": "2026-07-03 00:00:00", "dia_crea": "03/jul/26", "dia_mod": "07/jul/26", "cliente": "Ingri Isaza"}, {"id": 40, "supervisor": "Jonathan Ortega", "asesor": "Lerys Ariana Barrios Chacon", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-03 09:45:56", "fecha_entrega": "2026-07-03 00:00:00", "dia_crea": "03/jul/26", "dia_mod": "04/jul/26", "cliente": "Inova Castillo de Garcia"}, {"id": 41, "supervisor": "Manuel García", "asesor": "Mónica Pérez", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-03 09:21:58", "fecha_entrega": "2026-07-03 00:00:00", "dia_crea": "03/jul/26", "dia_mod": "15/jul/26", "cliente": "Karen Ocampo"}, {"id": 42, "supervisor": "Manuel García", "asesor": "Abdiel Meléndez", "modelo": "iPhone 17e 256GB Black", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-02 15:17:33", "fecha_entrega": "2026-07-02 00:00:00", "dia_crea": "02/jul/26", "dia_mod": "07/jul/26", "cliente": "Juan Sebastian Achury Ospina"}, {"id": 43, "supervisor": "Manuel García", "asesor": "Abdiel Alberto Vanega Simpson", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-02 14:59:20", "fecha_entrega": "2026-07-02 00:00:00", "dia_crea": "02/jul/26", "dia_mod": "09/jul/26", "cliente": "Dalys Del Carmen Agudelo De Gough"}, {"id": 44, "supervisor": "Manuel García", "asesor": "Geraldine Ovalles", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-02 14:44:03", "fecha_entrega": "2026-07-01 00:00:00", "dia_crea": "02/jul/26", "dia_mod": "04/jul/26", "cliente": "ariel rivas"}, {"id": 45, "supervisor": "Jonathan Ortega", "asesor": "Modeiza Rivas", "modelo": "IPHONE 17 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-02 11:47:09", "fecha_entrega": "2026-07-02 00:00:00", "dia_crea": "02/jul/26", "dia_mod": "06/jul/26", "cliente": "CAROLINA ESPAÑA BOHORQUEZ"}, {"id": 46, "supervisor": "Manuel García", "asesor": "Alma Rosa Delago Garcia", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-02 11:26:43", "fecha_entrega": "2026-07-02 00:00:00", "dia_crea": "02/jul/26", "dia_mod": "07/jul/26", "cliente": "RICARDO ALBERTO R LIAO MANCILLA"}, {"id": 47, "supervisor": "Jonathan Ortega", "asesor": "Antonio Rivera Ayarza", "modelo": "IPHONE 17E 256GB (Black)", "status": "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "fecha_creacion": "2026-07-01 15:31:14", "fecha_entrega": "2026-07-01 00:00:00", "dia_crea": "01/jul/26", "dia_mod": "07/jul/26", "cliente": "CHRISTOPHER JASSIR SANTAMARIA FEDERICO"}, {"id": 48, "supervisor": "Milliceth Ortega", "asesor": "Génesis Caicedo", "modelo": "IPHONE 17E 256GB Negro", "status": "CALIBRADOR (RECHAZADO POR INFORMACIÓN)", "fecha_creacion": "2026-07-10 12:08:33", "fecha_entrega": "2026-07-10 13:00:00", "dia_crea": "10/jul/26", "dia_mod": "20/jul/26", "cliente": "Keyban Scott Leslie"}, {"id": 49, "supervisor": "Manuel García", "asesor": "Abdiel Meléndez", "modelo": "iPhone 17 256GB Black", "status": "CALIBRADOR (RECHAZADO POR INFORMACIÓN)", "fecha_creacion": "2026-07-01 10:07:14", "fecha_entrega": "2026-07-01 00:00:00", "dia_crea": "01/jul/26", "dia_mod": "01/jul/26", "cliente": "Heidy Marcela Mendoza Gaitan"}, {"id": 50, "supervisor": "Milliceth Ortega", "asesor": "Zachy Hernández", "modelo": "iphone 17e  256 GB", "status": "BO (RENOVACIÓN NO REFLEJA ACH)", "fecha_creacion": "2026-07-13 15:58:31", "fecha_entrega": "2026-07-13 00:00:00", "dia_crea": "13/jul/26", "dia_mod": "21/jul/26", "cliente": "LIONEL UNIVER CAMPBELL BEITIA"}, {"id": 51, "supervisor": "Milliceth Ortega", "asesor": "Alisson Grau", "modelo": "Iphone 17E 256 GB", "status": "BO (MENSAJERIA PANAMA – P. OESTE)", "fecha_creacion": "2026-07-20 11:56:07", "fecha_entrega": "2026-07-20 00:00:00", "dia_crea": "20/jul/26", "dia_mod": "21/jul/26", "cliente": "Lian Marlen Arauz Lopez"}, {"id": 52, "supervisor": "Milliceth Ortega", "asesor": "Rosa  Grenald", "modelo": "iPhone 17 de 256 GB COLOR NEGRO", "status": "BO (MENSAJERIA INTERIOR)", "fecha_creacion": "2026-07-21 12:21:16", "fecha_entrega": "2026-07-21 00:00:00", "dia_crea": "21/jul/26", "dia_mod": "22/jul/26", "cliente": "Kenneth Joel Ayala Arauz"}, {"id": 53, "supervisor": "Manuel García", "asesor": "Geraldine Ovalles", "modelo": "IPHONE 17E 256GB (Black)", "status": "BO (ENVIADO AL SOC)", "fecha_creacion": "2026-07-21 16:00:39", "fecha_entrega": "2026-07-21 00:00:00", "dia_crea": "21/jul/26", "dia_mod": "22/jul/26", "cliente": "Alberto Adolfo Cole Archibolb"}, {"id": 54, "supervisor": "Jonathan Ortega", "asesor": "Modeiza Rivas", "modelo": "IPHONE 17E 256GB (Black)", "status": "BO (ENVIADO AL SOC)", "fecha_creacion": "2026-07-21 14:39:48", "fecha_entrega": "2026-07-21 00:00:00", "dia_crea": "21/jul/26", "dia_mod": "21/jul/26", "cliente": "Betsy Magaly Esquivel Lee de Romero"}, {"id": 55, "supervisor": "Manuel García", "asesor": "Abdiel Meléndez", "modelo": "iPhone 17e 256GB Black", "status": "BO (ENVIADO AL SOC)", "fecha_creacion": "2026-07-08 17:30:53", "fecha_entrega": "2026-07-08 00:00:00", "dia_crea": "08/jul/26", "dia_mod": "22/jul/26", "cliente": "FLOR MARIA MIER Y TERAN COLMENARES"}], "supervisores": ["Jonathan Ortega", "Manuel García", "Milliceth Ortega"], "modelos": ["IPHONE 17 256GB (Black)", "IPHONE 17 256GB (Blue)", "IPHONE 17 E 256GB Negro", "IPHONE 17E 256GB", "IPHONE 17E 256GB (Black)", "IPHONE 17E 256GB Negro", "Iphone 17 E 256 GB", "Iphone 17E 256 GB", "Iphone 17e", "Iphone 17e de 256gb color negro", "iPhone 17 256GB Black", "iPhone 17 de 256 GB COLOR NEGRO", "iPhone 17e 256GB", "iPhone 17e 256GB Black", "iphone 17e  256 GB"], "dia_crea": ["01/jul/26", "02/jul/26", "03/jul/26", "04/jul/26", "06/jul/26", "07/jul/26", "08/jul/26", "09/jul/26", "10/jul/26", "11/jul/26", "13/jul/26", "14/jul/26", "15/jul/26", "16/jul/26", "17/jul/26", "18/jul/26", "19/jul/26", "20/jul/26", "21/jul/26"], "dia_mod": ["01/jul/26", "04/jul/26", "06/jul/26", "07/jul/26", "08/jul/26", "09/jul/26", "10/jul/26", "11/jul/26", "13/jul/26", "14/jul/26", "15/jul/26", "16/jul/26", "17/jul/26", "18/jul/26", "20/jul/26", "21/jul/26", "22/jul/26"], "statuses": ["BO (ENVIADO AL SOC)", "BO (MENSAJERIA INTERIOR)", "BO (MENSAJERIA PANAMA – P. OESTE)", "BO (RENOVACIÓN NO REFLEJA ACH)", "CALIBRADOR (RECHAZADO POR INFORMACIÓN)", "VENTAS (RENOVACIÓN EXITOSA JULIO 26)", "VENTAS (CLIENTE DESISTE)", "VENTAS (CLIENTE NO CONTACTADO)", "VENTAS (CLIENTE REPROGRAMA)", "VENTAS (MENSAJERIA- SOC POST ENTREGA)"], "total": 55, "db_size": "4.0 KB", "today": "2026-07-23"};
+let currentMode = 'creacion';
+
+// Populate comboboxes
+function populateSelect(id, values) {
+  const sel = document.getElementById(id);
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+populateSelect('filterSup', DATA.supervisores);
+populateSelect('filterDiaCrea', DATA.dia_crea);
+populateSelect('filterDiaMod', DATA.dia_mod);
+populateSelect('filterModelo', DATA.modelos);
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+function getFiltered() {
+  const sup = document.getElementById('filterSup').value;
+  const diaCrea = document.getElementById('filterDiaCrea').value;
+  const diaMod = document.getElementById('filterDiaMod').value;
+  const modelo = document.getElementById('filterModelo').value;
+
+  return DATA.ventas.filter(v => {
+    if (sup !== 'todos' && v.supervisor !== sup) return false;
+    if (diaCrea !== 'todos' && v.dia_crea !== diaCrea) return false;
+    if (diaMod !== 'todos' && v.dia_mod !== diaMod) return false;
+    if (modelo !== 'todos' && v.modelo !== modelo) return false;
+    return true;
+  });
+}
+
+function isFacturada(status) {
+  return status && status.toUpperCase().includes('RENOVACIÓN EXITOSA JULIO 26');
+}
+
+function render() {
+  const filtered = getFiltered();
+  
+  // Split by mode
+  let creacion, facturadas;
+  if (currentMode === 'creacion') {
+    creacion = filtered;
+    facturadas = [];
+  } else if (currentMode === 'facturadas') {
+    creacion = [];
+    facturadas = filtered.filter(v => isFacturada(v.status));
+  } else {
+    creacion = filtered;
+    facturadas = filtered.filter(v => isFacturada(v.status));
+  }
+
+  // Metrics
+  const totalC = creacion.length;
+  const totalF = facturadas.length;
+  document.getElementById('metricsContainer').innerHTML =
+    '<div class="metric"><div class="num">' + totalC + '</div><div class="label">CREACION (todos status)</div></div>' +
+    '<div class="metric"><div class="num" style="color:#28a745">' + totalF + '</div><div class="label">FACTURADAS (renovacion exitosa)</div></div>' +
+    '<div class="metric"><div class="num">' + filtered.length + '</div><div class="label">Total Filtrado</div></div>';
+
+  // Build pivot table
+  const data = currentMode === 'facturadas' ? facturadas : 
+               currentMode === 'ambas' ? creacion : creacion;
+  
+  const pivotData = {};
+  const allAsesores = new Set();
+  const allModelos = new Set();
+  
+  data.forEach(v => {
+    allAsesores.add(v.asesor);
+    allModelos.add(v.modelo);
+    const key = v.asesor + '|' + v.modelo;
+    pivotData[key] = (pivotData[key] || 0) + 1;
+  });
+
+  // Also build facturadas pivot if in 'ambas' mode
+  const pivotFact = {};
+  if (currentMode === 'ambas') {
+    facturadas.forEach(v => {
+      const key = v.asesor + '|' + v.modelo;
+      pivotFact[key] = (pivotFact[key] || 0) + 1;
+    });
+  }
+
+  const asesores = [...allAsesores].sort();
+  const modelos = [...allModelos].sort();
+
+  let h = '<table><tr><th style="text-align:left;min-width:200px">Asesor \ Modelo</th>';
+  modelos.forEach(m => {
+    const short = m.replace(/IPHONE /gi, 'iP ').replace(/256GB/g, '256').replace(/\(Black\)/gi, '(B)').replace(/\(Blue\)/gi, '(Bl)');
+    h += '<th>' + short + '</th>';
+  });
+  h += '<th>Total</th></tr>';
+
+  let grandTotal = 0;
+  const colTotals = {};
+  modelos.forEach(m => colTotals[m] = 0);
+
+  asesores.forEach(ase => {
+    h += '<tr><td class="left">' + ase + '</td>';
+    let rowTotal = 0;
+    modelos.forEach(m => {
+      const key = ase + '|' + m;
+      let val = pivotData[key] || 0;
+      
+      if (currentMode === 'ambas') {
+        const fVal = pivotFact[key] || 0;
+        h += '<td>' + (val || '') + '<br><span class="status-facturada">' + (fVal || '') + '</span></td>';
+      } else {
+        h += '<td>' + (val || '') + '</td>';
+      }
+      
+      rowTotal += val;
+      colTotals[m] += val;
+    });
+    grandTotal += rowTotal;
+    h += '<td class="total-col">' + rowTotal + '</td></tr>';
+  });
+
+  // Total row
+  h += '<tr class="total-row"><td>Total general</td>';
+  modelos.forEach(m => {
+    h += '<td class="total-row">' + colTotals[m] + '</td>';
+  });
+  h += '<td class="total-row" style="background:#FFD700">' + grandTotal + '</td></tr>';
+  h += '</table>';
+
+  if (currentMode === 'ambas') {
+    h += '<p style="margin-top:8px;font-size:11px;color:#666"><span class="badge badge-creacion">CREACION</span> / <span class="badge badge-facturada">FACTURADAS</span></p>';
+  }
+
+  document.getElementById('pivotTable').innerHTML = h;
+
+  // Resumen por Supervisor
+  const supCount = {};
+  data.forEach(v => {
+    supCount[v.supervisor] = (supCount[v.supervisor] || 0) + 1;
+  });
+  let sh = '<table><tr><th class="left">Supervisor</th><th>Ventas</th><th>%</th></tr>';
+  Object.entries(supCount).sort((a,b) => b[1] - a[1]).forEach(([sup, cnt], i) => {
+    const cls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    sh += '<tr class="'+cls+'"><td class="left">'+sup+'</td><td>'+cnt+'</td><td>'+(cnt/data.length*100).toFixed(1)+'%</td></tr>';
+  });
+  sh += '</table>';
+  document.getElementById('resumenSup').innerHTML = sh;
+
+  // Resumen por Modelo
+  const modCount = {};
+  data.forEach(v => {
+    modCount[v.modelo] = (modCount[v.modelo] || 0) + 1;
+  });
+  let mh = '<table><tr><th class="left">Modelo</th><th>Ventas</th><th>%</th></tr>';
+  Object.entries(modCount).sort((a,b) => b[1] - a[1]).forEach(([mod, cnt], i) => {
+    const cls = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    mh += '<tr class="'+cls+'"><td class="left">'+mod+'</td><td>'+cnt+'</td><td>'+(cnt/data.length*100).toFixed(1)+'%</td></tr>';
+  });
+  mh += '</table>';
+  document.getElementById('resumenMod').innerHTML = mh;
+
+  // Detalle
+  let dh = '<table><tr><th>#</th><th class="left">Cliente</th><th class="left">Modelo</th><th class="left">Supervisor</th><th class="left">Asesor</th><th>Status</th><th>Dia Creacion</th></tr>';
+  data.slice(0, 200).forEach((v, i) => {
+    const stClass = isFacturada(v.status) ? 'status-facturada' : 'status-cancelada';
+    dh += '<tr><td>'+(i+1)+'</td><td class="left">'+v.cliente+'</td><td class="left">'+v.modelo+'</td><td class="left">'+v.supervisor+'</td><td class="left">'+v.asesor+'</td><td class="'+stClass+'">'+(v.status||'').substring(0,30)+'</td><td>'+(v.fecha_creacion||'').substring(0,10)+'</td></tr>';
+  });
+  if (data.length > 200) dh += '<tr><td colspan="7" style="color:#999">... '+data.length+' registros total</td></tr>';
+  dh += '</table>';
+  document.getElementById('detalleTable').innerHTML = dh;
+}
+
+// Event listeners
+['filterSup', 'filterDiaCrea', 'filterDiaMod', 'filterModelo'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+});
+
+render();
+</script>
+</body>
+</html>

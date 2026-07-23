@@ -1,0 +1,23 @@
+# Secrets
+token_github.txt
+
+# Large data files
+*.xlsx
+*.xlsm
+*.xls
+*.db
+*.sqlite
+*.sqlite3
+
+# Excel temp files
+~$*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# OS
+.DS_Store
+Thumbs.db
