@@ -7,7 +7,7 @@ import sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 print("Leyendo Sharep.xlsx...")
-wb = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws = wb['owssvr (6)']
 
 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
@@ -260,7 +260,7 @@ ws3.column_dimensions['E'].width = 22
 ws3.column_dimensions['F'].width = 14
 ws3.column_dimensions['G'].width = 30
 
-outfile = 'Ranking iPhone - Julio 2026.xlsx'
+outfile = '../Lixi/3diasporsemana/Ranking iPhone - Julio 2026.xlsx'
 out_wb.save(outfile)
 print(f"\nArchivo generado: {outfile}")
 print("\nHojas:")

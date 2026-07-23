@@ -6,14 +6,14 @@ import sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 TODAY = date.today()
-OUT_DIR = 'output'
+OUT_DIR = '../Lixi/3diasporsemana/output'
 os.makedirs(OUT_DIR, exist_ok=True)
 
 PROMO_DAYS = {0: 'Todos', 1: 'Lunes', 3: 'Miércoles', 5: 'Viernes'}
 WEEKDAYS = {1: 'Lunes', 3: 'Miércoles', 5: 'Viernes'}
 
 print("Conectando a sharep.db...")
-conn = sqlite3.connect('sharep.db')
+conn = sqlite3.connect('../Lixi/3diasporsemana/sharep.db')
 conn.row_factory = sqlite3.Row
 c = conn.cursor()
 
@@ -88,7 +88,7 @@ conn.close()
 marcas_ordenadas = sorted(marcas_set, key=lambda m: -sum(1 for r in registros if r['marca'] == m))
 
 # Comparison data (all July, all phones)
-conn2 = sqlite3.connect('sharep.db')
+conn2 = sqlite3.connect('../Lixi/3diasporsemana/sharep.db')
 c2 = conn2.cursor()
 c2.execute('''
     SELECT

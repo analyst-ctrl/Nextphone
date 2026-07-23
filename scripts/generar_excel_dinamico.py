@@ -16,7 +16,7 @@ def week_of_july(d):
     return (d.day - 1) // 7 + 1
 
 print("Procesando datos...")
-wb = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws = wb['owssvr (6)']
 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 col_idx = {h: i for i, h in enumerate(headers)}
@@ -85,7 +85,7 @@ wb.close()
 print(f"Datos: {len(all_rows)} registros, {len(sup_total)} supervisores, {len(dia_info)} dias, {len(modelos_set)} modelos")
 
 # Comparison data (full julio)
-wb2 = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb2 = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws2 = wb2['owssvr (6)']
 _ = [cell.value for cell in next(ws2.iter_rows(min_row=1, max_row=1))]
 julio_all_total = julio_all_lmj = 0
@@ -466,7 +466,7 @@ ws6.column_dimensions['E'].width = 22; ws6.column_dimensions['F'].width = 22
 ws6.column_dimensions['G'].width = 14; ws6.column_dimensions['H'].width = 14
 ws6.column_dimensions['I'].width = 10; ws6.column_dimensions['J'].width = 28
 
-outfile = 'Ranking_3_Dias_x_Semana_Julio_2026.xlsx'
+outfile = '../Lixi/3diasporsemana/Ranking_3_Dias_x_Semana_Julio_2026.xlsx'
 out.save(outfile)
 print(f"Excel generado: {outfile}")
 print(f"6 hojas: Tabla Dinamica, Ranking General, Ranking iPhone, Desglose Diario, Comparativa, Detalle Ventas")

@@ -14,7 +14,7 @@ def week_of_july(d):
     return (d.day - 1) // 7 + 1
 
 print("Leyendo Sharep.xlsx...")
-wb = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws = wb['owssvr (6)']
 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 col_idx = {h: i for i, h in enumerate(headers)}
@@ -94,7 +94,7 @@ for row in ws.iter_rows(min_row=2, values_only=True):
 wb.close()
 
 # Comparison data (all julio, promo=Si, any phone)
-wb2 = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb2 = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws2 = wb2['owssvr (6)']
 _ = [cell.value for cell in next(ws2.iter_rows(min_row=1, max_row=1))]
 julio_all_total = julio_all_lmj = 0
@@ -417,7 +417,7 @@ render();
 
 html = html.replace('$DATA_JSON$', data_json).replace('$TODAY_STR$', TODAY.strftime('%Y-%m-%d'))
 
-with open('dashboard_3diasporsemana.html', 'w', encoding='utf-8') as f:
+with open('../Lixi/3diasporsemana/dashboard_3diasporsemana.html', 'w', encoding='utf-8') as f:
     f.write(html)
 
 print(f"Dashboard generado: dashboard_3diasporsemana.html")

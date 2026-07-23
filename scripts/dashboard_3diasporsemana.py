@@ -11,7 +11,7 @@ PROMO_DAYS = {0: 'Lunes', 2: 'Miércoles', 4: 'Viernes'}
 PROMO_DAY_NAMES = ['Lunes', 'Miércoles', 'Viernes']
 
 print("Leyendo Sharep.xlsx...")
-wb = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws = wb['owssvr (6)']
 
 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
@@ -280,7 +280,7 @@ for d in july_days:
 
 # Re-count totals for comparison (all days julio, promo=Si, iPhone)
 print("Recontando comparativas...")
-wb2 = openpyxl.load_workbook('Sharep.xlsx', read_only=True, data_only=True)
+wb2 = openpyxl.load_workbook('../Lixi/3diasporsemana/Sharep.xlsx', read_only=True, data_only=True)
 ws2 = wb2['owssvr (6)']
 _ = [cell.value for cell in next(ws2.iter_rows(min_row=1, max_row=1))]
 
@@ -412,7 +412,7 @@ ws4.column_dimensions['G'].width = 14
 ws4.column_dimensions['H'].width = 12
 ws4.column_dimensions['I'].width = 30
 
-outfile = 'Ranking 3 Dias por Semana - Julio 2026.xlsx'
+outfile = '../Lixi/3diasporsemana/Ranking 3 Dias por Semana - Julio 2026.xlsx'
 out_wb.save(outfile)
 print(f"\nDashboard generado: {outfile}")
 print("\nHojas del dashboard:")
