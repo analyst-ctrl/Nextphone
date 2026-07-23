@@ -1,0 +1,49 @@
+========================================
+CRITERIO DE NEGOCIO: Corte de Ventas - Teléfonos (iPhone)
+========================================
+
+FUENTE: Sharep.xlsx (hoja owssvr (6))
+FILTRO: Modelo del equipo = IPHONE
+        Lleva promoción = Sí
+
+========================================
+REGLA DE NEGOCIO - DÍAS DE CORTE (PROMO "3 DÍAS POR SEMANA")
+========================================
+Días de corte/liquidación: LUNES, MIÉRCOLES, VIERNES
+
+Estos son los días oficiales de la promoción "3 días por semana".
+- Las ventas en L/M/V cuentan para el ranking de la promo.
+- Las ventas en otros días (Martes, Jueves, Sábado, Domingo) SON VÁLIDAS y cuentan para el total mensual, pero NO son días de corte de la promo.
+
+El reporte se puede solicitar PARA CUALQUIER DÍA DE CORTE (L/M/V).
+La fecha de corte se define al momento de generar el reporte.
+
+========================================
+PARÁMETROS DEL REPORTE (CONFIGURABLES)
+========================================
+- Período: Mes/Año (ej. Julio 2026)
+- Fecha de corte: Un Lunes, Miércoles o Viernes específico
+- Modelo: IPHONE (configurable)
+- Promoción: Sí (configurable)
+
+========================================
+ESTRUCTURA DE SALIDA
+========================================
+1. Resumen período (Total iPhones promo en el mes)
+2. Ventas en días de corte (L/M/V) vs días no promo
+3. Ranking Supervisores (filtrado por días de corte del mes)
+4. Detalle equipo por supervisor (ej. Manuel García)
+   - Ventas por asesor
+   - Modelos vendidos
+   - Estatus de ventas
+5. Archivos generados:
+   - Ranking iPhone - [Mes] [Año].xlsx (con filtro L/M/V)
+   - dashboard_[mes]_promo.html (filtros interactivos L/M/V)
+
+========================================
+NOTA IMPORTANTE
+========================================
+NO hardcodear la fecha de corte (ej. 22/07/2026).
+El script debe aceptar la fecha de corte como parámetro
+y filtrar automáticamente los Lunes/Miércoles/Viernes
+del mes correspondiente.

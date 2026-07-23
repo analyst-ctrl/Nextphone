@@ -1,0 +1,46 @@
+========================================
+REQUERIMIENTO: Ranking Incentivos iPhone
+========================================
+
+Fuente: Sharep.xlsx (hoja owssvr (6))
+Promo: 3 días por semana (Lunes, Miércoles y Viernes)
+Período: Julio 2026
+Filtros aplicados:
+  - Modelo del equipo = IPHONE
+  - Lleva promoción = Si
+  - Solo Julio 2026
+  - Solo días Lunes, Miércoles, Viernes
+
+========================================
+HALLAZGOS (al 22/07/2026)
+========================================
+
+Distribución de ventas por tipo de día:
+  - Lunes:     4 ventas (2 días: Jul 6, Jul 13)
+  - Miércoles: 5 ventas (2 días: Jul 1, Jul 8)
+  - Viernes:   3 ventas (2 días: Jul 3, Jul 10)
+  - TOTAL:    12 ventas en 6 días promo
+
+Días sin ventas en promo:
+  - Miércoles Jul 15 (Semana 3)
+  - Viernes Jul 17 (Semana 3)
+  - Lunes Jul 20 (Semana 4)
+  - Miércoles Jul 22 (Semana 4) - puede tener datos pendientes
+
+Comparativa Julio (iPhone + Promo Si):
+  - Ventas en días promo (L/M/J): 12 (52.2%)
+  - Ventas en días no promo:      11 (47.8%)
+  - Total Julio:                   23
+
+Semana 1 (Jul 1-5):  8 ventas
+Semana 2 (Jul 6-12): 4 ventas
+Semana 3 (Jul 13-19): 0 ventas
+Semana 4 (Jul 20-26): 0 ventas
+
+========================================
+ARCHIVOS GENERADOS
+========================================
+- dashboard_3diasporsemana.html     -> Dashboard web interactivo con filtros
+- Ranking 3 Dias por Semana.xlsx    -> Tabla dinámica en Excel
+- dashboard_3diasporsemana.py       -> Genera ranking Excel (LMJ)
+- generar_dashboard_html.py         -> Genera el HTML automáticamente

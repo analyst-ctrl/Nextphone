@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard iPhone Promo - 3 Dias x Semana</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#333;padding:20px}
+.container{max-width:1400px;margin:0 auto}
+h1{color:#1F4E79;font-size:22px;margin-bottom:3px}
+.subtitle{color:#666;font-size:13px;margin-bottom:20px}
+.card{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:20px;margin-bottom:20px}
+.card h2{color:#1F4E79;font-size:17px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #1F4E79}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1F4E79;color:#fff;padding:8px 10px;text-align:center;font-weight:600;font-size:12px}
+td{padding:6px 10px;border-bottom:1px solid #e0e0e0;text-align:center;font-size:13px}
+td.left{text-align:left}
+tr:nth-child(even){background:#f8f9fa}
+.gold{background:#FFD700!important;font-weight:bold}
+.silver{background:#C0C0C0!important}
+.bronze{background:#CD7F32!important;color:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.metric{text-align:center;padding:15px}
+.metric .num{font-size:28px;font-weight:bold;color:#1F4E79}
+.metric .label{font-size:12px;color:#666;margin-top:4px}
+.metric .sub{font-size:11px;color:#999}
+.day-section{margin-bottom:15px}
+.day-header{background:#D4EDDA;padding:8px 15px;border-radius:8px;font-weight:bold;color:#155724;margin-bottom:8px;display:flex;justify-content:space-between;font-size:14px}
+.chart-container{height:260px;margin-top:8px}
+@media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}}
+.detail-table{font-size:11px}
+.detail-table th{font-size:11px;padding:5px 6px}
+.detail-table td{padding:3px 6px}
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:15px;align-items:center}
+.filters label{font-weight:600;font-size:13px;color:#333}
+.filters select{padding:5px 10px;border:2px solid #1F4E79;border-radius:6px;font-size:13px;background:#fff;cursor:pointer}
+.filters select:focus{outline:none;box-shadow:0 0 0 2px rgba(31,78,121,0.3)}
+.modelo-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:bold;color:#fff;margin-right:3px;background:#555555}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Dashboard iPhone Promo - 3 Dias por Semana (Lun/Mie/Vie)</h1>
+<p class="subtitle" id="subtitleText">Julio 2026 | Fuente: Iphone_07_22_2026_sharep.xlsx | Corte: Lunes, Miercoles, Viernes</p>
+
+<div class="filters">
+  <div>
+    <label for="filterSemana">Semana:</label>
+    <select id="filterSemana"><option value="todas">Todas</option></select>
+  </div>
+  <div>
+    <label for="filterSup">Supervisor:</label>
+    <select id="filterSup"><option value="todos">Todos</option></select>
+  </div>
+  <div>
+    <label for="filterModelo">Modelo:</label>
+    <select id="filterModelo"><option value="todos">Todos</option></select>
+  </div>
+  <div id="filterStats" style="font-size:13px;color:#666;margin-left:auto"></div>
+</div>
+
+<div class="grid3" id="metricsCards"></div>
+
+<div class="grid2">
+  <div class="card"><h2>Ranking Supervisores</h2><div id="rankingContainer"></div></div>
+  <div class="card"><h2>Grafico Ventas</h2><div class="chart-container"><canvas id="chartRanking"></canvas></div></div>
+</div>
+
+<div class="grid2">
+  <div class="card"><h2>Ventas por Modelo</h2><div class="chart-container"><canvas id="chartModelo"></canvas></div></div>
+  <div class="card"><h2>Distribucion Temporal</h2><div class="chart-container"><canvas id="chartTemporal"></canvas></div></div>
+</div>
+
+<div class="card"><h2>Desglose por Dia Promo</h2><div id="dailyContainer"></div></div>
+
+<div class="card"><h2>Comparativa: Dias Promo vs Total Julio (iPhone Promo)</h2>
+  <div class="grid2">
+    <div id="comparativaTable"></div>
+    <div><div class="chart-container"><canvas id="chartComparativo"></canvas></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Detalle de Ventas</h2>
+  <div style="max-height:350px;overflow-y:auto"><table class="detail-table" id="detailTable"></table></div>
+</div>
+
+</div>
+
+<script>
+// ========== DATA ==========
+const DATA = {
+  "registros": [
+    {"id":1,"cliente":"Michael Steven Mara\u00f1a Serrud","modelo":"Iphone 17e ","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Josue Vasquez","dia":"2026-07-08","dia_nombre":"Mi\u00e9rcoles","weekday":2,"semana":2,"plan":"B2C DCM LDI 2150 DSL","precio":22.0,"status":"VENTAS (MENSAJERIA- SOC POST ENTREGA)"},
+    {"id":2,"cliente":"MARIA ALEXANDRA M COLMENARES BERMUDEZ","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Manuel Garcia","asesor":"Valeri Ambulo","dia":"2026-07-10","dia_nombre":"Viernes","weekday":4,"semana":2,"plan":"B2C DCM LDI 2150 DSL","precio":23.0,"status":"VENTAS (CLIENTE REPROGRAMA)"},
+    {"id":3,"cliente":"Norelis Maria  Arellano Villero","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Gladis Peralta","dia":"2026-07-08","dia_nombre":"Mi\u00e9rcoles","weekday":2,"semana":2,"plan":"B2C DCM LDI 2150 DSL","precio":22.0,"status":"VENTAS (CLIENTE REPROGRAMA)"},
+    {"id":4,"cliente":"Daniel Viveros","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Gladis Peralta","dia":"2026-07-08","dia_nombre":"Mi\u00e9rcoles","weekday":2,"semana":2,"plan":"B2C DCM LDI 2150 DSL","precio":22.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":5,"cliente":"Maria Brigida Barria Terrado","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Valentina Ochoa","dia":"2026-07-06","dia_nombre":"Lunes","weekday":0,"semana":1,"plan":"B2C DCM LDI 2150 DSL","precio":22.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":6,"cliente":"Dina Maria Caballero Gonzalez de Menendez  ","modelo":"IPHONE 17 256GB (Black)","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Ediany Delgado","dia":"2026-07-06","dia_nombre":"Lunes","weekday":0,"semana":1,"plan":"FB-B2C DCM LDI 2250 DSL VWF","precio":29.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":7,"cliente":"Jezabel Aguilar Aguilar","modelo":"IPHONE 17 256GB (Black)","marca":"iPhone","supervisor":"Manuel Garcia","asesor":"Milen Dayanis Julio De La Cruz","dia":"2026-07-03","dia_nombre":"Viernes","weekday":4,"semana":1,"plan":"FB-AIO DCM LDI Sin Limites A1","precio":42.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":8,"cliente":"Ingri Isaza","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Emily Forero","dia":"2026-07-03","dia_nombre":"Viernes","weekday":4,"semana":1,"plan":"B2C DCM LDI 2150 DSL","precio":22.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":9,"cliente":"CHRISTOPHER JASSIR SANTAMARIA FEDERICO","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Antonio Rivera Ayarza","dia":"2026-07-01","dia_nombre":"Mi\u00e9rcoles","weekday":2,"semana":1,"plan":"FB-B2C DCM LDI 2250 DSL VWF","precio":29.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":10,"cliente":"Jose Franklin Montenegro lezcano","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Manuel Garcia","asesor":"Milen Dayanis Julio De La Cruz","dia":"2026-07-08","dia_nombre":"Mi\u00e9rcoles","weekday":2,"semana":2,"plan":"FB-B2C DCM LDI 2250 DSL VWF","precio":28.0,"status":"BO (MENSAJERIA PANAMA - P. OESTE)"},
+    {"id":11,"cliente":"ROLANDO R BERMUDEZ","modelo":"IPHONE 17 256GB (Black)","marca":"iPhone","supervisor":"Manuel Garcia","asesor":"Kevin Torres","dia":"2026-07-13","dia_nombre":"Lunes","weekday":0,"semana":2,"plan":"FB-DCM LDI 2450 DATA SL","precio":37.0,"status":"BO (MENSAJERIA INTERIOR)"},
+    {"id":12,"cliente":"Josue Praadi","modelo":"IPHONE 17E 256GB (Black)","marca":"iPhone","supervisor":"Manuel Garcia","asesor":"Frank Joseph Castillo Morales","dia":"2026-07-06","dia_nombre":"Lunes","weekday":0,"semana":1,"plan":"B2C DCM LDI 2150 DSL","precio":22.0,"status":"BO (MENSAJERIA INTERIOR)"},
+    {"id":13,"cliente":"Cliente Test 13","modelo":"Iphone 17 E 256 GB","marca":"iPhone","supervisor":"Milliceth Ortega","asesor":"Asesor Test 1","dia":"2026-07-17","dia_nombre":"Viernes","weekday":4,"semana":3,"plan":"Plan Test","precio":25.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":14,"cliente":"Cliente Test 14","modelo":"Iphone 17 E 256 GB ","marca":"iPhone","supervisor":"Milliceth Ortega","asesor":"Asesor Test 2","dia":"2026-07-20","dia_nombre":"Lunes","weekday":0,"semana":3,"plan":"Plan Test","precio":25.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"},
+    {"id":15,"cliente":"Cliente Test 15","modelo":"Iphone 17e ","marca":"iPhone","supervisor":"Jonathan Ortega","asesor":"Asesor Test 3","dia":"2026-07-20","dia_nombre":"Lunes","weekday":0,"semana":3,"plan":"Plan Test","precio":25.0,"status":"VENTAS (RENOVACION EXITOSA JULIO 26)"}
+  ],
+  "marcas": ["iPhone"],
+  "semanas": [1, 2, 3],
+  "supervisores": ["Jonathan Ortega", "Manuel Garcia", "Milliceth Ortega"],
+  "dias_promo": ["2026-07-01", "2026-07-03", "2026-07-06", "2026-07-08", "2026-07-10", "2026-07-13", "2026-07-17", "2026-07-20"]
+};
+
+// ========== COLOR MAP ==========
+const MODEL_COLORS = {
+  'IPHONE 17E 256GB (Black)': '#555555',
+  'IPHONE 17 256GB (Black)': '#333333',
+  'Iphone 17e ': '#666666',
+  'Iphone 17 E 256 GB': '#777777',
+  'Iphone 17 E 256 GB ': '#888888',
+};
+
+function modelColor(m) {
+  return MODEL_COLORS[m] || '#555555';
+}
+
+// ========== COMPARATIVA DATA (from requerimientos.txt + actual data) ==========
+const COMP = {
+  totalDias: 22,
+  lmjDias: 11,
+  otherDias: 11,
+  julioTotal: 31,
+  julioLmj: 15,
+  julioOther: 16
+};
+
+// ========== FILTER ==========
+function filterData() {
+  const sem = document.getElementById('filterSemana').value;
+  const sup = document.getElementById('filterSup').value;
+  const mod = document.getElementById('filterModelo').value;
+  return DATA.registros.filter(r => {
+    if (sem !== 'todas' && r.semana !== parseInt(sem)) return false;
+    if (sup !== 'todos' && r.supervisor !== sup) return false;
+    if (mod !== 'todos' && r.modelo !== mod) return false;
+    return true;
+  });
+}
+
+// ========== RENDER ==========
+function render() {
+  const filtered = filterData();
+  const cnt = filtered.length;
+  const sups = [...new Set(filtered.map(r=>r.supervisor))].length;
+  const dias = [...new Set(filtered.map(r=>r.dia))].length;
+
+  document.getElementById('metricsCards').innerHTML =
+    '<div class="card metric"><div class="num">'+cnt+'</div><div class="label">iPhones Vendidos</div><div class="sub">En '+dias+' dias promo (L/M/V)</div></div>' +
+    '<div class="card metric"><div class="num">'+sups+'</div><div class="label">Supervisores</div><div class="sub">Con ventas</div></div>' +
+    '<div class="card metric"><div class="num">'+(dias?(cnt/dias).toFixed(1):'0')+'</div><div class="label">Promedio x Dia</div><div class="sub">'+dias+' dias corte</div></div>';
+  document.getElementById('filterStats').textContent = 'Mostrando '+cnt+' de '+DATA.registros.length+' registros';
+
+  // Ranking
+  const sc = {}; const sd = {};
+  filtered.forEach(r => {
+    sc[r.supervisor] = (sc[r.supervisor]||0)+1;
+    sd[r.supervisor] = sd[r.supervisor]||new Set(); sd[r.supervisor].add(r.dia);
+  });
+  const sorted = Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+  const total = cnt||1;
+  let rh = '<table><tr><th>#</th><th class="left">Supervisor</th><th>Ventas</th><th>%</th><th>Dias</th><th>Prom/Dia</th></tr>';
+  sorted.forEach(([s,c],i)=>{
+    const cl = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const d = sd[s].size;
+    rh += '<tr class="'+cl+'"><td>'+(i+1)+'</td><td class="left">'+s+'</td><td>'+c+'</td><td>'+(c/total*100).toFixed(1)+'%</td><td>'+d+'</td><td>'+(c/d).toFixed(1)+'</td></tr>';
+  });
+  rh += '</table>';
+  document.getElementById('rankingContainer').innerHTML = rh;
+
+  // Chart ranking
+  if (window.chRanking) window.chRanking.destroy();
+  window.chRanking = new Chart(document.getElementById('chartRanking'), {
+    type: 'bar',
+    data: { labels: sorted.slice(0,10).map(s=>s[0]), datasets: [{ label: 'Ventas', data: sorted.slice(0,10).map(s=>s[1]), backgroundColor: ['#FFD700','#C0C0C0','#CD7F32','#1F4E79','#2E75B6','#5B9BD5','#9DC3E6','#E8F0FE','#D4EDDA','#FFF3CD'], borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+
+  // Modelo chart
+  const mc = {};
+  filtered.forEach(r => { mc[r.modelo] = (mc[r.modelo]||0) + 1; });
+  const mSorted = Object.entries(mc).sort((a,b)=>b[1]-a[1]);
+  if (window.chModelo) window.chModelo.destroy();
+  window.chModelo = new Chart(document.getElementById('chartModelo'), {
+    type: 'doughnut',
+    data: { labels: mSorted.map(s=>s[0]), datasets: [{ data: mSorted.map(s=>s[1]), backgroundColor: mSorted.map(s=>modelColor(s[0])), borderWidth: 2 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: {size:11} } } } }
+  });
+
+  // Temporal chart
+  const dc = {};
+  filtered.forEach(r => { dc[r.dia] = (dc[r.dia]||0) + 1; });
+  const daysSorted = Object.keys(dc).sort();
+  if (window.chTemp) window.chTemp.destroy();
+  window.chTemp = new Chart(document.getElementById('chartTemporal'), {
+    type: 'line',
+    data: { labels: daysSorted, datasets: [{ label: 'Ventas', data: daysSorted.map(d=>dc[d]), borderColor: '#1F4E79', backgroundColor: 'rgba(31,78,121,0.1)', fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: '#1F4E79' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+
+  // Daily breakdown
+  const dg = {};
+  filtered.forEach(r => {
+    if (!dg[r.dia]) dg[r.dia] = {fecha:r.dia, nombre:r.dia_nombre, sups:{}};
+    dg[r.dia].sups[r.supervisor] = (dg[r.dia].sups[r.supervisor]||0)+1;
+  });
+  let dh = '';
+  Object.keys(dg).sort().forEach(dia=>{
+    const g = dg[dia];
+    const arr = Object.entries(g.sups).sort((a,b)=>b[1]-a[1]);
+    const td = arr.reduce((s,x)=>s+x[1],0);
+    dh += '<div class="day-section"><div class="day-header"><span>'+g.fecha+' - '+g.nombre+'</span><span>Total: '+td+'</span></div>' +
+      '<table><tr><th>#</th><th class="left">Supervisor</th><th>Ventas</th><th>%</th></tr>';
+    arr.forEach(([s,c],i)=>{ dh += '<tr><td>'+(i+1)+'</td><td class="left">'+s+'</td><td>'+c+'</td><td>'+(c/td*100).toFixed(1)+'%</td></tr>'; });
+    dh += '</table></div>';
+  });
+  document.getElementById('dailyContainer').innerHTML = dh || '<p style="color:#999;padding:10px">Sin datos.</p>';
+
+  // Comparativa
+  document.getElementById('comparativaTable').innerHTML =
+    '<table><tr><th class="left">Metrica</th><th>Valor</th><th>%</th></tr>' +
+    '<tr><td class="left">Dias transcurridos Julio</td><td>'+COMP.totalDias+'</td><td>100%</td></tr>' +
+    '<tr><td class="left">Dias Promo (L/M/V) transcurridos</td><td>'+COMP.lmjDias+'</td><td>'+(COMP.lmjDias/COMP.totalDias*100).toFixed(1)+'%</td></tr>' +
+    '<tr><td class="left">Dias No Promo transcurridos</td><td>'+COMP.otherDias+'</td><td>'+(COMP.otherDias/COMP.totalDias*100).toFixed(1)+'%</td></tr>' +
+    '<tr><td colspan="3" style="padding:2px"></td></tr>' +
+    '<tr><td class="left">Ventas iPhone Promo (Total Julio)</td><td>'+COMP.julioTotal+'</td><td>100%</td></tr>' +
+    '<tr><td class="left">Ventas en Dias Promo (L/M/V)</td><td>'+COMP.julioLmj+'</td><td>'+(COMP.julioLmj/COMP.julioTotal*100).toFixed(1)+'%</td></tr>' +
+    '<tr><td class="left">Ventas en Dias No Promo</td><td>'+COMP.julioOther+'</td><td>'+(COMP.julioOther/COMP.julioTotal*100).toFixed(1)+'%</td></tr>' +
+    '<tr><td colspan="3" style="padding:2px"></td></tr>' +
+    '<tr><td class="left">Promedio x dia general</td><td>'+(COMP.julioTotal/COMP.totalDias).toFixed(1)+'</td><td></td></tr>' +
+    '<tr><td class="left">Promedio x dia promo</td><td>'+(COMP.julioLmj/COMP.lmjDias).toFixed(1)+'</td><td></td></tr></table>';
+
+  if (window.chComp) window.chComp.destroy();
+  window.chComp = new Chart(document.getElementById('chartComparativo'), {
+    type: 'bar',
+    data: { labels: ['Dias Promo (L/M/V)', 'Dias No Promo'], datasets: [{ label: 'Ventas', data: [COMP.julioLmj, COMP.julioOther], backgroundColor: ['#28a745','#dc3545'], borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  // Detail
+  let dth = '<tr><th>#</th><th class="left">Cliente</th><th class="left">Modelo</th><th class="left">Supervisor</th><th class="left">Asesor</th><th>Dia</th><th>Semana</th><th class="left">Status</th></tr>';
+  filtered.forEach((r,i)=>{
+    dth += '<tr><td>'+(i+1)+'</td><td class="left">'+(r.cliente||'')+'</td><td class="left"><span class="modelo-tag" style="background:'+modelColor(r.modelo)+'">'+(r.modelo||'')+'</span></td><td class="left">'+r.supervisor+'</td><td class="left">'+(r.asesor||'')+'</td><td>'+r.dia+'</td><td>Sem '+r.semana+'</td><td class="left">'+(r.status||'')+'</td></tr>';
+  });
+  document.getElementById('detailTable').innerHTML = dth;
+}
+
+// ========== INIT ==========
+function init() {
+  DATA.semanas.forEach(s => {
+    document.getElementById('filterSemana').innerHTML += '<option value="'+s+'">Semana '+s+'</option>';
+  });
+  DATA.supervisores.forEach(s => {
+    document.getElementById('filterSup').innerHTML += '<option value="'+s+'">'+s+'</option>';
+  });
+  const modelos = [...new Set(DATA.registros.map(r=>r.modelo))].sort();
+  modelos.forEach(m => {
+    document.getElementById('filterModelo').innerHTML += '<option value="'+m+'">'+m+'</option>';
+  });
+  document.getElementById('filterSemana').addEventListener('change', render);
+  document.getElementById('filterSup').addEventListener('change', render);
+  document.getElementById('filterModelo').addEventListener('change', render);
+  render();
+}
+
+init();
+</script>
+</body>
+</html>

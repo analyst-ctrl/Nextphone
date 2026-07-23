@@ -1,0 +1,8 @@
+token_github.txt
+*.pyc
+__pycache__/
+*.db
+*.xlsx
+*.xlsm
+.env
+.DS_Store
