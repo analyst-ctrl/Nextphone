@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lixi - Dashboards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo {
+            font-size: 4rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #f857a6, #ff5858, #ffc371);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+        }
+        .subtitle {
+            font-size: 1rem;
+            color: #aaa;
+            margin-bottom: 3rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            width: 100%;
+            max-width: 420px;
+            padding: 0 1rem;
+        }
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem 1.5rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            text-decoration: none;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .menu a:hover {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(248,87,166,0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(248,87,166,0.2);
+        }
+        .menu a .icon {
+            font-size: 1.6rem;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f857a6, #ff5858);
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+        .menu a .info { display: flex; flex-direction: column; gap: 2px; }
+        .menu a .info .label { font-size: 0.75rem; color: #888; font-weight: 400; }
+        .footer {
+            margin-top: 3rem;
+            font-size: 0.75rem;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">LIXI</div>
+    <div class="subtitle">DASHBOARD CENTER</div>
+
+    <div class="menu">
+        <a href="pruebas/dashboard_iphone_julio.html">
+            <div class="icon">&#128241;</div>
+            <div class="info">
+                <span>iPhone Julio 2026</span>
+                <span class="label">Pipeline, comboboxes y tabla pivote</span>
+            </div>
+        </a>
+        <a href="Lixi/3diasporsemana/dashboard_3diasporsemana.html">
+            <div class="icon">&#128200;</div>
+            <div class="info">
+                <span>3 Dias por Semana</span>
+                <span class="label">Ranking y productividad</span>
+            </div>
+        </a>
+        <a href="Lixi/3diasporsemana/output/dashboard_iphone_promo.html">
+            <div class="icon">&#128176;</div>
+            <div class="info">
+                <span>iPhone Promo</span>
+                <span class="label">Dashboard promocional</span>
+            </div>
+        </a>
+    </div>
+
+    <div class="footer">Nextphone &copy; 2026</div>
+</body>
+</html>
