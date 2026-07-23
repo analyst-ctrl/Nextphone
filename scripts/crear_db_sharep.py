@@ -7,7 +7,7 @@ import sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 print("Paso 1: Extrayendo datos de Iphone_07_22_2026_sharep.xlsx...")
-wb = openpyxl.load_workbook('../Lixi/3diasporsemana/Iphone_07_22_2026_sharep.xlsx', read_only=True, data_only=True)
+wb = openpyxl.load_workbook('../Lixi/3diasporsemana/modelos/Iphone_07_22_2026_sharep.xlsx', read_only=True, data_only=True)
 ws = wb['Sharep']
 headers = [cell.value for cell in next(ws.iter_rows(min_row=1, max_row=1))]
 col_idx = {h: i for i, h in enumerate(headers)}
