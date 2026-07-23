@@ -1,0 +1,69 @@
+=====================================
+ REGLAS Y PARAMETROS GENERALES - LIXI
+=====================================
+
+--- PROYECTO ---
+- Nombre: Nextphone / Lixi
+- Ubicación: C:\Users\Near\Documents\Chamba Panama
+- GitHub: https://github.com/analyst-ctrl/Nextphone.git
+
+--- FUENTE DE DATOS ---
+- Archivo principal: excels/Iphone (1).xlsx
+  - Hoja "Sharep": 38,770 filas, 45 columnas
+  - Hoja "Tabla": Pivot tables (referencia para validación)
+- Archivo original: Lixi/3diasporsemana/Sharep.xlsx (19.53 MB)
+
+--- BASE DE DATOS SQLite ---
+- Archivo: pruebas/iphone_julio.db
+- Peso actual: ~56 KB (vs 35.72 MB Excel original)
+- Método: Se recrea desde cero al ejecutar pipeline_iphone_julio.py
+
+--- TABLAS NORMALIZADAS ---
+1. supervisores (id, nombre)
+2. asesores (id, nombre, supervisor_id)
+3. modelos (id, nombre)
+4. status_cliente (id, nombre)
+5. clientes (id, nombre, telefono, status_id, asesor_id, modelo_id)
+6. ventas (id, cliente_id, fecha_creacion, fecha_modificacion, dia_crea, dia_mod, modo, supervisor_id)
+
+--- REGLAS DE FILTRADO ---
+- Solo registros con mes = julio 2026
+- Solo modelos que contengan "IPHONE" (insensible a mayúsculas)
+- Supervisor: Manuel García, Jonathan Ortega
+- Modo: CREACION, FACTURADAS, AMBAS
+
+--- REGLAS DE AGRUPACIÓN (Tabla pivote) ---
+- Filas: Asesor
+- Columnas: Modelo del equipo
+- Valores: Conteo de registros
+- Filtros: Supervisor, Dia Crea, Dia Mod, Modelo, Modo
+
+--- DIFERENCIA CON TABLA ORIGINAL ---
+- Nuestros datos (todos los días): 38 registros (MG=22, JO=16)
+- Tabla Excel original: 31 registros (MG=18, JO=13)
+- Diferencia: 7 registros
+- Causa: La Tabla Excel tiene filtro "Dia Crea = (Varios elementos)"
+- Para coincidir exacto, hay que excluir 2 días específicos del filtro Dia Crea
+- 03/jul/26 aparece en todas las combinaciones posibles
+
+--- DASHBOARDS ---
+1. pruebas/dashboard_iphone_julio.html
+   - Pipeline completo: Excel → SQLite → Dashboard
+   - 5 comboboxes: Supervisor, Dia Creación, Dia Modificación, Modelo, Modo
+   - Gráfico de barras (Chart.js), tabla pivote, métricas, detalle
+   - Datos embebidos como JSON en el HTML (sin servidor)
+
+2. Lixi/3diasporsemana/dashboard_3diasporsemana.html
+3. Lixi/3diasporsemana/output/dashboard_iphone_promo.html
+4. index.html (menú principal con links a los 3 dashboards)
+
+--- PROCESO DE ACTUALIZACIÓN ---
+1. Recibir nuevo Iphone.xlsx
+2. Ejecutar pipeline_iphone_julio.py (reemplaza DB y regenera dashboard)
+3. Verificar coincidencia con Tabla de referencia
+4. Hacer push a GitHub
+
+--- COMANDOS ÚTILES ---
+- Ejecutar pipeline: python pruebas/pipeline_iphone_julio.py
+- Abrir dashboard: Start-Process pruebas/dashboard_iphone_julio.html
+- Abrir menú: Start-Process index.html
