@@ -38,9 +38,13 @@ tr:nth-child(even){background:#f8f9fa}
 .badge-creacion{background:#cce5ff;color:#004085}
 .badge-facturada{background:#d4edda;color:#155724}
 @media(max-width:768px){.grid2{grid-template-columns:1fr}.filters{flex-direction:column}}
+.home-btn{position:fixed;top:20px;right:20px;z-index:999;display:flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,#1F4E79,#2d6aa0);color:#fff;text-decoration:none;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 15px rgba(31,78,121,0.4);transition:all 0.3s ease}
+.home-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(31,78,121,0.5);background:linear-gradient(135deg,#163d5c,#1F4E79)}
+.home-btn svg{width:16px;height:16px;fill:#fff}
 </style>
 </head>
 <body>
+<a href="../index.html" class="home-btn"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg> Inicio</a>
 <div class="container">
 <h1>Tabla Dinamica iPhone - Julio 2026</h1>
 <p class="subtitle">SQLite: 4.0 KB | Corte: 2026-07-23</p>
