@@ -1,0 +1,110 @@
+========================================================================
+  MANUAL - Reporte iPhone Julio 2026 (Lixi)
+========================================================================
+
+UBICACION:
+  Lixi/3diasporsemana/
+
+ARCHIVOS GENERADOS:
+  - dashboard_iphone_julio_7_24.html  (abrir en navegador)
+  - iphone_julio_7_24.db              (base de datos SQLite)
+
+ARCHIVOS DE SOPORTE (scripts):
+  - pipeline_iphone_7_24.py           (script principal)
+
+
+========================================================================
+  PASO A PASO - Como generar el reporte
+========================================================================
+
+1. PONER EL ARCHIVO XLSX EN LA CARPETA:
+   Copiar el archivo de SharePoint a:
+     excels/Iphone_7_24_2026.xlsx
+
+   (El archivo viene de SharePoint con el nombre del dia.
+    Ejemplo: Iphone_7_24_2026.xlsx = 24 de julio 2026)
+
+2. EJECUTAR EL SCRIPT:
+   Abrir terminal en la carpeta raiz del proyecto y correr:
+
+     python scripts/pipeline_iphone_7_24.py
+
+   Esto genera:
+     - La base de datos SQLite en Lixi/3diasporsemana/
+     - El dashboard HTML en Lixi/3diasporsemana/
+
+3. ABRIR EL DASHBOARD:
+   Doble clic en:
+     Lixi/3diasporsemana/dashboard_iphone_julio_7_24.html
+
+   Se abre en el navegador con filtros interactivos:
+     - Supervisor
+     - Dia de Creacion
+     - Dia de Modificacion
+     - Modelo
+     - Modo: CREACION / FACTURADAS / AMBAS
+
+
+========================================================================
+  ESTRUCTURA DEL PROYECTO
+========================================================================
+
+  Chamba Panama/
+  |
+  +-- excels/                          ← Archivos de SharePoint
+  |   +-- Iphone_7_24_2026.xlsx       ← Fuente de datos
+  |   +-- hoy.xlsx                     ← Tabla dinamica Excel
+  |
+  +-- scripts/                         ← Scripts de generacion
+  |   +-- pipeline_iphone_7_24.py      ← Script principal
+  |   +-- generar_ranking_iphone.py    ← Ranking anterior
+  |   +-- generar_dashboard_html.py    ← Dashboard promo
+  |   +-- generar_output.py            ← Output promo
+  |
+  +-- Lixi/
+  |   +-- 3diasporsemana/
+  |       +-- dashboard_iphone_julio_7_24.html  ← DASHBOARD
+  |       +-- iphone_julio_7_24.db              ← SQLITE
+  |       +-- pipeline_iphone_7_24.py           ← SCRIPT
+  |       +-- MANUAL.txt                        ← ESTE ARCHIVO
+  |       +-- Sharep.xlsx                       ← Datos originales
+  |       +-- dashboard_3diasporsemana.html     ← Dashboard promo
+  |       +-- Ranking iPhone - Julio 2026.xlsx  ← Ranking
+  |       +-- output/                           ← Rankings
+  |
+  +-- pruebas/                         ← Scripts de prueba
+
+
+========================================================================
+  QUE MUESTRA EL DASHBOARD
+========================================================================
+
+  - Pivot Table: Asesor x Modelo (cross-tab)
+  - Filtros: Supervisor, Dia Creacion, Dia Mod, Modelo
+  - 3 modos de vista:
+      CREACION: Todos los registros iPhone de julio
+      FACTURADAS: Solo ventas con status "renovacion exitosa"
+      AMBAS: Muestra ambos conteos lado a lado
+  - Resumen por Supervisor (ranking)
+  - Resumen por Modelo (ranking)
+  - Detalle de registros (primeros 200)
+
+
+========================================================================
+  SOLUCION DE PROBLEMAS
+========================================================================
+
+  "No se encuentra el archivo":
+    Verificar que Iphone_7_24_2026.xlsx esta en excels/
+
+  "No hay registros iPhone julio":
+    Puede que el archivo no sea del mes correcto.
+    Verificar la fecha en el nombre del archivo.
+
+  "El dashboard no se abre":
+    Abrir con doble clic o arrastrar al navegador.
+    No funciona con Internet Explorer.
+
+  "Quiero otro mes":
+    Copiar el script pipeline_iphone_7_24.py,
+    cambiar la ruta del xlsx y el filtro de mes en el codigo.
