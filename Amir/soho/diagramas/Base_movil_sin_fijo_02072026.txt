@@ -1,0 +1,33 @@
+================================================================================
+BASE: Base Móvil sin fijo 02072026
+================================================================================
+
+HOJA: Campaña Móvil sin fijo (23 columnas, sin headers - inferidos)
+
+| #  | Columna inferida    | Tipo      | Ejemplo                         |
+|----|---------------------|-----------|---------------------------------|
+| 0  | TIPO_SERVICIO       | Texto     | Movil                           |
+| 1  | SUB_TIPO            | Texto     | sin fijo                        |
+| 2  | CUST_NO             | Num       | 35435927                        |
+| 3  | CUENTA              | Num       | 354359270000                    |
+| 4  | NOMBRE_CLIENTE      | Texto     | HECTOR DARIO MUÑOZ RIOS         |
+| 5  | TELEFONO_1          | Texto/Num | 4-272-779                       |
+| 6  | CONTACTO_FIJO       | Texto/Num | 3053142                         |
+| 7  | NOMBRE_REF          | Texto     | HECTOR DARIO MUÑOZ RIOS         |
+| 8  | CLIENTE_NOMBRE      | Texto     | HECTOR DARIO MUÑOZ RIOS         |
+| 9  | CELULAR             | Num       | 62663664                        |
+| 10 | ESTADO              | Texto     | W                               |
+| 11 | FECHA_ALTA          | Fecha     | 2025-12-03                      |
+| 12 | CANAL               | Texto     | TIENDA CALL CENTER              |
+| 13 | SUPERVISOR          | Texto     | Leonardo Wizemberg              |
+| 14 | LINEA_NEGOCIO       | Texto     | Nuevos Negocios                 |
+| 15 | TIPO_CLIENTE        | Texto     | M                               |
+| 16 | CODIGO              | Texto     | G / A / C / F / I               |
+| 17 | CANTIDAD            | Num       | 1                               |
+| 18 | MONTO               | Num       | 18                              |
+| 19 | DESCUENTO           | Num       | 0                               |
+| 20 | TOTAL               | Num       | 18                              |
+| 21 | NOMBRE_KEY          | Texto     | HECTORDARIOMUÑOZRIOS            |
+| 22 | MARCA               | Texto     | Nextphone                       |
+
+NOTA: Misma estructura que Base 1 pero sin columna EJECUTIVA.

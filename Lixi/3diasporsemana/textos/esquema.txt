@@ -1,0 +1,113 @@
+========================================
+ESQUEMA SQL - Promo 3 Días por Semana
+========================================
+
+--- BD 1: promo_3dias.db (supervisores promoción) ---
+Archivo: promo_3dias.db
+
+Tabla: supervisores
+  id        INTEGER PRIMARY KEY AUTOINCREMENT
+  nombre    TEXT NOT NULL UNIQUE
+  activo    INTEGER DEFAULT 1
+  creado    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+Datos iniciales:
+  Lixi Moran (id=1)
+  Amir Rodriguez (id=2)
+
+========================================
+
+--- BD 2: sharep.db (datos completos normalizados) ---
+Archivo: sharep.db
+Origen: Sharep.xlsx → 38,093 registros → Diagrama Inverso (Reverse Engineering)
+
+         ┌──────────────────────────────────────────────────────────────┐
+         │                         VENTAS                              │
+         │                      (38,093 rows)                          │
+         │                                                             │
+         │  id │ supervisor_id │ asesor_id │ modelo_id │ plan_id      │
+         │  ...│ status_id    │ tipo_venta_id │ ...                   │
+         │  ...│ cliente_id   │ fecha_creacion │ precio_plan          │
+         └──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┘
+            │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │
+    ┌───────┘  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  └──────────┐
+    │          │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │  │             │
+┌───▼────┐ ┌──▼──▼──┐ ┌▼──────┐ ┌▼─────┐ ┌▼──────┐ ┌▼────┐ ┌▼──────┐  ┌────▼────┐
+│SUPERVI-│ │SUPERV- │ │MODELOS│ │PLANES│ │STATUS │ │TIPO │ │ORIGEN │  │CLIENTES │
+│SORES   │ │ASESOR  │ │(2,354)│ │(?)   │ │CLIENTE│ │VENTA│ │CLIENTE│  │(36,405) │
+│(10)    │ │(322)   │ │       │ │      │ │(71)   │ │(7)  │ │(?)    │  │         │
+└────────┘ │        │ └───────┘ └──────┘ └───────┘ └─────┘ └───────┘  └─────────┘
+           │  M:N   │
+      ┌────▼───┐   │           ┌──────────┐ ┌──────────┐ ┌──────────┐
+      │ASESORES│   │           │METODO    │ │TIPO      │ │SEGURO    │
+      │(180)   │   │           │PAGO      │ │ABONO     │ │MOVIL     │
+      └────────┘   │           │(2)       │ │(2)       │ │(2)       │
+                   │           └──────────┘ └──────────┘ └──────────┘
+                   │           ┌──────────┐ ┌──────────┐ ┌──────────┐
+                   │           │PROVINCIA │ │DISTRITO  │ │CORREGI-  │
+                   │           │          │ │          │ │MIENTO    │
+                   │           └──────────┘ └──────────┘ └──────────┘
+                   │           ┌──────────┐
+                   │           │LLEVA     │
+                   │           │EQUIPO    │
+                   │           │(2)       │
+                   │           └──────────┘
+
+Tablas:
+  supervisores      (id, nombre)
+  asesores          (id, nombre)
+  supervisor_asesor (supervisor_id, asesor_id)  M:N
+  modelos           (id, nombre)
+  planes            (id, nombre)
+  status_cliente    (id, nombre)
+  tipo_venta        (id, nombre)
+  origen_cliente    (id, nombre)
+  metodo_pago       (id, nombre)
+  tipo_abono        (id, nombre)
+  seguro_movil      (id, nombre)
+  lleva_equipo      (id, nombre)
+  provincias        (id, nombre)
+  distritos         (id, nombre)
+  corregimientos    (id, nombre)
+  clientes          (id, nombre, identificacion)
+  ventas            (id, ... 18 FK + datos) ← Fact Table
+
+Vista:
+  v_ventas → JOIN completo de todas las tablas (consulta fácil)
+
+========================================
+CONSULTAS ÚTILES
+========================================
+
+-- Ventas en días promo (L/M/J) con supervisores
+SELECT s.nombre, COUNT(*) as ventas
+FROM ventas v
+JOIN supervisores s ON v.supervisor_id = s.id
+WHERE strftime('%w', v.fecha_creacion) IN ('1', '3', '5')  -- Lun, Mie, Vie
+  AND v.lleva_promocion = 'Si'
+GROUP BY s.nombre ORDER BY ventas DESC;
+
+-- Ranking supervisores Julio 2026 (L/M/J)
+SELECT s.nombre, COUNT(*) as total,
+  SUM(CASE WHEN m.nombre LIKE '%IPHONE%' THEN 1 ELSE 0 END) as iPhones
+FROM ventas v
+JOIN supervisores s ON v.supervisor_id = s.id
+JOIN modelos m ON v.modelo_id = m.id
+WHERE strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+  AND strftime('%w', v.fecha_creacion) IN ('1', '3', '5')
+  AND v.lleva_promocion = 'Si'
+GROUP BY s.nombre ORDER BY total DESC;
+
+-- Asesores de un supervisor
+SELECT a.nombre
+FROM supervisor_asesor sa
+JOIN asesores a ON sa.asesor_id = a.id
+JOIN supervisores s ON sa.supervisor_id = s.id
+WHERE s.nombre = 'Amir Rodriguez';
+
+========================================
+LO QUE SIGUE
+========================================
+- Vincular promo_3dias.db con sharep.db
+- Crear tablas de incentivos / comisiones
+- Dashboard conectado a la BD

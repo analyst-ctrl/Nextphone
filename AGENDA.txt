@@ -1,0 +1,34 @@
+AGENDA - PROYECTO CHAMBA PANAMA
+================================
+
+Fecha de creacion: 2025-07-25
+
+ESTRUCTURA DEL PROYECTO:
+========================
+- index.html -> Archivo principal del proyecto
+- Lixi/3diasporsemana/ -> Espacio de trabajo de Lixi (gerente)
+- Amir/ -> Espacio de trabajo de Amir (gerente)
+
+GERENTES:
+=========
+1. LIXI - Gerente
+   - Espacio: Lixi/3diasporsemana/
+   - Contiene: dashboards, pipelines, bases de datos SQLite, excel de entrada
+   - Pipeline: pipeline_iphone_7_24.py (procesa Iphone_7_24_2026.xlsx)
+   - Dashboards generados: dashboard_iphone_julio_7_24.html, dashboard_3diasporsemana.html
+   - Bases de datos: iphone_julio_7_24.db, sharep.db, promo_3dias.db
+
+2. AMIR - Gerente
+   - Espacio: Amir/soho/
+   - Contiene: Reporte_soho_junio_25 (1).xlsb (informe de renovaciones Soho junio 2025)
+
+NOTA IMPORTANTE:
+================
+Lixi y Amir son gerentes DISTINTOS. Cada uno tiene su propio espacio de trabajo
+y sus propios reportes/datos. No son la misma persona.
+
+FUENTES DE DATOS:
+================
+- Iphone_7_24_2026.xlsx -> Fuente para pipeline de Lixi
+- Reporte_soho_junio_25 (1).xlsb -> Reporte de Amir (Soho Renovacion junio 2025)
+- excels/ -> Archivos Excel de entrada adicionales

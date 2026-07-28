@@ -1,0 +1,194 @@
+================================================================================
+INSTRUCCIONES: Cómo llenar el Reporte SOHO
+================================================================================
+
+REPORTE: Reporte_soho_junio_25 (1).xlsb
+GERENTE: Amir Josue Rodriguez Chavarria
+================================================================================
+
+1. ESTRUCTURA DEL REPORTE (7 hojas)
+================================================================================
+
+HOJA 1: Resumen (Dashboard)
+  - Filtros: campaign_id, mes
+  - Muestra resumen ejecutivo de la gestión del mes
+
+HOJA 2: llamadas (24 cols)
+  - Filtros: Campaña, Mes, campaign_id
+  - Columnas clave: Dia, métricas de llamadas
+  - Datos diarios de gestión telefónica
+
+HOJA 3: Tabla historica (18 cols)
+  - Filtros: MES GESTION, NO EFECTIVO, No Cierre Asesor, No Cumple Condiciones
+  - Evolución mensual de gestión
+
+HOJA 4: Vici (57 cols) - DETALLE DE LLAMADAS
+  - Columnas clave del sistema Vici/Asterisk:
+    * Nombre de Campaña, Campaña
+    * RPC, WPC, NPC (resultado de llamada)
+    * EFECTIVO, No Cierre Asesor, No Cumple Condiciones
+    * Contact, Tipo, Call Day, Intentos, Contar, Contacto
+    * call_date, phone_number_dialed, status, user, full_name
+    * campaign_id, vendor_lead_code, source_id, list_id
+    * Datos del lead: first_name, last_name, address, city, province
+    * gender, date_of_birth, email, alt_phone
+    * length_in_sec, status_name
+    * Mes, Llamadas Efectivas, Llamadas no efectivas, Intentos por numeros
+
+HOJA 5: Ventas Moviles (32 cols) - FORMULARIO DE VENTAS
+  - Se llena manualmente por cada venta:
+    * Marca temporal (fecha/hora)
+    * Nombre del cliente, Cedula, Dirección, Correo Electrónico
+    * Contacto (teléfono), Cuenta
+    * Agentes (vendedor que vende)
+    * Bonos y Descuento (Si/No o monto)
+    * Tramite: Renovación / Portabilidad interna
+    * Linea 1 a Linea 10 (números MIN)
+    * Equipo (Si/No)
+    * Plan Vendido (código numérico, ej: 20)
+    * MRC Anterior, MRC Actual
+    * Comentario Back Office
+    * No Refleja ACH
+    * Fecha, Mes
+
+HOJA 6: Ventas Fijo (22 cols) - VENTAS FIJO/INTERNET
+  - Columnas:
+    * Mes Reg, Dia Reg, Mes Fact, Dia Fact
+    * F.Registro (fecha)
+    * Canal: "SOHO-CALL CENTER"
+    * Identifica Client (cédula/RUC)
+    * Cliente (nombre)
+    * Tel Fijo, Movil
+    * Vendedor (nombre completo)
+    * Supervisor: "AMIR JOSUE RODRIGUEZ CHAVARRIA"
+    * Coordinador: "AMIR JOSUE RODRIGUEZ CHAVARRIA"
+    * Orden (código, ej: JT5350D)
+    * Rgu (número de servicios)
+    * Cuenta Cliente
+    * Status Final
+    * Empresa
+    * Fecha Instalacion
+    * Mrc (monto recurrente)
+    * Fecha Subida
+    * User
+
+HOJA 7: lineas facturadas (32 cols) - LÍNEAS FACTURADAS
+  - Columnas:
+    * Documento (ej: CONTRATO 402)
+    * No (código de venta, ej: JJ4736F)
+    * # Cuenta
+    * Venta convergente (Si/No)
+    * Venta digital (Si/No)
+    * No, Recibo
+    * No, Factura
+    * Sucursal (ej: PRINCIPAL)
+    * Tipoventa: RENOVACION
+    * Segmento: SOHO CORPORATIVO
+    * Fecha
+    * Identificacion vendedor
+    * Vendedor (nombre)
+    * Canal: SOHO
+    * Coordinador: AMIR JOSUE RODRIGUEZ CHAVARRIA
+    * Gerente: AMIR JOSUE RODRIGUEZ CHAVARRIA
+    * Identificacion cliente, Cliente
+    * Cedula usuario, Usuario
+    * Plan, Producto, Codigo
+    * IMEI, ICCID, MIN
+    * Cantidad lineas
+    * Valor plan, Valor recibo, Valor factura
+    * Ventas x base
+    * Fecha fact
+
+
+2. QUÉ BASE ALIMENTA CADA HOJA DEL REPORTE
+================================================================================
+
+BASE 1 (Nextphone 14072026) ──────────────► Ventas Fijo / lineas facturadas
+  - CUST_NO / CUENTA  →  # Cuenta / Cuenta Cliente
+  - NOMBRE_CLIENTE     →  Cliente
+  - CELULAR            →  Movil
+  - CANAL              →  Canal
+  - SUPERVISOR/COORD   →  Supervisor / Coordinador / Gerente
+  - MONTO/TOTAL        →  MRC / Valor plan
+
+BASE 2 (Móvil sin fijo 02072026) ─────────► Ventas Fijo / lineas facturadas
+  - Misma estructura que Base 1
+  - Se usa para campañas de clientes sin fijo
+
+BASE 3 (Cross-sell movil) ───────────────► Ventas Moviles
+  - CUENTA / CUST_NO   →  Cuenta
+  - ALIAS / NOMBRE_CIS →  Nombre del cliente
+  - RUC                →  Cedula
+  - contact_mobile     →  Contacto
+  - contact_email      →  Correo Electrónico
+  - SERVICIOS_TELCO    →  MRC Anterior
+  - Agentes / AGENTE   →  Agentes (vendedor)
+  - DIRECCION          →  Dirección
+
+BASE 4 (Winback SOHO) ───────────────────► Ventas Moviles / Ventas Fijo
+  - CLIENTE            →  Cliente / Nombre del cliente
+  - Persona_contacto   →  Contacto
+  - Correo             →  Correo Electrónico
+  - Contacto_1/2       →  Teléfono
+  - MRC_Acum           →  MRC Anterior
+  - DESCRIPCION_PLAN   →  Plan Vendido
+  - Ejecutivas         →  Agentes
+
+
+3. FLUJO DE TRABAJO SUGERIDO
+================================================================================
+
+  ┌─────────────────────────────────────────────────────┐
+  │  1. EXTRAER datos de las 4 bases (.xlsx)            │
+  │     - Usar Python/pandas o abrir manualmente        │
+  └──────────────────────┬──────────────────────────────┘
+                         │
+                         ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  2. CRUZAR por CUENTA / CUST_NO / CUENTA            │
+  │     - Buscar coincidencias entre bases              │
+  │     - Unir información de contacto y servicios      │
+  └──────────────────────┬──────────────────────────────┘
+                         │
+                         ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  3. LLENAR el reporte (.xlsb)                       │
+  │     - Ventas Moviles: formulario por cada venta     │
+  │     - Ventas Fijo: registrar cada instalación       │
+  │     - lineas facturadas: datos de facturación       │
+  │     - Vici: importar desde sistema de llamadas       │
+  └──────────────────────┬──────────────────────────────┘
+                         │
+                         ▼
+  ┌─────────────────────────────────────────────────────┐
+  │  4. ACTUALIZAR Dashboard (Resumen)                  │
+  │     - KPIs: llamadas, ventas, MRC, conversión       │
+  │     - Filtros: campaña, mes, ejecutivo              │
+  └─────────────────────────────────────────────────────┘
+
+
+4. OPCIONES PARA CREAR DASHBOARD
+================================================================================
+
+OPCIÓN A: Power BI (Recomendado)
+  - Conectar directamente a los .xlsx y .xlsb
+  - Crear modelo de datos con relaciones por CUENTA
+  - Dashboards interactivos con filtros
+  - Actualización automática al cambiar archivos
+
+OPCIÓN B: Excel + Power Query
+  - Dentro del mismo .xlsb usar Power Query
+  - Conectar las 4 bases como orígenes de datos
+  - Crear tablas dinámicas y gráficos
+  - Ventaja: todo en un solo archivo
+
+OPCIÓN C: Python + Streamlit
+  - Script que lee las 4 bases
+  - Genera gráficos interactivos
+  - Dashboard web local
+  - Más flexible pero requiere saber Python
+
+OPCIÓN D: Google Data Studio / Looker
+  - Subir los archivos a Google Drive
+  - Conectar y crear dashboard online
+  - Compartir con el equipo

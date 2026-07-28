@@ -1,0 +1,248 @@
+================================================================================
+   DIAGRAMA DE ENTIDAD - RELACION (MER)
+   Fuente: Sharep.xlsx (38,093 registros, 41 columnas, 19.53 MB)
+   Sistema: Ventas Moviles KREDIYA - Panama
+================================================================================
+
+
+    +==================+
+    |      STAFF       |
+    +==================+         +-----------------------+
+    | PK id_staff (INT)|<--------|                       |
+    | nombre (VARCHAR) |  1   N  |        VENTA          |
+    | rol (ENUM)       |---------|                       |
+    +==================+         | PK issue_id (INT)     |
+              |                  |                       |
+              |                  | FK id_cliente (INT) ---+------+
+              |                  | FK id_plan (INT) ------+--+   |
+              |                  | FK imei_equipo (VARCHAR)+--+|  |
+              |                  | FK id_ubicacion (INT) --+-+-+|
+              |                  | FK id_asesor (INT) -----+-+-+|
+              |                  | FK id_supervisor (INT) --+-+-+|
+              |                  |                       |   ||||
+              |                  | tipo_venta (VARCHAR)  |   ||||
+              |                  | tipo_abono (VARCHAR)  |   ||||
+              |                  | metodo_pago (VARCHAR) |   ||||
+              |                  | precio_plan (DECIMAL) |   ||||
+              |                  | lleva_promocion (BOOL)|   ||||
+              |                  | lleva_seguro (BOOL)   |   ||||
+              |                  | lleva_equipo (BOOL)   |   ||||
+              |                  | como_equipo (VARCHAR) |   ||||
+              |                  | fecha_entrega (DATE)  |   ||||
+              |                  | num_portar (VARCHAR)  |   ||||
+              |                  | num_referencia (VARCH) |   ||||
+              |                  | status (VARCHAR)      |   ||||
+              |                  | comentarios (TEXT)     |   ||||
+              |                  | num_soc_vb2c (VARCHAR)|   ||||
+              |                  | created (DATETIME)    |   ||||
+              |                  | created_by (VARCHAR)  |   ||||
+              |                  | modified (DATETIME)   |   ||||
+              |                  | modified_by (VARCHAR) |   ||||
+              |                  +-------+----+----+-----+   ||||
+              |                          |    |    |         ||||
+              |                          |    |    |         ||||
+              |            +-------------+    |    +------+  ||||
+              |            |                  |           |  ||||
+              v            v                  v           v  vvvv
+    +==================+  +==========+  +==============+  +==================+
+    |     CLIENTE      |  |   PLAN   |  |    EQUIPO    |  | UBICACION_ENTREGA|
+    +==================+  +==========+  +==============+  +==================+
+    | PK cedula (TEXT) |  | PK id    |  | PK imei      |  | PK id (INT)      |
+    | nombre (VARCHAR) |  |  (INT)   |  |  (VARCHAR)   |  |                  |
+    | correo (VARCHAR) |  | nombre   |  | modelo       |  | provincia        |
+    | whatsapp (VARCHAR)|  | (VARCHAR)|  | (VARCHAR)    |  |  (VARCHAR)       |
+    | origen (VARCHAR) |  | precio   |  | num_sim      |  | distrito         |
+    | num_cuenta (TEXT) |  | (DECIMAL)|  | (VARCHAR)    |  |  (VARCHAR)       |
+    +==================+  +==========+  +==============+  | corregimiento    |
+           1                   1              1           |  (VARCHAR)       |
+           |                   |              |           | barrio (VARCHAR) |
+           |                   |              |           | calle (VARCHAR)  |
+           v                   v              v           | casa (VARCHAR)   |
+          N                   N              N           | direccion_completa|
+        VENTA              VENTA           VENTA         |  (VARCHAR)       |
+                                                        +==================+
+                                                                 1
+                                                                 |
+                                                                 v
+                                                               N
+                                                             VENTA
+
+
+================================================================================
+   CONTENIDO REAL DE CADA TABLA (analisis de Sharep.xlsx)
+================================================================================
+
+  +----------------+----------+----------------------------------------------+
+  | TABLA          | FILAS    | EJEMPLO                                      |
+  +----------------+----------+----------------------------------------------+
+  | CLIENTE        | 35,603   | 8-795-810, Eduardo Atencio, eduardo@...       |
+  | VENTA          | 38,093   | Issue 38824, Renovacion, ACH, B/. 18         |
+  | PLAN           |     40   | "Mas Control LDI 2250 DSL", "B2C DCM..."     |
+  | EQUIPO         | 24,040   | IMEI 860548078577464, Xiaomi Redmi Note 15   |
+  | UBICACION      |  7,117   | Panama|Panama|San Francisco                  |
+  | STAFF          |    190   | Josue Vasquez (Asesor), Jonathan Ortega (Sup) |
+  +----------------+----------+----------------------------------------------+
+
+  * Algunos clientes tienen 2+ ventas (renovaciones sucesivas).
+  * 40 planes distintos se repiten en las 38K ventas.
+  * 71 valores de status (ej: "VENTAS (SOLICITUD CANCELADA)").
+
+
+================================================================================
+   ESTIMACION DE ESPACIO: SQLite vs Excel
+================================================================================
+
+  ARCHIVO ORIGINAL:
+    Sharep.xlsx .................. 19.53 MB  (38,093 filas x 41 columnas)
+
+  TABLAS NORMALIZADAS (estimacion SQLite):
+
+  +----------------+----------+---------+--------------------------------------+
+  | TABLA          | FILAS    | SIZE    | RAZON                                |
+  +----------------+----------+---------+--------------------------------------+
+  | CLIENTE        | 35,603   | ~3.2 MB | cedula+nombre+correo+whatsapp+origen |
+  | VENTA          | 38,093   | ~4.8 MB | FKs(24b) + campos scalar(~160b)      |
+  | PLAN           |     40   | ~  5 KB | 40 nombres + precios                 |
+  | EQUIPO         | 24,040   | ~1.5 MB | imei(15b) + modelo(30b) + sim(15b)   |
+  | UBICACION      |  7,117   | ~0.8 MB | prov+dist+corr+barrio+calle+casa     |
+  | STAFF          |    190   | ~ 10 KB | nombre(25b) + rol(8b)                |
+  +----------------+----------+---------+--------------------------------------+
+  | SUBTOTAL DATA  |          |~10.3 MB |                                      |
+  | INDEXES        |          | ~1.5 MB | PKs + FKs索引                         |
+  | OVERHEAD       |          | ~0.2 MB | WAL, headers, etc.                   |
+  +----------------+----------+---------+--------------------------------------+
+  | TOTAL SQLite   |          |~12.0 MB |                                      |
+  +----------------+----------+---------+--------------------------------------+
+
+  AHORRO: 19.53 MB -> ~12 MB  =  ~7.5 MB menos  (~38%)
+
+  Si ademas normalizamos STATUS (71 valores) y METODO_PAGO como lookup:
+    -> ~10 MB total  =  ~9.5 MB menos  (~49%)
+
+  AHORRO MAXIMO (con todas las lookup tables):
+    19.53 MB -> ~8-10 MB  =  ~50% menos espacio
+
+
+================================================================================
+   POR QUE SE AHORRA TANTO?
+================================================================================
+
+  1. NOMBRES DE PLAN repetidos 38,093 veces:
+     "B2C DCM LDI 2150 DSL" = 22 chars x 38,093 = ~837 KB
+     En SQLite: solo 40 registros x ~60 bytes = 2.4 KB
+     VENTA solo guarda un INTEGER de 2 bytes como FK.
+
+  2. STATUS repetidos miles de veces:
+     "VENTAS (RENOVACION EXITOSA JULIO 26)" = 38 chars x ~2000 veces = ~76 KB
+     En SQLite: solo 71 registros. VENTA guarda un SMALLINT.
+
+  3. UBICACIONES repetidas:
+     "Panama|Panama|San Francisco" aparece en cientos de ventas.
+     En SQLite: solo 1 registro, referenciado por INT.
+
+  4. ASESORES Y SUPERVISORES:
+     "Jonathan Ortega" = 15 chars x ~3000 ventas = ~45 KB
+     En SQLite: 1 registro de 23 bytes.
+
+  5. EXCEL guarda datos en XML comprimido (ZIP).
+     SQLite usa B-tree con compresion inherente por normalizacion.
+
+
+================================================================================
+   ESTRUCTURA SQLite SUGERIDA
+================================================================================
+
+  CREATE TABLE cliente (
+      cedula          TEXT PRIMARY KEY,
+      nombre          TEXT NOT NULL,
+      correo          TEXT,
+      whatsapp        TEXT,
+      origen          TEXT,
+      num_cuenta      TEXT
+  );
+
+  CREATE TABLE plan (
+      id_plan         INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre_plan     TEXT NOT NULL UNIQUE,
+      precio          REAL
+  );
+
+  CREATE TABLE equipo (
+      imei            TEXT PRIMARY KEY,
+      modelo          TEXT NOT NULL,
+      num_sim         TEXT
+  );
+
+  CREATE TABLE ubicacion (
+      id_ubicacion    INTEGER PRIMARY KEY AUTOINCREMENT,
+      provincia       TEXT,
+      distrito        TEXT,
+      corregimiento   TEXT,
+      barrio          TEXT,
+      calle           TEXT,
+      casa            TEXT,
+      direccion_completa TEXT
+  );
+
+  CREATE TABLE staff (
+      id_staff        INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre          TEXT NOT NULL,
+      rol             TEXT CHECK(rol IN ('Asesor','Supervisor'))
+  );
+
+  CREATE TABLE venta (
+      issue_id        INTEGER PRIMARY KEY,
+      id_cliente      TEXT REFERENCES cliente(cedula),
+      id_plan         INTEGER REFERENCES plan(id_plan),
+      imei_equipo     TEXT REFERENCES equipo(imei),
+      id_ubicacion    INTEGER REFERENCES ubicacion(id_ubicacion),
+      id_asesor       INTEGER REFERENCES staff(id_staff),
+      id_supervisor   INTEGER REFERENCES staff(id_staff),
+      tipo_venta      TEXT,
+      tipo_abono      TEXT,
+      metodo_pago     TEXT,
+      precio_plan     REAL,
+      lleva_promocion BOOLEAN,
+      lleva_seguro    BOOLEAN,
+      lleva_equipo    BOOLEAN,
+      como_equipo     TEXT,
+      fecha_entrega   TEXT,
+      num_portar      TEXT,
+      num_referencia  TEXT,
+      status          TEXT,
+      comentarios     TEXT,
+      num_soc_vb2c    TEXT,
+      created         TEXT,
+      created_by      TEXT,
+      modified        TEXT,
+      modified_by     TEXT
+  );
+
+  -- Indices para queries frecuentes
+  CREATE INDEX idx_venta_cliente ON venta(id_cliente);
+  CREATE INDEX idx_venta_plan ON venta(id_plan);
+  CREATE INDEX idx_venta_equipo ON venta(imei_equipo);
+  CREATE INDEX idx_venta_ubicacion ON venta(id_ubicacion);
+  CREATE INDEX idx_venta_asesor ON venta(id_asesor);
+  CREATE INDEX idx_venta_status ON venta(status);
+  CREATE INDEX idx_venta_fecha ON venta(fecha_entrega);
+
+
+================================================================================
+   MODELO LOGICO RESUMIDO
+================================================================================
+
+    CLIENTE (1) ----< (N) VENTA >---- (1) PLAN
+                              |
+                              +----< (1) EQUIPO
+                              |
+                              +----< (1) UBICACION
+                              |
+    STAFF_asesor (1) ----< (N) VENTA
+    STAFF_supervisor (1) ----< (N) VENTA
+
+
+================================================================================
+   GENERADO: 2026-07-23
+   ARCHIVO: Sharep.xlsx (19.53 MB) -> SQLite estimado (~8-12 MB, -38% a -50%)
+================================================================================

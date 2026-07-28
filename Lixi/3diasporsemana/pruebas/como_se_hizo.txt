@@ -1,0 +1,87 @@
+=====================================
+ CÓMO SE HIZO - Dashboard iPhone Julio 2026
+=====================================
+
+--- PASO 1: ORGANIZACIÓN DEL PROYECTO ---
+- Se creó la carpeta excels/ y se movió Iphone (1).xlsx desde la raíz
+- Se creó pruebas/ para archivos de trabajo
+- Se creó scripts/ con el diagrama ER
+- Se organizó Lixi/ con los dashboards de 3 días por semana
+
+--- PASO 2: DIAGRAMA ER ---
+- Archivo: scripts/diagrama_ER_sharep.txt
+- Se analizaron las 41 columnas del Excel Sharep
+- Se diseñaron 6 entidades normalizadas:
+  CLIENTE → VENTA → PLAN → EQUIPO → UBICACION_ENTREGA → STAFF
+- Se generó el DDL SQL para crear las tablas
+- Se estimó reducción de 35.72 MB a ~8-12 MB (~50% ahorro)
+
+--- PASO 3: PIPELINE (pipeline_iphone_julio.py) ---
+Secuencia de ejecución:
+1. Leer Excel con openpyxl (hoja Sharep)
+2. Filtrar solo registros de julio 2026
+3. Filtrar solo modelos con "IPHONE" en el nombre
+4. Filtrar supervisores Manuel García y Jonathan Ortega
+5. Crear tablas normalizadas en SQLite
+6. Insertar datos con relaciones (foreign keys)
+7. Generar queries para el dashboard
+8. Exportar datos como JSON embebido en HTML
+9. Generar dashboard interactivo con comboboxes
+10. Exportar a xlsx con tablas dinámicas
+
+--- PASO 4: DASHBOARD ---
+- Tecnologías: HTML + CSS + JavaScript + Chart.js
+- Datos embebidos: el JSON se incrusta directamente en el HTML
+- Sin servidor: se abre directamente en el navegador
+- Comboboxes filtran en tiempo real con JavaScript
+- Tabla pivote calculada en el navegador
+- Responsive: se adapta a móvil
+
+--- PASO 5: BASE DE DATOS SQLite ---
+- Se creó desde cero ejecutando el pipeline
+- Se normalizaron 41 columnas en 6 tablas
+- Se usaron foreign keys para integridad referencial
+- Se crearon índices para búsquedas rápidas
+- Peso: 56 KB vs 35.72 MB del Excel
+
+--- PASO 6: VALIDACIÓN ---
+- Se compararon los resultados con la hoja Tabla del Excel
+- Se encontró diferencia de 7 registros (causa: filtros de día)
+- Se identificó que 03/jul/26 aparece en todas las combinaciones
+- Se decidió mantener todos los días sin excluir
+
+--- PASO 7: MENÚ PRINCIPAL ---
+- Se creó index.html en la raíz
+- 3 botones con links a cada dashboard
+- Diseño gradient dark con hover effects
+- Botón "Inicio" agregado a cada dashboard
+
+--- ARCHIVOS CREADOS ---
+1. index.html - Menú principal
+2. pruebas/pipeline_iphone_julio.py - Pipeline completo
+3. pruebas/dashboard_iphone_julio.html - Dashboard interactivo
+4. pruebas/iphone_julio.db - Base de datos SQLite
+5. pruebas/datos_iphone_julio.xlsx - Exportación Excel
+6. pruebas/reglas_dashboard_iphone.txt - Reglas del dashboard
+7. pruebas/reglas_dashboard_iphone.txt - Cómo se hizo (este archivo)
+8. scripts/diagrama_ER_sharep.txt - Diagrama ER
+9. .gitignore - Exclusiones de Git
+
+--- COMANDOS PARA EJECUTAR ---
+# Generar/actualizar todo:
+python pruebas/pipeline_iphone_julio.py
+
+# Abrir dashboard:
+Start-Process pruebas/dashboard_iphone_julio.html
+
+# Abrir menú:
+Start-Process index.html
+
+# Subir a GitHub:
+git add -A; git commit -m "mensaje"; git push
+
+--- TROUBLESHOOTING ---
+- Error "UNIQUE constraint": se corrigió el CREATE TABLE con UNIQUE en f-string
+- Error "'int' object has no attribute 'execute'": variable 'c' se usaba como cursor y como contador
+  Solución: fetchall() antes del loop de Excel
+- Diferencia con Tabla: filtrar días específicos en Dia Crea

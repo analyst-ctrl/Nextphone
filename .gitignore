@@ -1,15 +1,19 @@
 # Secrets
 token_github.txt
 
-# Large data files
-*.xlsx
-*.xlsm
-*.xls
+# Large Excel temp data (20-40 MB each, se regeneran)
+Lixi/3diasporsemana/excels/
+
+# Large Excel source files (Sharep.xlsx ~20MB)
+Lixi/3diasporsemana/Sharep.xlsx
+Lixi/3diasporsemana/modelos/
+
+# Databases (se regeneran con los pipelines)
 *.db
 *.sqlite
 *.sqlite3
 
-# Excel temp files
+# Excel temp files (~$ = archivo abierto por otro usuario)
 ~$*
 
 # Python

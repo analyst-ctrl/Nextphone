@@ -1,0 +1,77 @@
+================================================================================
+BASE: Base para campaña cross-sell movil Nextphone
+================================================================================
+
+--------------------------------------------------------------------------------
+HOJA 1: sin contactos telefonicos (26 columnas)
+--------------------------------------------------------------------------------
+
+| Columna         | Tipo      | Ejemplo                      |
+|-----------------|-----------|------------------------------|
+| FECHA           | Texto     | 31 DE DICIEMBRE              |
+| CUENTA          | Num       | 105042520000                 |
+| CUST_NO         | Num       | 10504252                     |
+| ALIAS           | Texto     | VIELKA ICELA ALVAREZ         |
+| NOMBRE_CIS      | Texto     | VIELKA ICELA ALVAREZ         |
+| ESTADO_CUENTA   | Texto     | W                            |
+| TIPO_CLIENTE    | Texto     | M                            |
+| SERVICIOS_TELCO | Num       | 0                            |
+| TIPO            | Texto     | (vacío)                      |
+| PROVINCIA       | Texto     | NO TIENE                     |
+| RUC             | Texto     | -                            |
+| PERSONA_AUT_1   | Texto     | -                            |
+| PERSONA_AUT_2   | Texto     | -                            |
+| PERSONA_AUT_3   | Texto     | -                            |
+| Nombre_contacto | Texto     | -                            |
+| contact_mobile  | Texto     | #N/A                         |
+| Mix_contacto    | Texto     | Correo                       |
+| contact_phone   | Texto     | #N/A                         |
+| bill_email      | Texto     | #N/A                         |
+| contact_email   | Texto     | #N/A                         |
+| SERV_NO         | Texto     | #N/A                         |
+| DIRECCION       | Texto     | NULL                         |
+| PROVEEDOR       | Texto     | NEXTPHONE                    |
+| FECHA_INICIO    | Num/Fecha | 46020                        |
+| Agentes         | Texto     | -                            |
+| COMENTARIOS     | Texto     | -                            |
+
+--------------------------------------------------------------------------------
+HOJA 2: Base para gestionar CC (25 columnas)
+--------------------------------------------------------------------------------
+
+| Columna         | Tipo      | Ejemplo                        |
+|-----------------|-----------|--------------------------------|
+| Ejecutivo       | Texto     | Yariela Galarce                |
+| CUENTA          | Num       | 335026020000                   |
+| CUST_NO         | Num       | 33502602                       |
+| ALIAS           | Texto     | VIELKA ESTHER SALCEDO...       |
+| NOMBRE_CIS      | Texto     | VIELKA ESTHER SALCEDO...       |
+| ESTADO_CUENTA   | Texto     | W                              |
+| TIPO_CLIENTE    | Texto     | M                              |
+| SERVICIOS_TELCO | Num       | 45                             |
+| TIPO            | Texto     | FLBBTV                         |
+| PROVINCIA       | Texto     | NO TIENE                       |
+| RUC             | Texto     | 8-203-1839                     |
+| PERSONA_AUT_1   | Texto     | -                              |
+| PERSONA_AUT_2   | Texto     | -                              |
+| PERSONA_AUT_3   | Texto     | -                              |
+| Nombre_contacto | Texto     | -                              |
+| contact_mobile  | Num       | 62785413                       |
+| Mix_contacto    | Texto     | Movil-Fijo-Correo              |
+| contact_phone   | Num       | 62785413                       |
+| bill_email      | Texto     | Liapilar15.ep@gmail.com        |
+| contact_email   | Texto     | Liapilar15.ep@gmail.com        |
+| SERV_NO         | Num       | 8300057                        |
+| DIRECCION       | Texto     | Pedregal Monteria...           |
+| PROVEEDOR       | Texto     | NEXTPHONE                      |
+| FECHA_INICIO    | Fecha     | 2025-12-29                     |
+| AGENTE          | Texto     | -                              |
+
+--------------------------------------------------------------------------------
+HOJA 3: con contacto telefonos (28 columnas)
+--------------------------------------------------------------------------------
+
+Mismas columnas que Hoja 2, más:
+| Estatus         | Texto     | -                              |
+| COMENTARIOS     | Texto     | cte no contesta...             |
+| (col vacía)     | -         | -                              |

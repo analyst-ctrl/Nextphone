@@ -1,0 +1,593 @@
+========================================================================
+  FORMULAS DEL PROYECTO LIXI - VENTAS IPHONE
+========================================================================
+  Proyecto:  3 Días por Semana (Lunes/Miércoles/Viernes)
+  Fuente:    Sharep.xlsx (19.53 MB, hoja "owssvr (6)")
+  Scripts:   pipeline_iphone_7_24.py, dashboard_3diasporsemana.py
+  Dashboards: dashboard_iphone_julio_7_24.html,
+              dashboard_iphone_promo.html,
+              dashboard_3diasporsemana.html
+  Bases:     iphone_julio_7_24.db, sharep.db, promo_3dias.db
+  Datos:     38,770 filas × 45 columnas (~19.5 MB)
+========================================================================
+
+
+ÍNDICE
+========================================================================
+  1.  FILTRO IPHONE
+  2.  FILTRO PROMOCIÓN
+  3.  FILTRO DÍAS PROMO (L/M/V)
+  4.  FILTRO PERIODO (MES/AÑO)
+  5.  SQL - ESTRUCTURA DE BASE DE DATOS
+  6.  SQL - VENTAS POR SUPERVISOR
+  7.  SQL - VENTAS IPHONE POR SUPERVISOR
+  8.  SQL - RANKING DE SUPERVISORES
+  9.  SQL - ASESORES POR SUPERVISOR
+  10. SQL - VENTAS POR MODELO
+  11. SQL - DASHBOARD RESUMEN
+  12. DASHBOARD JS - MÉTRICAS INTERACTIVAS
+  13. DASHBOARD JS - FILTROS
+  14. EXCEL - RANKING EN EXCEL (openpyxl)
+  15. EXCEL - GRÁFICOS EN EXCEL
+  16. EXCEL - COMPARATIVA PERIODOS
+  17. ESQUEMA DE BASES DE DATOS (3 DBs)
+
+
+================================================================================
+  1. FILTRO IPHONE
+================================================================================
+
+  Python (pipeline_iphone_7_24.py y scripts relacionados):
+  -----------------------------------------------
+  modelo = row[col_idx['Modelo del equipo']]
+  if not modelo or 'IPHONE' not in modelo.upper():
+      continue  # No es iPhone, saltar
+
+  Explicación:
+    Filtra SOLO los registros cuyo modelo contiene "IPHONE"
+    (ej: "IPHONE 17 256GB (Black)", "iPhone 17e 256GB Black").
+    Es case-insensitive (compara con .upper()).
+
+  Modelos comunes encontrados (Julio 2026):
+    - IPHONE 17 256GB (Black)
+    - IPHONE 17 256GB (Blue)
+    - IPHONE 17E 256GB (Black)
+    - iPhone 17e 256GB Black
+    - Iphone 17e
+
+
+================================================================================
+  2. FILTRO PROMOCIÓN
+================================================================================
+
+  Python:
+  -----------------------------------------------
+  promo = row[col_idx['Lleva promoción']]
+  if not promo or str(promo).strip().upper() != 'SI':
+      continue  # No tiene promoción, saltar
+
+  Explicación:
+    Solo considera ventas donde la columna "Lleva promoción"
+    sea explícitamente "SI". Esto asegura que solo se cuenten
+    ventas dentro de la campaña promocional de 3 días por semana.
+
+
+================================================================================
+  3. FILTRO DÍAS PROMO (L/M/V)
+================================================================================
+
+  Python:
+  -----------------------------------------------
+  PROMO_DAYS = {0: 'Lunes', 2: 'Miércoles', 4: 'Viernes'}
+  PROMO_DAY_NAMES = ['Lunes', 'Miércoles', 'Viernes']
+
+  wd = date_obj.weekday()  # 0=Lunes, 1=Martes, ..., 6=Domingo
+  if wd not in PROMO_DAYS:
+      continue  # No es día de promoción, saltar
+
+  Explicación:
+    La promoción aplica SOLO 3 días a la semana:
+    - Lunes    (weekday=0)
+    - Miércoles (weekday=2)
+    - Viernes   (weekday=4)
+
+    Martes, Jueves, Sábado y Domingo NO son días promocionales.
+
+
+================================================================================
+  4. FILTRO PERIODO (MES/AÑO)
+================================================================================
+
+  Python:
+  -----------------------------------------------
+  from datetime import datetime
+
+  # Parsear la fecha de creación
+  created_raw = row[col_idx['Created']]
+  date_obj = parse_date(created_raw)  # función que prueba varios formatos
+
+  if not date_obj or date_obj.year != 2026 or date_obj.month != 7:
+      continue  # No es Julio 2026, saltar
+
+  Formatos de fecha soportados:
+    - '%Y-%m-%d %H:%M:%S'  (2026-07-22 14:30:00)
+    - '%Y-%m-%d'           (2026-07-22)
+    - '%d/%m/%Y %H:%M:%S'  (22/07/2026 14:30:00)
+    - '%d/%m/%Y'           (22/07/2026)
+
+
+================================================================================
+  5. SQL - ESTRUCTURA DE BASE DE DATOS
+================================================================================
+
+  Tablas en iphone_julio_7_24.db / sharep.db / promo_3dias.db:
+
+  -- Dimensión: Supervisores
+  CREATE TABLE supervisores (
+      id      INTEGER PRIMARY KEY,
+      nombre  TEXT NOT NULL UNIQUE
+  );
+
+  -- Dimensión: Asesores (vendedores)
+  CREATE TABLE asesores (
+      id      INTEGER PRIMARY KEY,
+      nombre  TEXT NOT NULL UNIQUE
+  );
+
+  -- Relación: Supervisor-Asesor (M:N)
+  CREATE TABLE supervisor_asesor (
+      supervisor_id INTEGER NOT NULL,
+      asesor_id     INTEGER NOT NULL,
+      PRIMARY KEY (supervisor_id, asesor_id),
+      FOREIGN KEY (supervisor_id) REFERENCES supervisores(id),
+      FOREIGN KEY (asesor_id) REFERENCES asesores(id)
+  );
+
+  -- Dimensión: Modelos de equipo
+  CREATE TABLE modelos (
+      id      INTEGER PRIMARY KEY,
+      nombre  TEXT NOT NULL UNIQUE
+  );
+
+  -- Dimensión: Planes vendidos
+  CREATE TABLE planes (
+      id      INTEGER PRIMARY KEY,
+      nombre  TEXT NOT NULL UNIQUE
+  );
+
+  -- Dimensión: Status del cliente
+  CREATE TABLE status_cliente (
+      id      INTEGER PRIMARY KEY,
+      nombre  TEXT NOT NULL UNIQUE
+  );
+
+  -- Dimensión: Tipo de venta
+  CREATE TABLE tipo_venta (
+      id      INTEGER PRIMARY KEY,
+      nombre  TEXT NOT NULL UNIQUE
+  );
+
+  -- Dimensión: Clientes
+  CREATE TABLE clientes (
+      id              INTEGER PRIMARY KEY,
+      nombre          TEXT NOT NULL,
+      identificacion  TEXT,
+      UNIQUE(nombre, identificacion)
+  );
+
+  -- Tabla de hechos: Ventas
+  CREATE TABLE ventas (
+      id              INTEGER PRIMARY KEY,
+      supervisor_id   INTEGER,
+      asesor_id       INTEGER,
+      modelo_id       INTEGER,
+      plan_id         INTEGER,
+      status_id       INTEGER,
+      tipo_venta_id   INTEGER,
+      cliente_id      INTEGER,
+      precio_plan     REAL,
+      fecha_creacion  TIMESTAMP,
+      fecha_modific   TIMESTAMP,
+      dia_crea        TEXT,
+      dia_mod         TEXT,
+      promo           TEXT,
+      modo            TEXT,
+      -- Llaves foráneas
+      FOREIGN KEY (supervisor_id) REFERENCES supervisores(id),
+      FOREIGN KEY (asesor_id) REFERENCES asesores(id),
+      FOREIGN KEY (modelo_id) REFERENCES modelos(id),
+      FOREIGN KEY (plan_id) REFERENCES planes(id),
+      FOREIGN KEY (status_id) REFERENCES status_cliente(id),
+      FOREIGN KEY (tipo_venta_id) REFERENCES tipo_venta(id),
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+  );
+
+  -- Vista para consultas fáciles
+  CREATE VIEW v_ventas AS
+  SELECT
+      v.id,
+      cl.nombre AS cliente,
+      s.nombre AS supervisor,
+      a.nombre AS asesor,
+      m.nombre AS modelo,
+      p.nombre AS plan,
+      v.precio_plan,
+      st.nombre AS status,
+      v.fecha_creacion,
+      v.fecha_modific,
+      v.dia_crea,
+      v.dia_mod,
+      v.promo
+  FROM ventas v
+  LEFT JOIN clientes cl ON v.cliente_id = cl.id
+  LEFT JOIN supervisores s ON v.supervisor_id = s.id
+  LEFT JOIN asesores a ON v.asesor_id = a.id
+  LEFT JOIN modelos m ON v.modelo_id = m.id
+  LEFT JOIN planes p ON v.plan_id = p.id
+  LEFT JOIN status_cliente st ON v.status_id = st.id;
+
+
+================================================================================
+  6. SQL - VENTAS POR SUPERVISOR
+================================================================================
+
+  -- Total de ventas por supervisor (todos los equipos)
+  SELECT s.nombre,
+         COUNT(*) as ventas,
+         COUNT(DISTINCT v.fecha_creacion) as dias_con_venta
+  FROM ventas v
+  JOIN supervisores s ON v.supervisor_id = s.id
+  WHERE strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+  GROUP BY s.nombre
+  ORDER BY ventas DESC;
+
+
+================================================================================
+  7. SQL - VENTAS IPHONE POR SUPERVISOR
+================================================================================
+
+  -- Ventas de iPhone por supervisor (con porcentaje)
+  SELECT s.nombre,
+         COUNT(*) as total_ventas,
+         SUM(CASE WHEN m.nombre LIKE '%IPHONE%' THEN 1 ELSE 0 END) as iPhones,
+         ROUND(SUM(CASE WHEN m.nombre LIKE '%IPHONE%' THEN 1 ELSE 0 END)
+               * 100.0 / COUNT(*), 1) as pct_iphone,
+         COUNT(DISTINCT v.fecha_creacion) as dias_con_venta,
+         ROUND(COUNT(*) * 1.0 /
+               COUNT(DISTINCT v.fecha_creacion), 1) as promedio_dia
+  FROM ventas v
+  JOIN supervisores s ON v.supervisor_id = s.id
+  JOIN modelos m ON v.modelo_id = m.id
+  WHERE strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+  GROUP BY s.nombre
+  ORDER BY iPhones DESC;
+
+
+================================================================================
+  8. SQL - RANKING DE SUPERVISORES
+================================================================================
+
+  -- Ranking completo con posición
+  SELECT ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) as posicion,
+         s.nombre as supervisor,
+         COUNT(*) as ventas,
+         ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 1) as pct_del_total,
+         COUNT(DISTINCT v.fecha_creacion) as dias,
+         ROUND(COUNT(*) * 1.0 /
+               COUNT(DISTINCT v.fecha_creacion), 1) as promedio_dia
+  FROM ventas v
+  JOIN supervisores s ON v.supervisor_id = s.id
+  WHERE v.promo = 'SI'
+  GROUP BY s.nombre
+  ORDER BY ventas DESC;
+
+
+================================================================================
+  9. SQL - ASESORES POR SUPERVISOR
+================================================================================
+
+  -- Qué asesores pertenecen a cada supervisor
+  SELECT s.nombre as supervisor,
+         a.nombre as asesor,
+         COUNT(v.id) as ventas
+  FROM supervisor_asesor sa
+  JOIN supervisores s ON sa.supervisor_id = s.id
+  JOIN asesores a ON sa.asesor_id = a.id
+  LEFT JOIN ventas v ON v.asesor_id = a.id
+     AND strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+  GROUP BY s.nombre, a.nombre
+  ORDER BY s.nombre, ventas DESC;
+
+
+================================================================================
+  10. SQL - VENTAS POR MODELO
+================================================================================
+
+  -- Ranking de modelos de iPhone vendidos
+  SELECT m.nombre as modelo,
+         COUNT(*) as unidades,
+         s.nombre as supervisor
+  FROM ventas v
+  JOIN modelos m ON v.modelo_id = m.id
+  JOIN supervisores s ON v.supervisor_id = s.id
+  WHERE m.nombre LIKE '%IPHONE%'
+    AND strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+  GROUP BY m.nombre, s.nombre
+  ORDER BY unidades DESC;
+
+
+================================================================================
+  11. SQL - DASHBOARD RESUMEN
+================================================================================
+
+  -- Resumen general para el dashboard HTML
+  SELECT
+    (SELECT COUNT(*) FROM ventas
+     WHERE strftime('%Y-%m', fecha_creacion) = '2026-07') as total_julio,
+
+    (SELECT COUNT(*) FROM ventas v
+     JOIN modelos m ON v.modelo_id = m.id
+     WHERE m.nombre LIKE '%IPHONE%'
+       AND strftime('%Y-%m', v.fecha_creacion) = '2026-07') as iphone_julio,
+
+    (SELECT COUNT(DISTINCT supervisor_id) FROM ventas
+     WHERE strftime('%Y-%m', fecha_creacion) = '2026-07') as supervisores_activos,
+
+    (SELECT COUNT(DISTINCT asesor_id) FROM ventas
+     WHERE strftime('%Y-%m', fecha_creacion) = '2026-07') as asesores_activos;
+
+
+================================================================================
+  12. DASHBOARD JS - MÉTRICAS INTERACTIVAS
+================================================================================
+
+  Las métricas se calculan en el FRONTEND (JavaScript) dentro del HTML generado.
+
+  a) Conteo de ventas por supervisor:
+     ---------------------------------------------------------------
+     const supCount = {};
+     DATA.registros.forEach(r => {
+         supCount[r.supervisor] = (supCount[r.supervisor] || 0) + 1;
+     });
+
+  b) Días únicos con venta por supervisor:
+     ---------------------------------------------------------------
+     const supDays = {};
+     DATA.registros.forEach(r => {
+         supDays[r.supervisor] = supDays[r.supervisor] || new Set();
+         supDays[r.supervisor].add(r.dia);
+     });
+
+  c) Porcentaje del total:
+     ---------------------------------------------------------------
+     const pct = (count / total * 100).toFixed(1);
+
+  d) Promedio por día:
+     ---------------------------------------------------------------
+     const avg = (count / supDays[sup].size).toFixed(1);
+
+  e) Tarjetas de métricas (HTML generado):
+     ---------------------------------------------------------------
+     <div class="card metric">
+       <div class="num">${totalVentas}</div>
+       <div class="label">Ventas iPhone</div>
+       <div class="sub">En julio 2026</div>
+     </div>
+     <div class="card metric">
+       <div class="num">${supervisoresActivos}</div>
+       <div class="label">Supervisores</div>
+       <div class="sub">Con ventas en promo</div>
+     </div>
+
+  f) Tabla de ranking:
+     ---------------------------------------------------------------
+     let html = '<table><tr>
+       <th>#</th>
+       <th class="left">Supervisor</th>
+       <th>Ventas</th>
+       <th>%</th>
+       <th>Dias</th>
+       <th>Prom/Dia</th>
+     </tr>';
+     Object.entries(supCount)
+       .sort((a,b) => b[1] - a[1])
+       .forEach(([sup, count], i) => {
+         html += `<tr>
+           <td>${i+1}</td>
+           <td class="left">${sup}</td>
+           <td>${count}</td>
+           <td>${(count/total*100).toFixed(1)}%</td>
+           <td>${supDays[sup].size}</td>
+           <td>${(count/supDays[sup].size).toFixed(1)}</td>
+         </tr>`;
+       });
+
+
+================================================================================
+  13. DASHBOARD JS - FILTROS
+================================================================================
+
+  a) Filtro por Supervisor:
+     ---------------------------------------------------------------
+     const sup = document.getElementById('filterSup').value;
+     const filtered = DATA.registros.filter(r => {
+         if (sup !== 'todos' && r.supervisor !== sup) return false;
+         return true;
+     });
+
+  b) Filtro por Modelo:
+     ---------------------------------------------------------------
+     const modelo = document.getElementById('filterModelo').value;
+     // similar al de supervisor
+
+  c) Filtro por Día:
+     ---------------------------------------------------------------
+     const dia = document.getElementById('filterDia').value;
+     // similar
+
+  d) Filtro por Modo (CREACION / FACTURADAS / AMBAS):
+     ---------------------------------------------------------------
+     const modo = document.getElementById('filterModo').value;
+     if (modo === 'CREACION') {
+         // Solo registros con status "renovacion exitosa"... no,
+         // CREACION = todos los registros del mes
+     } else if (modo === 'FACTURADAS') {
+         // Solo status específicos
+     }
+
+
+================================================================================
+  14. EXCEL - RANKING EN EXCEL (openpyxl)
+================================================================================
+
+  Los scripts generar_ranking_iphone.py y dashboard_3diasporsemana.py
+  generan archivos .xlsx con rankings usando openpyxl.
+
+  a) Creación de hoja:
+     ---------------------------------------------------------------
+     from openpyxl import Workbook
+     from openpyxl.styles import Font, PatternFill, Alignment
+
+     wb = Workbook()
+     ws = wb.active
+     ws.title = "Ranking General"
+
+  b) Encabezados:
+     ---------------------------------------------------------------
+     headers = ['Posicion', 'Supervisor', 'Total iPhones',
+                '% del Total', 'Promedio por Dia']
+     for col, header in enumerate(headers, 1):
+         ws.cell(row=1, column=col, value=header)
+         ws.cell(row=1, column=col).font = Font(bold=True)
+
+  c) Datos del ranking:
+     ---------------------------------------------------------------
+     for i, (sup, count) in enumerate(sorted_sups, 1):
+         ws.cell(row=i+1, column=1, value=i)        # Posición
+         ws.cell(row=i+1, column=2, value=sup)       # Supervisor
+         ws.cell(row=i+1, column=3, value=count)     # Total
+         ws.cell(row=i+1, column=4,
+                 value=round(count/total*100, 1))    # % del Total
+         ws.cell(row=i+1, column=5,
+                 value=round(count/dias, 1))         # Promedio/Día
+
+  d) Formato condicional:
+     ---------------------------------------------------------------
+     # Colorear primeras posiciones
+     gold_fill = PatternFill(start_color='FFD700',
+                              end_color='FFD700', fill_type='solid')
+     silver_fill = PatternFill(start_color='C0C0C0',
+                                end_color='C0C0C0', fill_type='solid')
+     bronze_fill = PatternFill(start_color='CD7F32',
+                                end_color='CD7F32', fill_type='solid')
+
+     if i == 1: ws.cell(row=i+1, column=2).fill = gold_fill
+     elif i == 2: ws.cell(row=i+1, column=2).fill = silver_fill
+     elif i == 3: ws.cell(row=i+1, column=2).fill = bronze_fill
+
+  e) Fondo para filas de iPhone:
+     ---------------------------------------------------------------
+     iphone_fill = PatternFill(start_color='F3E8FF',
+                                end_color='F3E8FF', fill_type='solid')
+     # Aplica color morado claro a filas de iPhone
+
+
+================================================================================
+  15. EXCEL - GRÁFICOS EN EXCEL
+================================================================================
+
+  Los scripts generan gráficos de barras usando openpyxl:
+
+  from openpyxl.chart import BarChart, Reference
+
+  chart = BarChart()
+  chart.type = "col"
+  chart.title = "Ventas x Supervisor y Dia"
+  chart.style = 10
+  chart.grouping = "stacked"
+
+  # Datos del gráfico
+  data = Reference(ws, min_col=2, max_col=len(dias_sorted)+1,
+                   min_row=1, max_row=len(supervisores)+1)
+  cats = Reference(ws, min_col=1, min_row=2,
+                   max_row=len(supervisores)+1)
+
+  chart.add_data(data, titles_from_data=True)
+  chart.set_categories(cats)
+  chart.x_axis.title = "Supervisor"
+  chart.y_axis.title = "Ventas"
+
+  ws.add_chart(chart, "A" + str(fila_grafico))
+
+
+================================================================================
+  16. EXCEL - COMPARATIVA PERIODOS
+================================================================================
+
+  Para comparar diferentes periodos:
+
+  Python:
+  ---------------------------------------------------------------
+  # Julio Completo (todos los días, Promo Si, iPhone)
+  SELECT COUNT(*) as total_julio
+  FROM ventas v JOIN modelos m ON v.modelo_id = m.id
+  WHERE strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+    AND v.promo = 'SI'
+    AND m.nombre LIKE '%IPHONE%';
+
+  # Julio LMV (solo Lun/Mie/Vie, Promo Si, iPhone)
+  SELECT COUNT(*) as total_lmj
+  FROM ventas v JOIN modelos m ON v.modelo_id = m.id
+  WHERE strftime('%Y-%m', v.fecha_creacion) = '2026-07'
+    AND v.promo = 'SI'
+    AND m.nombre LIKE '%IPHONE%'
+    AND v.dia_crea IN ('Lunes','Miércoles','Viernes');
+
+  # Porcentaje de ventas en días promo
+  %_LMV = (total_lmj / total_julio) * 100
+
+  # Ventas fuera de días promo
+  otros_dias = total_julio - total_lmj
+
+
+================================================================================
+  17. ESQUEMA DE BASES DE DATOS (3 DBs)
+================================================================================
+
+  El proyecto Lixi tiene 3 bases de datos SQLite distintas:
+
+  a) iphone_julio_7_24.db (56 KB):
+     - Datos de iPhone julio 2026
+     - Tablas: supervisores, asesores, modelos, ventas
+     - Script: pipeline_iphone_7_24.py
+     - Fuente: Iphone_7_24_2026.xlsx
+
+  b) sharep.db (~150 KB):
+     - Todos los datos de Sharep.xlsx normalizados
+     - 6 tablas + vista v_ventas
+     - Script: crear_db_sharep.py
+     - Fuente: Sharep.xlsx (38,093 registros)
+
+  c) promo_3dias.db:
+     - Solo datos de promoción 3 días por semana
+     - Tablas: supervisores, asesores, modelos, ventas
+     - Filtrado por promo=SI y día LMV
+
+  Las 3 DBs tienen la MISMA estructura de tablas pero
+  diferentes fuentes y filtros de datos.
+
+
+================================================================================
+  NOTAS ADICIONALES
+================================================================================
+
+  1. Los scripts Python leen el Excel con openpyxl en modo read_only.
+  2. La columna "Created" puede ser timestamp o fecha según el Excel.
+  3. Los nombres de supervisores y asesores vienen del Excel original.
+  4. Los dashboards HTML tienen los datos embebidos como JSON.
+  5. Los filtros son case-sensitive para nombres de supervisores.
+  6. El modo "FACTURADAS" filtra por status "renovacion exitosa".
+
+========================================================================
+  FIN DE DOCUMENTACIÓN - LIXI
+========================================================================

@@ -1,0 +1,424 @@
+========================================================================
+  FORMULAS DEL PROYECTO INGRIS - CALIDAD NEXTPHONE / OJT
+========================================================================
+  Archivo fuente: INFORME DE CALIDAD NEXTPHONE 2026 Actualizado..xlsm
+                  OJT-REPORTE DE CALIDAD Actualizado.xlsm
+  Creado por:     Shanyda Botello
+========================================================================
+
+
+ÍNDICE
+========================================================================
+  1.  SCORE DE CALIDAD (fórmula principal)
+  2.  PESOS POR TIPO DE ERROR
+  3.  SCORE POR PREGUNTA INDIVIDUAL
+  4.  SCORE POR FACTOR (LA QUE ESTÁ MAL)
+  5.  CLASIFICACIÓN CRÍTICA
+  6.  CUARTILIZACIÓN (Q1-Q4)
+  7.  CUMPLIMIENTO vs NO CUMPLE
+  8.  ANTIGÜEDAD DEL AGENTE
+  9.  GRÁFICOS - GETPIVOTDATA
+  10. MUESTRA CRÍTICA
+  11. AGRUPACIÓN MENSUAL
+  12. XLOOKUP DESDE HC
+  13. ERRORES #REF! (referencias rotas)
+  14. RANGOS INCONSISTENTES ENTRE EVALUACIÓN Y COPIA
+  15. DASHBOARD POWERPOINT SEMANAL
+
+
+================================================================================
+  1. SCORE DE CALIDAD (Fórmula Principal)
+================================================================================
+
+  Archivo:   INFORME DE CALIDAD NEXTPHONE 2026 Actualizado..xlsm
+  Hoja:      BD
+  Celdas:    GB4:GE4 (columnas de cálculo), GF4 (total)
+  Fórmulas:
+
+    [GB4]  = $GB$2 * DX4        → Peso_PENC × Precisión_PENC
+    [GC4]  = $GC$2 * FC4        → Peso_PECUF × Precisión_PECUF
+    [GD4]  = $GD$2 * FS4        → Peso_PECNE × Precisión_PECNE
+    [GE4]  = $GE$2 * GA4        → Peso_PECCUM × Precisión_PECCUM
+    [GF4]  = SUM(GB4:GE4)       → SCORE TOTAL DE CALIDAD
+
+  Explicación:
+    El Score de Calidad es un promedio ponderado de 4 tipos de error:
+
+    Score = (Peso_PENC × Prec_PENC)
+          + (Peso_PECUF × Prec_PECUF)
+          + (Peso_PECNE × Prec_PECNE)
+          + (Peso_PECCUM × Prec_PECCUM)
+
+    Donde:
+    - PENC  = Precisión Error No Crítico (peso ej: 10%)
+    - PECUF = Precisión Error Crítico Usuario Final (peso ej: 30%)
+    - PECNE = Precisión Error Crítico Negocio (peso ej: 30%)
+    - PECCUM= Precisión Error Crítico Cumplimiento (peso ej: 30%)
+
+    Los pesos están en la fila 2 de la hoja BD (GB2, GC2, GD2, GE2).
+    Las precisiones vienen de los cálculos por factor (explicados abajo).
+
+
+================================================================================
+  2. PESOS POR TIPO DE ERROR
+================================================================================
+
+  Los pesos definen qué proporción del score total representa cada tipo de error.
+  Se almacenan como valores decimales en la fila 2 de la hoja BD:
+
+    GB2 = Peso PENC      (ej: 0.10 = 10%)
+    GC2 = Peso PECUF     (ej: 0.30 = 30%)
+    GD2 = Peso PECNE     (ej: 0.30 = 30%)
+    GE2 = Peso PECCUM    (ej: 0.30 = 30%)
+
+  NOTA: Los pesos deben sumar 100% (1.0). Si no suman 1.0,
+        el Score de Calidad estará sesgado.
+
+
+================================================================================
+  3. SCORE POR PREGUNTA INDIVIDUAL
+================================================================================
+
+  Hoja:   BD
+  Estas fórmulas convierten las respuestas "Si"/"No"/"N/A" en puntajes.
+
+  a) ¿Respuesta correcta? (columnas BL en adelante):
+     = IF(OR(celda="Si", celda="N/A"), 1, 0)
+
+     "Si" o "N/A" = 1 punto (cumple)
+     "No"         = 0 puntos (error)
+
+  b) Ponderación por factor (columnas DK, DP, DU, DW, etc.):
+     = IF(celda="No", 0, $Peso_del_factor)
+
+     Cada pregunta dentro de un factor tiene el mismo peso.
+     Si la respuesta es "No" (error), la ponderación es 0.
+     Si es "Si" o "N/A", se aplica el peso completo.
+
+  c) Suma de ponderaciones por factor:
+     Ejemplo para PENC:
+     = IF(MIN(rango_preguntas_PENC)=0, 0, 15%)
+
+     Si alguna pregunta del factor tiene 0 (No respondió),
+     el factor completo vale 0. Si todas ≥ 1, vale su peso (ej: 15%).
+
+
+================================================================================
+  4. SCORE POR FACTOR ⚠️ LA QUE ESTÁ MAL ⚠️
+================================================================================
+
+  Hoja:   Evalucion (y su copia oculta "Evalucion (2)")
+  Celda:  Fila 17 (factor "Apertura y cierre corporativo")
+
+  ❌ ACTUAL (INCORRECTA):
+     = +F17*1/G17/100
+
+     Ejemplo: 3 respuestas correctas de 4 preguntas
+     → 3 * 1 / 4 / 100 = 0.0075 (0.75%) ← MAL
+
+  ✅ DEBERÍA SER:
+     = +F17*1/G17
+
+     Ejemplo: 3 respuestas correctas de 4 preguntas
+     → 3 * 1 / 4 = 0.75 (75%) ← BIEN
+
+  EXPLICACIÓN DEL ERROR:
+    El cálculo original divide POR SEGUNDA VEZ entre 100.
+    Excel evalúa: (F17 × 1) ÷ G17 ÷ 100
+    F17*1/G17 ya da el porcentaje (ej: 0.75 = 75%).
+    Al dividir otra vez por 100, el score queda 100× más pequeño.
+
+  IMPACTO:
+    Todos los scores de factores individuales están 100×
+    disminuidos. Esto se arrastra a:
+    - Las tablas dinámicas (promedios incorrectos)
+    - Los gráficos en la hoja "Graficos"
+    - El ranking de agentes
+    - El reporte PowerPoint semanal
+
+  NOTA: Este error está DUPLICADO en la hoja oculta "Evalucion (2)"
+        (celda similar, fórmula idéntica).
+
+
+================================================================================
+  5. CLASIFICACIÓN CRÍTICA
+================================================================================
+
+  Hoja:   Evalucion
+  Celda:  G6
+
+  = IF($G$6 <= 90%, "Critica", "No Critica")
+
+  Si el score general de la evaluación es ≤ 90%,
+  se clasifica como "Crítica" (requiere atención).
+  Si es > 90%, es "No Crítica".
+
+  Esta clasificación se usa para:
+  - Identificar muestras críticas en la BD (columna BH)
+  - Reportar en el PPT semanal las evaluaciones críticas
+
+
+================================================================================
+  6. CUARTILIZACIÓN (Q1 - Q4)
+================================================================================
+
+  Hoja:   Resultado por agente
+
+  a) Cálculo de cuartiles (sobre columna K = Score):
+     = QUARTILE.INC(K:K, 4)   → Q4 (máximo)
+     = QUARTILE.INC(K:K, 3)   → Q3 (percentil 75)
+     = QUARTILE.INC(K:K, 2)   → Q2 (mediana)
+     = QUARTILE.INC(K:K, 1)   → Q1 (percentil 25)
+
+  b) Asignación de cuartil a cada agente:
+     = IF(B11="Total general", "",
+          IF(K11="", "",
+             CONCATENATE("Q",
+                IF(K11 > Q3, 1,
+                   IF(AND(K11 > Q2, K11 <= Q3), 2,
+                      IF(AND(K11 > Q1, K11 <= Q2), 3,
+                         IF(K11 <= Q1, 4)))))))
+
+  Explicación:
+    Q1 = Mejor desempeño (arriba del percentil 75)
+    Q2 = Buen desempeño (entre mediana y Q3)
+    Q3 = Desempeño regular (entre Q1 y mediana)
+    Q4 = Menor desempeño (debajo del percentil 25)
+
+    NOTA: Los cuartiles están INVERTIDOS vs lo convencional.
+    Q1 = mejores (arriba de Q3 estadístico).
+    Q4 = peores (abajo de Q1 estadístico).
+
+
+================================================================================
+  7. CUMPLIMIENTO vs NO CUMPLE
+================================================================================
+
+  Hoja:   Resultado por agente
+
+  = IF(B11="Total general", "",
+       IF(J11="", "",
+          IF(AND(C11=$T$16, K11>=$T$17), "Cumple",
+             IF(AND(C11=$U$16, K11>=$U$17), "Cumple",
+                IF(AND(C11=$V$16, K11>=$V$17), "Cumple", "No Cumple")))))
+
+  Explicación:
+    Cada campaña tiene un umbral de score diferente:
+    - Campaña en T16 → umbral en T17
+    - Campaña en U16 → umbral en U17
+    - Campaña en V16 → umbral en V17
+    
+    Si el score del agente >= umbral de su campaña → "Cumple"
+    Si no → "No Cumple"
+
+  Conteo de cuántos cumplen:
+     = COUNTIF(L:L, "Q1")   → Agentes en Q1
+     = COUNTIF(L:L, "Q2")
+     = COUNTIF(L:L, "Q3")
+     = COUNTIF(L:L, "Q4")
+
+
+================================================================================
+  8. ANTIGÜEDAD DEL AGENTE
+================================================================================
+
+  Hoja:   HC (Scorecard)
+
+  = IF(TODAY()-C2 <= 30, "1 a 30 dias",
+       IF(TODAY()-C2 <= 60, "31 a 60 dias", "> 60 dias"))
+
+  Explicación:
+    Calcula los días desde la fecha de ingreso del agente (columna C)
+    hasta la fecha actual y clasifica:
+    - 0-30 días:    Nuevo (1 a 30 días)
+    - 31-60 días:   En formación
+    - > 60 días:    Experimentado
+
+  Semana del año:
+     = WEEKNUM(fecha)
+
+
+================================================================================
+  9. GRÁFICOS - GETPIVOTDATA
+================================================================================
+
+  Hoja:   Graficos (8 gráficos)
+  Estas fórmulas extraen datos de los pivotes para alimentar los charts.
+
+  a) Score calidad del mes actual:
+     = GETPIVOTDATA("Score calidad", $A$3, "mes", $K$1)
+
+  b) Precisión PENC:
+     = GETPIVOTDATA("PENC", $A$3)
+
+  c) Precisión PECUF:
+     = GETPIVOTDATA(" PECUF", $A$3)
+
+  d) Precisión PECNE:
+     = GETPIVOTDATA(" PECNE", $A$3)
+
+  e) Precisión PECCUM:
+     = GETPIVOTDATA(" PECCUM", $A$3)
+
+  f) Conteo de agentes evaluados:
+     = GETPIVOTDATA("Count of agent count", $A$3,
+                    "mes", TEXT(TODAY(), "MMM-YY"))
+
+  g) Comparativa mes anterior:
+     = GETPIVOTDATA("Score calidad", $A$3, "mes", "jun-26")
+     = GETPIVOTDATA("Score calidad", $A$3, "mes", "jul-26")
+
+     (Nota: los meses están escritos como texto "jun-26", "jul-26",
+      generados por la fórmula =TEXT(fecha, "mmm-yy") en la BD)
+
+  h) Fecha del reporte:
+     = TEXT(TODAY(), "mmm-yy")
+
+  i) Agentes únicos evaluados:
+     = GETPIVOTDATA("Sum of agent unico", $A$3, "mes", $K$1)
+
+  j) Ratio de agentes por muestra:
+     = +K4/K5   (total agentes / total muestras)
+
+
+================================================================================
+  10. MUESTRA CRÍTICA
+================================================================================
+
+  Hoja:   BD
+
+  = IF(BH4="Critica", 1, 0)
+
+  Si la evaluación fue clasificada como "Crítica" (score <= 90%),
+  se marca como Muestra Crítica = 1.
+
+  Para mostrar solo las críticas:
+  = IF(Data[[#This Row],[Muestra Critica]]>0,
+        Data[[#This Row],[Muestra Critica]], "")
+
+
+================================================================================
+  11. AGRUPACIÓN MENSUAL
+================================================================================
+
+  Hoja:   BD
+  Celda:  IN4
+
+  = TEXT(C4, "mmm-yy")
+
+  Convierte la fecha de creación (columna C) a formato de mes
+  abreviado (ej: "jul-26", "jun-26", "may-26").
+
+  Este campo se usa como filtro en los pivotes para agrupar
+  evaluaciones por mes.
+
+
+================================================================================
+  12. XLOOKUP DESDE HC
+================================================================================
+
+  Hoja:   BD
+  Celda:  IS4
+
+  = IFERROR(XLOOKUP(A:A, HC!B:B, HC!E:E, , 0), 0)
+
+  Busca el nombre del agente (columna A de BD) en la columna B de HC
+  y trae el valor de la columna E de HC (alguna métrica del scorecard).
+
+  NOTA: XLOOKUP con A:A (columna completa) es ineficiente.
+        Debería usarse un rango específico A2:A420.
+
+
+================================================================================
+  13. ERRORES #REF! (referencias rotas) ⚠️
+================================================================================
+
+  En la hoja BD se encontraron MÚLTIPLES fórmulas con #REF!:
+
+  ❌ = IF(#REF!="No", #REF!, "")
+
+  Estas referencias se rompieron porque se ELIMINARON columnas
+  después de crear las fórmulas. Las preguntas que apuntan a esas
+  columnas NO SE ESTÁN EVALUANDO.
+
+  Ubicaciones aproximadas:
+  - Cerca de las columnas AQ, AR (posiblemente preguntas 29-31)
+  - Cerca de la columna HT (posiblemente "venta cruzada")
+  - Cerca de la columna HU (posiblemente "indagar necesidades")
+
+  Las preguntas afectadas SIEMPRE dan error y NO contribuyen al score.
+
+
+================================================================================
+  14. RANGOS INCONSISTENTES ENTRE EVALUACIÓN Y COPIA
+================================================================================
+
+  El archivo tiene dos hojas de evaluación:
+  - "Evalucion" (visible, activa)
+  - "Evalucion (2)" (oculta, posible respaldo)
+
+  HAY DIFERENCIAS en los rangos:
+
+  Fórmula                    | Evalucion | Evalucion(2) | Diferencia
+  ---------------------------|-----------|--------------|-----------
+  SUM(H17:H...)              | 67        | 65           | 2 filas
+  COUNTIF(D51:D..., "No")    | 63        | 61           | 2 filas
+  COUNTIF(D64:D..., "No")    | 67        | 65           | 2 filas
+
+  La copia oculta tiene rangos diferentes, lo que significa que
+  está DESACTUALIZADA y si alguien la usa accidentalmente dará
+  resultados distintos.
+
+  POSIBLE CAUSA: Se agregaron/quitaron preguntas del formulario
+  y solo se actualizó la hoja visible.
+
+
+================================================================================
+  15. INDICADORES DEL DASHBOARD (PPT Semanal)
+================================================================================
+
+  Archivo: Performance Semanal – Calidad.pptx (19 slides)
+
+  Las métricas clave del PPT se calculan así:
+
+  a) Score General = GETPIVOTDATA("Score calidad", ...)
+
+  b) Score por Supervisor = Pivot filtrado por supervisor
+
+  c) Score por Campaña = Pivot filtrado por campaña
+
+  d) Top 5 Factores Causales:
+     1. Registro CRM
+     2. Fraude
+     3. Términos y condiciones
+     4. Resumen Comercial
+     5. Centros de Pago
+
+  e) Aseguramientos focalizados:
+     Score QA = GETPIVOTDATA("Score calidad", ..., filtro "Aseguramiento")
+     HC Auditado = COUNTIF(rango, "Auditado")
+     HC Activo = COUNTIF(rango, "Activo")
+
+  f) Histórico de Score:
+     Se compara mes actual vs mes anterior usando GETPIVOTDATA
+     con filtros "jun-26", "jul-26", etc.
+
+  g) Cuartilización por antigüedad:
+     Se cruzan los datos de antigüedad (HC) con los cuartiles
+     (Resultado por agente).
+
+
+================================================================================
+  NOTAS ADICIONALES
+================================================================================
+
+  1. Las fórmulas están en 14 hojas (próximamente 11 en OJT).
+  2. 9,298 fórmulas en la hoja BD (la mayoría repetidas por fila).
+  3. Los pesos de los errores están HARDCODEADOS en la fila 2 de BD.
+  4. Los umbrales de cumplimiento están en T16:V17 de "Resultado por agente".
+  5. Todos los gráficos (8) se alimentan de los pivotes vía GETPIVOTDATA.
+  6. Los slicers filtran por: Supervisor, Semana, Campaña, Auditor, Outbound.
+
+========================================================================
+  FIN DE DOCUMENTACIÓN - INGRIS
+========================================================================
