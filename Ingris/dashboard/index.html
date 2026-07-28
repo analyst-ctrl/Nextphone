@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Calidad - Ingris</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg-primary:#0f1117;--bg-secondary:#1a1d27;--bg-card:#1e2130;--bg-card-hover:#252838;--bg-input:#161922;--border-color:#2a2d3e;--text-primary:#e8eaf0;--text-secondary:#8b8fa3;--text-muted:#5a5e72;--accent-blue:#4f8cff;--accent-green:#34d399;--accent-yellow:#fbbf24;--accent-red:#f87171;--accent-purple:#a78bfa;--accent-cyan:#22d3ee;--sidebar-width:240px;--radius:12px;--radius-sm:8px;--shadow:0 4px 24px rgba(0,0,0,0.3)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-width);background:var(--bg-secondary);border-right:1px solid var(--border-color);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform 0.3s}
+.sidebar-logo{padding:20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border-color)}
+.logo-icon{font-size:28px}
+.logo-text{font-weight:700;font-size:18px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-list{list-style:none;padding:12px 8px;flex:1}
+.nav-link{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--radius-sm);color:var(--text-secondary);text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s;cursor:pointer}
+.nav-link:hover{background:var(--bg-card);color:var(--text-primary)}
+.nav-link.active{background:linear-gradient(135deg,rgba(79,140,255,0.15),rgba(167,139,250,0.1));color:var(--accent-blue);font-weight:600}
+.nav-icon{font-size:18px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border-color);font-size:11px;color:var(--text-muted);text-align:center}
+
+/* MAIN */
+.main-content{margin-left:var(--sidebar-width);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:64px;display:flex;align-items:center;padding:0 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);gap:16px}
+.menu-toggle{display:none;background:none;border:none;color:var(--text-primary);font-size:24px;cursor:pointer}
+.page-title{font-size:18px;font-weight:600;flex:1}
+.header-info{display:flex;gap:12px}
+.badge-db,.badge-date{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-db{background:rgba(52,211,153,0.15);color:var(--accent-green)}
+.badge-date{background:rgba(79,140,255,0.15);color:var(--accent-blue)}
+
+/* FILTERS */
+.filters-bar{display:flex;align-items:end;gap:12px;padding:16px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);flex-wrap:wrap}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.filter-group select{padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:13px;cursor:pointer;min-width:150px}
+.filter-group select:focus{outline:none;border-color:var(--accent-blue)}
+
+/* CONTENT */
+.content-wrapper{padding:24px;flex:1}
+.dashboard-section{display:none}
+.dashboard-section.active{display:block}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:20px;text-align:center;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent-blue),var(--accent-purple))}
+.kpi-card.critica::before{background:linear-gradient(90deg,var(--accent-red),var(--accent-yellow))}
+.kpi-value{font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-card.critica .kpi-value{background:linear-gradient(135deg,var(--accent-red),var(--accent-yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-label{font-size:13px;color:var(--text-secondary);margin-top:4px;font-weight:500}
+.kpi-trend{font-size:12px;margin-top:4px;color:var(--text-muted)}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);overflow:hidden;margin-bottom:24px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:15px;font-weight:600}
+.card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.card-actions select,.card-actions input{padding:6px 10px;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-input);color:var(--text-primary);font-size:12px}
+.card-actions input{min-width:150px}
+.card-body{padding:20px}
+
+/* CHARTS */
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.chart-container{margin-top:20px;height:300px}
+canvas{max-height:350px;width:100%!important}
+
+/* TABLE */
+.table-responsive{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{text-align:left;padding:10px 12px;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border-color);white-space:nowrap;background:var(--bg-card);position:sticky;top:0}
+.data-table td{padding:10px 12px;border-bottom:1px solid rgba(42,45,62,0.5);white-space:nowrap}
+.data-table tbody tr:hover{background:var(--bg-card-hover)}
+.score-high{color:var(--accent-green);font-weight:600}
+.score-mid{color:var(--accent-yellow);font-weight:600}
+.score-low{color:var(--accent-red);font-weight:600}
+.badge-cuartil{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700}
+.q1{background:rgba(52,211,153,0.2);color:var(--accent-green)}
+.q2{background:rgba(79,140,255,0.2);color:var(--accent-blue)}
+.q3{background:rgba(251,191,36,0.2);color:var(--accent-yellow)}
+.q4{background:rgba(248,113,113,0.2);color:var(--accent-red)}
+.badge-cumple{color:var(--accent-green);font-weight:600}
+.badge-nocumple{color:var(--accent-red);font-weight:600}
+
+/* FACTORS */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.factor-card{padding:20px;border-radius:var(--radius-sm);border:1px solid var(--border-color);text-align:center}
+.factor-card.penc{border-left:3px solid var(--accent-blue)}
+.factor-card.pecuf{border-left:3px solid var(--accent-purple)}
+.factor-card.pecne{border-left:3px solid var(--accent-yellow)}
+.factor-card.peccum{border-left:3px solid var(--accent-red)}
+.factor-sigla{font-size:24px;font-weight:800}
+.factor-nombre{font-size:12px;color:var(--text-secondary);margin:4px 0}
+.factor-valor{font-size:28px;font-weight:700;color:var(--accent-cyan)}
+
+/* FOOTER */
+.footer{padding:12px 24px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);background:var(--bg-secondary);flex-wrap:wrap;gap:8px}
+.mt-2{margin-top:16px}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--text-muted);font-size:14px}
+.loading .spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--border-color);border-top-color:var(--accent-blue);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESPONSIVE */
+@media(max-width:1024px){.chart-grid-2{grid-template-columns:1fr}}
+@media(max-width:768px){
+.sidebar{transform:translateX(-100%)}
+.sidebar.open{transform:translateX(0)}
+.main-content{margin-left:0}
+.menu-toggle{display:block}
+.kpi-grid{grid-template-columns:repeat(2,1fr)}
+.filters-bar{flex-direction:column;align-items:stretch}
+.filter-group select{min-width:auto}
+.content-wrapper{padding:16px}
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="app">
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo"><span class="logo-icon">📊</span><span class="logo-text">Calidad Ingris</span></div>
+        <ul class="nav-list">
+            <li><a class="nav-link active" data-section="resumen"><span class="nav-icon">📈</span> Resumen</a></li>
+            <li><a class="nav-link" data-section="supervisores"><span class="nav-icon">👔</span> Supervisores</a></li>
+            <li><a class="nav-link" data-section="agentes"><span class="nav-icon">👤</span> Agentes</a></li>
+            <li><a class="nav-link" data-section="campanas"><span class="nav-icon">🎯</span> Campañas</a></li>
+            <li><a class="nav-link" data-section="atributos"><span class="nav-icon">📋</span> Atributos</a></li>
+            <li><a class="nav-link" data-section="historico"><span class="nav-icon">📅</span> Histórico</a></li>
+            <li><a class="nav-link" data-section="criticas"><span class="nav-icon">⚠️</span> Críticas</a></li>
+        </ul>
+        <div class="sidebar-footer">Nextphone Analytics · <span id="footerEval"></span></div>
+    </nav>
+
+    <main class="main-content">
+        <header class="topbar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h1 class="page-title">Dashboard de Calidad</h1>
+            <div class="header-info">
+                <span class="badge-db" id="badgeEval">Cargando...</span>
+                <span class="badge-date" id="currentDate"></span>
+            </div>
+        </header>
+
+        <section class="filters-bar">
+            <div class="filter-group"><label>📅 Datos</label><span style="color:var(--text-secondary);font-size:13px;padding:8px 0;">Generados desde Excel · <span id="badgeEval2">Cargando...</span></span></div>
+        </section>
+
+        <div class="content-wrapper">
+            <!-- RESUMEN -->
+            <section id="section-resumen" class="dashboard-section active">
+                <div class="kpi-grid" id="kpiGrid">
+                    <div class="kpi-card"><div class="kpi-value" id="kpiScore">--</div><div class="kpi-label">Score General</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpiEvaluaciones">--</div><div class="kpi-label">Evaluaciones</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpiAgentes">--</div><div class="kpi-label">Agentes</div></div>
+                    <div class="kpi-card"><div class="kpi-value" id="kpiSupervisores">--</div><div class="kpi-label">Supervisores</div></div>
+                    <div class="kpi-card critica"><div class="kpi-value" id="kpiCriticas">--</div><div class="kpi-label">Críticas</div><div class="kpi-trend" id="kpiCriticasPct"></div></div>
+                </div>
+                <div class="chart-grid-2">
+                    <div class="card"><div class="card-header"><h3>Score por Componente</h3></div><div class="card-body"><canvas id="chartComponentes"></canvas></div></div>
+                    <div class="card"><div class="card-header"><h3>Pesos vs Precisión</h3></div><div class="card-body"><canvas id="chartPesos"></canvas></div></div>
+                </div>
+            </section>
+
+            <!-- SUPERVISORES -->
+            <section id="section-supervisores" class="dashboard-section">
+                <div class="card">
+                    <div class="card-header"><h3>Ranking de Supervisores</h3></div>
+                    <div class="card-body">
+                        <div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Supervisor</th><th>Score</th><th>PENC</th><th>PECUF</th><th>PECNE</th><th>PECCUM</th><th>Eval.</th><th>Agentes</th><th>Crít.</th><th>% Crít.</th></tr></thead><tbody id="tbodySupervisores"></tbody></table></div>
+                        <div class="chart-container"><canvas id="chartSupervisores"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AGENTES -->
+            <section id="section-agentes" class="dashboard-section">
+                <div class="card">
+                    <div class="card-header"><h3>Ranking de Agentes</h3><div class="card-actions"><select id="ordenAgentes" onchange="renderAgentes()"><option value="score_desc">Score ↓</option><option value="score_asc">Score ↑</option><option value="nombre">Nombre A-Z</option></select><input type="text" id="buscarAgente" placeholder="🔍 Buscar..." oninput="renderAgentes()"></div></div>
+                    <div class="card-body">
+                        <div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Agente</th><th>Supervisor</th><th>Score</th><th>Cuartil</th><th>Cumple</th><th>PENC</th><th>PECUF</th><th>PECNE</th><th>PECCUM</th><th>Eval.</th><th>Crít.</th></tr></thead><tbody id="tbodyAgentes"></tbody></table></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CAMPAÑAS -->
+            <section id="section-campanas" class="dashboard-section">
+                <div class="chart-grid-2">
+                    <div class="card"><div class="card-header"><h3>Score por Campaña</h3></div><div class="card-body"><canvas id="chartCampanas"></canvas></div></div>
+                    <div class="card"><div class="card-header"><h3>Comparativa</h3></div><div class="card-body"><canvas id="chartCampanasRadar"></canvas></div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h3>Detalle por Campaña</h3></div>
+                    <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Campaña</th><th>Score</th><th>PENC</th><th>PECUF</th><th>PECNE</th><th>PECCUM</th><th>Eval.</th><th>Agentes</th><th>Crít.</th></tr></thead><tbody id="tbodyCampanas"></tbody></table></div></div>
+                </div>
+            </section>
+
+            <!-- ATRIBUTOS -->
+            <section id="section-atributos" class="dashboard-section">
+                <div class="chart-grid-2">
+                    <div class="card"><div class="card-header"><h3>Precisión por Tipo de Error</h3></div><div class="card-body"><div class="info-grid" id="factoresGrid"></div></div></div>
+                    <div class="card"><div class="card-header"><h3>Score por Atributo</h3></div><div class="card-body"><canvas id="chartAtributos"></canvas></div></div>
+                </div>
+            </section>
+
+            <!-- HISTÓRICO -->
+            <section id="section-historico" class="dashboard-section">
+                <div class="card"><div class="card-header"><h3>Tendencia Mensual de Scores</h3></div><div class="card-body"><canvas id="chartHistorico"></canvas></div></div>
+                <div class="card mt-2"><div class="card-header"><h3>Evolución por Componente</h3></div><div class="card-body"><canvas id="chartHistoricoComp"></canvas></div></div>
+            </section>
+
+            <!-- CRÍTICAS -->
+            <section id="section-criticas" class="dashboard-section">
+                <div class="card"><div class="card-header"><h3>⚠️ Evaluaciones Críticas (Score &lt; 90%)</h3></div>
+                <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Agente</th><th>Supervisor</th><th>Fecha</th><th>Proyecto</th><th>Score</th><th>PENC</th><th>PECUF</th><th>PECNE</th><th>PECCUM</th></tr></thead><tbody id="tbodyCriticas"></tbody></table></div></div></div>
+            </section>
+        </div>
+
+        <footer class="footer">
+            <span>Ingris Dashboard · Datos corregidos ✅</span>
+            <span id="footerDate"></span>
+        </footer>
+    </main>
+</div>
+
+<script>
+// ═══ DATA: Cargada desde JSON externo ═══
+let DATA = null;
+const CHART = {};
+
+function $(id) { return document.getElementById(id); }
+function sc(val) { return val >= 85 ? 'score-high' : val >= 70 ? 'score-mid' : 'score-low'; }
+
+async function init() {
+    document.getElementById('menuToggle').onclick = () => document.getElementById('sidebar').classList.toggle('open');
+    document.querySelectorAll('.nav-link').forEach(l => l.onclick = () => {
+        document.querySelectorAll('.nav-link,.dashboard-section').forEach(e => e.classList.remove('active'));
+        l.classList.add('active');
+        const s = document.getElementById('section-' + l.dataset.section);
+        if (s) { s.classList.add('active'); renderSection(l.dataset.section); }
+        if (innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+    });
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-PA',{month:'long',year:'numeric'});
+    document.getElementById('footerDate').textContent = 'Actualizado: ' + new Date().toLocaleDateString('es-PA');
+    await loadData();
+}
+
+async function loadData() {
+    try {
+        const resp = await fetch('data/calidad_data.json');
+        DATA = await resp.json();
+        document.getElementById('badgeEval').textContent = DATA.resumen.total_evaluaciones + ' eval.';
+        document.getElementById('footerEval').textContent = DATA.resumen.total_evaluaciones + ' eval.';
+        document.getElementById('badgeEval2').textContent = DATA.resumen.total_evaluaciones + ' eval. · ' + DATA.resumen.total_agentes + ' agentes';
+        renderResumen();
+    } catch(e) {
+        document.querySelector('.content-wrapper').innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando datos...<br><small>Si esto persiste, ejecuta: python scripts/export_json.py</small></div>';
+    }
+}
+
+
+
+function renderSection(section) {
+    const fns = { supervisores: renderSupervisores, agentes: renderAgentes, campanas: renderCampanas, atributos: renderAtributos, historico: renderHistorico, criticas: renderCriticas };
+    if (fns[section]) fns[section]();
+}
+
+function renderResumen() {
+    const d = DATA.resumen;
+    $('kpiScore').textContent = d.score_promedio + '%';
+    $('kpiEvaluaciones').textContent = d.total_evaluaciones;
+    $('kpiAgentes').textContent = d.total_agentes;
+    $('kpiSupervisores').textContent = d.total_supervisores;
+    $('kpiCriticas').textContent = d.total_criticas;
+    $('kpiCriticasPct').textContent = d.pct_criticas + '% del total';
+    
+    const c = DATA.componentes;
+    if (CHART.componentes) CHART.componentes.destroy();
+    CHART.componentes = new Chart($('chartComponentes'), {
+        type: 'bar',
+        data: { labels: ['PENC','PECUF','PECNE','PECCUM'], datasets: [{ label: 'Precisión', data: [c.penc,c.pecuf,c.pecne,c.peccum], backgroundColor: ['rgba(79,140,255,0.7)','rgba(167,139,250,0.7)','rgba(251,191,36,0.7)','rgba(248,113,113,0.7)'], borderColor: ['#4f8cff','#a78bfa','#fbbf24','#f87171'], borderWidth: 2, borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa3' } }, x: { grid: { display: false }, ticks: { color: '#8b8fa3' } } } }
+    });
+    
+    if (CHART.pesos) CHART.pesos.destroy();
+    CHART.pesos = new Chart($('chartPesos'), {
+        type: 'radar',
+        data: {
+            labels: ['PENC','PECUF','PECNE','PECCUM'],
+            datasets: [
+                { label: 'Precisión', data: [c.penc,c.pecuf,c.pecne,c.peccum], borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.1)', borderWidth: 2, pointBackgroundColor: '#4f8cff' },
+                { label: 'Máximo', data: [100,100,100,100], borderColor: '#8b8fa3', borderDash: [5,5], borderWidth: 1, pointBackgroundColor: '#8b8fa3', backgroundColor: 'transparent' }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, angleLines: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#8b8fa3', backdropColor: 'transparent' }, pointLabels: { color: '#8b8fa3' } } }, plugins: { legend: { labels: { color: '#8b8fa3', font: { size: 11 } } } } }
+    });
+}
+
+function renderSupervisores() {
+    if (!DATA) return;
+    const s = DATA.supervisores;
+    $('tbodySupervisores').innerHTML = s.map((x,i) => `<tr><td>${i+1}</td><td><strong>${x.supervisor}</strong></td><td class="${sc(x.score_promedio)}">${x.score_promedio}%</td><td>${x.penc}%</td><td>${x.pecuf}%</td><td>${x.pecne}%</td><td>${x.peccum}%</td><td>${x.evaluaciones}</td><td>${x.agentes}</td><td>${x.criticas}</td><td class="${x.pct_criticas>20?'score-low':'score-high'}">${x.pct_criticas}%</td></tr>`).join('');
+    if (CHART.supervisores) CHART.supervisores.destroy();
+    CHART.supervisores = new Chart($('chartSupervisores'), {
+        type: 'bar', data: { labels: s.map(x => x.supervisor.split(' ').slice(0,2).join(' ')), datasets: [{ label: 'Score', data: s.map(x => x.score_promedio), backgroundColor: 'rgba(79,140,255,0.7)', borderColor: '#4f8cff', borderWidth: 2, borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa3' } }, y: { grid: { display: false }, ticks: { color: '#8b8fa3', font: { size: 11 } } } } }
+    });
+}
+
+function renderAgentes() {
+    if (!DATA) return;
+    let a = [...DATA.agentes];
+    const ord = document.getElementById('ordenAgentes').value;
+    const busq = document.getElementById('buscarAgente').value.toLowerCase();
+    if (ord === 'score_desc') a.sort((a,b) => b.score_promedio - a.score_promedio);
+    else if (ord === 'score_asc') a.sort((a,b) => a.score_promedio - b.score_promedio);
+    else a.sort((a,b) => a.agente.localeCompare(b.agente));
+    if (busq) a = a.filter(x => x.agente.toLowerCase().includes(busq));
+    $('tbodyAgentes').innerHTML = a.map((x,i) => `<tr><td>${i+1}</td><td><strong>${x.agente}</strong></td><td>${x.supervisor||'—'}</td><td class="${sc(x.score_promedio)}">${x.score_promedio}%</td><td><span class="badge-cuartil ${(x.cuartil||'Q4').toLowerCase()}">${x.cuartil||'—'}</span></td><td class="${x.cumple==='Cumple'?'badge-cumple':'badge-nocumple'}">${x.cumple}</td><td>${x.penc}%</td><td>${x.pecuf}%</td><td>${x.pecne}%</td><td>${x.peccum}%</td><td>${x.evaluaciones}</td><td>${x.criticas}</td></tr>`).join('');
+}
+
+function renderCampanas() {
+    if (!DATA) return;
+    const c = DATA.campanas;
+    $('tbodyCampanas').innerHTML = c.map(x => `<tr><td><strong>${x.campana}</strong></td><td class="${sc(x.score_promedio)}">${x.score_promedio}%</td><td>${x.penc}%</td><td>${x.pecuf}%</td><td>${x.pecne}%</td><td>${x.peccum}%</td><td>${x.evaluaciones}</td><td>${x.agentes}</td><td>${x.criticas}</td></tr>`).join('');
+    
+    if (CHART.campanas) CHART.campanas.destroy();
+    CHART.campanas = new Chart($('chartCampanas'), {
+        type: 'bar', data: { labels: c.map(x=>x.campana), datasets: [{ label: 'Score', data: c.map(x=>x.score_promedio), backgroundColor: ['rgba(79,140,255,0.7)','rgba(167,139,250,0.7)'], borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa3' } }, x: { grid: { display: false }, ticks: { color: '#8b8fa3' } } } }
+    });
+    
+    if (CHART.campanasRadar) CHART.campanasRadar.destroy();
+    CHART.campanasRadar = new Chart($('chartCampanasRadar'), {
+        type: 'radar', data: { labels: ['PENC','PECUF','PECNE','PECCUM'], datasets: c.map((x,i) => ({ label: x.campana, data: [x.penc,x.pecuf,x.pecne,x.peccum], backgroundColor: i===0?'rgba(79,140,255,0.1)':'rgba(167,139,250,0.1)', borderColor: i===0?'#4f8cff':'#a78bfa', borderWidth: 2, pointBackgroundColor: i===0?'#4f8cff':'#a78bfa' })) },
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, angleLines: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#8b8fa3', backdropColor: 'transparent' }, pointLabels: { color: '#8b8fa3' } } }, plugins: { legend: { labels: { color: '#8b8fa3', font: { size: 11 } } } } }
+    });
+}
+
+function renderAtributos() {
+    if (!DATA) return;
+    const a = DATA.atributos;
+    $('factoresGrid').innerHTML = a.map(x => `<div class="factor-card ${x.sigla.toLowerCase()}"><div class="factor-sigla">${x.sigla}</div><div class="factor-nombre">${x.nombre}</div><div class="factor-valor">${x.valor}%</div></div>`).join('');
+    
+    if (CHART.atributos) CHART.atributos.destroy();
+    CHART.atributos = new Chart($('chartAtributos'), {
+        type: 'bar', data: { labels: a.map(x=>x.sigla), datasets: [{ data: a.map(x=>x.valor), backgroundColor: ['rgba(79,140,255,0.7)','rgba(167,139,250,0.7)','rgba(251,191,36,0.7)','rgba(248,113,113,0.7)'], borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa3' } }, x: { grid: { display: false }, ticks: { color: '#8b8fa3' } } } }
+    });
+}
+
+function renderHistorico() {
+    if (!DATA) return;
+    const h = DATA.historico;
+    if (!h.length) return;
+    
+    if (CHART.historico) CHART.historico.destroy();
+    CHART.historico = new Chart($('chartHistorico'), {
+        type: 'line', data: { labels: h.map(x=>x.mes_texto), datasets: [{ label: 'Score General', data: h.map(x=>x.score_promedio), borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#4f8cff', pointRadius: 5, borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8b8fa3' } } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa3' } }, x: { grid: { display: false }, ticks: { color: '#8b8fa3' } } } }
+    });
+    
+    if (CHART.historicoComp) CHART.historicoComp.destroy();
+    CHART.historicoComp = new Chart($('chartHistoricoComp'), {
+        type: 'line', data: { labels: h.map(x=>x.mes_texto), datasets: [
+            { label: 'PENC', data: h.map(x=>x.penc), borderColor: '#4f8cff', tension: 0.4, pointRadius: 4, borderWidth: 2, fill: false },
+            { label: 'PECUF', data: h.map(x=>x.pecuf), borderColor: '#a78bfa', tension: 0.4, pointRadius: 4, borderWidth: 2, fill: false },
+            { label: 'PECNE', data: h.map(x=>x.pecne), borderColor: '#fbbf24', tension: 0.4, pointRadius: 4, borderWidth: 2, fill: false },
+            { label: 'PECCUM', data: h.map(x=>x.peccum), borderColor: '#f87171', tension: 0.4, pointRadius: 4, borderWidth: 2, fill: false }
+        ] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8b8fa3', font: { size: 11 } } } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b8fa3' } }, x: { grid: { display: false }, ticks: { color: '#8b8fa3' } } } }
+    });
+}
+
+function renderCriticas() {
+    if (!DATA) return;
+    const c = DATA.criticas;
+    if (!c.length) { $('tbodyCriticas').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">✅ No hay evaluaciones críticas</td></tr>'; return; }
+    $('tbodyCriticas').innerHTML = c.map(x => `<tr><td><strong>${x.agente}</strong></td><td>${x.supervisor||'—'}</td><td>${x.fecha}</td><td>${x.proyecto}</td><td class="score-low"><strong>${x.score}%</strong></td><td>${x.penc}%</td><td>${x.pecuf}%</td><td>${x.pecne}%</td><td>${x.peccum}%</td></tr>`).join('');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
