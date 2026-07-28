@@ -1,0 +1,180 @@
+================================================================================
+  ANALISIS WINBACK SOHO - JULIO 2026
+  Iniciativa Nextphone
+  Gerente: Amir Josue Rodriguez Chavarria
+================================================================================
+
+  Base: Winback SOHO 2026 Julio-Iniciativa Nextphone 17 julio 2026.xlsx
+  Registros analizados: 210 clientes
+  Fecha del analisis: Julio 2026
+
+
+================================================================================
+  1. RESUMEN EJECUTIVO
+================================================================================
+
+  Total clientes en base Winback:      210
+  MRC total recuperable:              $8,242.40
+  RGU total (servicios):              382
+  MRC promedio por cliente:           $39.25
+  MRC maximo:                         $204.00
+  RGU maximo:                         12
+
+  PRIORIDAD ALTA   (MRC>$50 o RGU>3):   42 clientes (20.0%) - $3,987.96
+  PRIORIDAD MEDIA  (MRC>$20 o RGU>1):   96 clientes (45.7%) - $3,191.21
+  PRIORIDAD BAJA   (resto):            72 clientes (34.3%) - $1,063.23
+
+  Punto critico: 58 clientes (27.6%) no tienen NINGUN dato de contacto
+  (sin telefono, sin correo, sin persona de contacto)
+
+
+================================================================================
+  2. RENDIMIENTO POR EJECUTIVA
+================================================================================
+
+  EJECUTIVA             CLIENTES   MRC TOTAL     RGU TOTAL   MRC PROMEDIO
+  --------------------  --------   ----------    ---------   ------------
+  Michelle Zambrano     53         $2,362.46     109         $44.57
+  Nailyn Martinez J.    52         $2,319.23     111         $44.60
+  Solanye Acuña         53         $1,875.00     80          $35.38
+  Maria Fernanda Rivas  52         $1,685.71     82          $32.42
+
+  Las 4 ejecutivas tienen cargas equilibradas (52-53 clientes c/u).
+  Michelle Zambrano y Nailyn Martinez Johnson tienen el MRC total mas alto.
+
+
+================================================================================
+  3. RAZONES DE SALIDA
+================================================================================
+
+  RAZON                          CLIENTES   MRC TOTAL     %
+  -----------------------------  --------   ----------    -----
+  Solicitado por el Cliente      187        $7,655.15     89.0%
+  Migracion Post-Pre             19         $503.50       9.0%
+  (en blanco)                    2          $43.75        1.0%
+  Cliente incumple Pago          2          $40.00        1.0%
+
+  El 89% de las bajas son por solicitud del cliente.
+  Solo 2 clientes por incumplimiento de pago (bajo riesgo crediticio).
+
+
+================================================================================
+  4. CATEGORIZACION POR MRC
+================================================================================
+
+  CATEGORIA      RANGO         CLIENTES   MRC TOTAL     % CLIENTES
+  -------------  ------------  --------   ----------    ----------
+  VIP            MRC >= $100   11         $1,701.75     5.2%
+  Premium        $50-$99.99    54         $3,342.21     25.7%
+  Estandar       $20-$49.99    81         $2,459.94     38.6%
+  Basico         MRC < $20     64         $738.50       30.5%
+
+  El 30.9% del MRC total esta en clientes Premium.
+  Clientes VIP son solo 11 pero aportan $1,701.75 (20.6% del total).
+
+
+================================================================================
+  5. DISTRIBUCION DE RGU (Cantidad de servicios por cliente)
+================================================================================
+
+  RGU     CLIENTES   % ACUMULADO
+  ------  --------   -----------
+  1       141        67.1%
+  2       31         81.9%
+  3       15         89.0%
+  4       9          93.3%
+  5       5          95.7%
+  6       5          98.1%
+  8       1          98.6%
+  11      1          99.0%
+  12      2          100.0%
+
+  El 67% de los clientes tiene solo 1 servicio (RGU=1).
+  Clientes con RGU>=4 son clave: solo 23 clientes (11%) pero alto MRC.
+
+
+================================================================================
+  6. TOP 10 CLIENTES POR MRC
+================================================================================
+
+  #  CLIENTE                         EJECUTIVA          MRC      RGU
+  -- ------------------------------- ------------------ -------- ---
+  1  (SIN NOMBRE)                    Michelle Zambrano  $204.00  12
+  2  AMOLMA, SA                      Nailyn Martinez    $180.00  12
+  3  (SIN NOMBRE)                    Michelle Zambrano  $170.00  5
+  4  PH COUNTRY CLUB -               Nailyn Martinez    $166.00  8
+  5  TECNO COOL S A                  Maria Fernanda R.  $165.00  11
+  6  (SIN NOMBRE)                    Solanye Acuña      $150.00  6
+  7  INVERSIONES VALMAR, S,A         Michelle Zambrano  $150.00  6
+  8  (SIN NOMBRE)                    Solanye Acuña      $150.00  2
+  9  Atenea Shop                     Solanye Acuña      $131.25  5
+  10 UPPER EAST TOWER                Solanye Acuña      $124.00  4
+
+  Nota: Varios top clients no tienen nombre registrado (urgente identificar).
+
+
+================================================================================
+  7. TOP 10 PLANES MAS FRECUENTES
+================================================================================
+
+  #  PLAN                              CLIENTES   MRC TOTAL
+  -- ---------------------------------  --------   ----------
+  1  AIO DCM SMB LDI 1300 DATA SL      77         $2,529.25
+  2  DCM B2B LDI 2500 DSL              20         $1,027.25
+  3  MG DCM B2B LDI SL VWF             10         $767.50
+  4  DCM B2B LDI Sin Limites           7          $362.00
+  5  GX DCM B2B LDI 500 DSL VWF        7          $286.25
+  6  GX DCM SMB LDI 1300 DSL           6          $374.00
+  7  AIO DCM LDI Sin Limites A1        6          $315.50
+  8  AIO DCM Staff 300-3GB VWF         5          $146.72
+  9  DCM XS SMB LDI 1100 DATA 13GB     5          $99.00
+  10 Control SMB LDI 1300 DATA SL      4          $94.00
+
+
+================================================================================
+  8. HALLAZGOS Y RECOMENDACIONES
+================================================================================
+
+  HALLAZGO 1: 58 clientes (27.6%) sin datos de contacto
+    -> PRIORIDAD: Localizar a estos clientes para poder gestionar el winback.
+    -> Asignar a ejecutivas para busqueda en sistemas corporativos.
+    -> MRC en riesgo de estos clientes: $2,479.15
+
+  HALLAZGO 2: 57 clientes (27.1%) sin nombre registrado
+    -> La columna CLIENTE esta vacia en estos registros.
+    -> Revisar la fuente de datos o completar con informacion de sistema.
+
+  HALLAZGO 3: 141 clientes (67.1%) con RGU=1
+    -> Clientes con un solo servicio son mas propensos a cancelar.
+    -> Ofrecer paquetes convergentes para aumentar retencion.
+
+  HALLAZGO 4: El plan AIO DCM SMB LDI 1300 DATA SL domina (77 clientes)
+    -> 36.7% de los clientes tienen este plan.
+    -> Investigar si hay problema especifico con este plan.
+
+  HALLAZGO 5: 89% de bajas son por "Solicitado por el Cliente"
+    -> Poca informacion sobre la causa real.
+    -> Implementar encuesta de salida para conocer motivos exactos.
+
+  RECOMENDACIONES:
+
+  1. PRIORIDAD INMEDIATA: Identificar los 58 clientes sin contacto.
+     Asignar a ejecutivas y reportar avance semanal.
+
+  2. ATENCION PRIORIDAD ALTA: 42 clientes con $3,987.96 en MRC.
+     Contactar primero a estos clientes.
+
+  3. ESTRATEGIA POR CATEGORIA:
+     - VIP (11 clientes): Atencion personalizada por gerente.
+     - Premium (54 clientes): Ofertas de retencion con descuentos.
+     - Estandar (81 clientes): Campana de fidelizacion masiva.
+     - Basico (64 clientes): Up-sell a planes superiores.
+
+  4. SEGUIMIENTO SEMANAL:
+     - Reunion cada lunes para revisar avance de winback.
+     - Reporte de contactos realizados y recuperaciones.
+
+
+================================================================================
+  FIN DEL ANALISIS
+================================================================================
