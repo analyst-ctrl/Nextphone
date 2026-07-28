@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOHO - Reportes</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.1);padding:40px;max-width:600px;width:100%;text-align:center}
+.logo{font-size:48px;margin-bottom:10px}
+h1{font-size:28px;margin-bottom:4px;color:#1a1a2e}
+.sub{font-size:14px;color:#888;margin-bottom:30px}
+.links{display:flex;flex-direction:column;gap:12px}
+.links a{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 20px;border-radius:12px;text-decoration:none;font-size:16px;font-weight:600;transition:.3s}
+.links a.primary{background:#1a1a2e;color:#fff}
+.links a.primary:hover{background:#16213e;transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,26,46,.3)}
+.links a.secondary{background:#eef0f5;color:#1a1a2e}
+.links a.secondary:hover{background:#e2e5ec;transform:translateY(-2px)}
+.links a .arrow{font-size:20px}
+.footer{margin-top:30px;font-size:12px;color:#aaa}
+.footer span{color:#1a1a2e;font-weight:600}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">📊</div>
+  <h1>Amir_reporte provisional</h1>
+  <div class="sub">Proyecto SOHO · Iniciativa Nextphone · Julio 2026</div>
+  <div class="links">
+    <a href="consolidado.html" class="primary">
+      <span>📈</span> Dashboard Consolidado SOHO
+      <span class="arrow">→</span>
+    </a>
+    <a href="reporte_winback.html" class="secondary">
+      <span>🔍</span> Dashboard Winback
+      <span class="arrow">→</span>
+    </a>
+    <a href="Consolidado_SOHO_Julio2026.xlsx" class="secondary">
+      <span>📋</span> Reporte Excel Consolidado
+      <span class="arrow">→</span>
+    </a>
+    <a href="ANALISIS_WINBACK_JULIO2026.txt" class="secondary">
+      <span>📄</span> Análisis Winback (texto)
+      <span class="arrow">→</span>
+    </a>
+    <a href="diagramas/INSTRUCCIONES_armar_reporte_winback_excel.txt" class="secondary">
+      <span>📖</span> Instrucciones Excel
+      <span class="arrow">→</span>
+    </a>
+  </div>
+  <div class="footer">Gerente: <span>Amir Josue Rodriguez Chavarria</span></div>
+</div>
+</body>
+</html>
