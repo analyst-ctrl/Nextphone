@@ -167,6 +167,34 @@ BASE 4 (Winback SOHO) ───────────────────�
   └─────────────────────────────────────────────────────┘
 
 
+3.5. BASES RECORRIDAS (VICI DIALER)
+===============================================================================
+
+  Las 4 bases de datos se cargan en el sistema Vici Dialer para gestion
+  telefónica. Cada base contiene números de teléfono que el sistema
+  recorre (marca) automáticamente.
+
+  Métricas clave de "bases recorridas":
+  -------------------------------------
+  - Total de llamadas realizadas: 15,796
+  - Números únicos marcados:      7,063
+  - Intentos promedio por número: 2.24
+  - Máximos intentos a un número: 114
+  - Tasa de contacto:             41.5%
+  - Total contactados:            6,562
+
+  Distribución de recorridas por número:
+  -------------------------------------
+  - 1 vez:     3,554 números (50.3%)
+  - 2-3 veces: 2,569 números (36.4%)
+  - 4-5 veces:   586 números (8.3%)
+  - 6-10 veces:  287 números (4.1%)
+  - 11+ veces:    67 números (0.9%)
+
+  Esto permite medir la intensidad de gestión sobre cada base y
+  optimizar el número de intentos por cliente.
+
+
 4. OPCIONES PARA CREAR DASHBOARD
 ================================================================================
 

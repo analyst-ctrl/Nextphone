@@ -119,6 +119,16 @@ tr:hover td{background:#f0f4ff}
         <tbody id="vcStatusBody"></tbody></table>
       </div>
     </div>
+    <div class="card full">
+      <h2>Recorridas por Número (veces que se marcó cada base)</h2>
+      <div class="grid-4" id="vcPassSummary" style="margin-bottom:10px;"></div>
+      <div style="overflow-x:auto;max-height:260px;overflow-y:auto">
+        <table><thead><tr>
+          <th>#</th><th>Veces Marcado</th><th class="rt">Números</th><th class="rt">% del Total</th><th class="rt">Acumulado</th>
+        </tr></thead>
+        <tbody id="vcPassBody"></tbody></table>
+      </div>
+    </div>
   </div>
 
   <div class="source-tabs">
@@ -235,6 +245,7 @@ function renderKPI() {
     <div class="kpi-card warning" onclick="switchSource('wb',document.querySelector('[data-src=wb]'))"><div class="lbl">Winback - MRC</div><div class="val">${fmt$(D.wb.mrc_total)}</div><div class="sub">${D.wb.alta} prioridad alta</div></div>
     <div class="kpi-card danger" onclick="switchSource('wb',document.querySelector('[data-src=wb]'))"><div class="lbl">Winback Sin Contacto</div><div class="val">${D.wb.sin_contacto}</div><div class="sub">${(D.wb.sin_contacto/D.wb.total*100).toFixed(1)}% del total</div></div>
     <div class="kpi-card teal" onclick="switchSource('cs',document.querySelector('[data-src=cs]'))"><div class="lbl">Cross-sell Oportunidad</div><div class="val">${D.cs.sin_movil}</div><div class="sub">clientes sin móvil</div></div>
+    <div class="kpi-card purple" onclick="switchSource('vc',document.querySelector('[data-src=vc]'))"><div class="lbl">Bases Recorridas</div><div class="val">${D.vc.total_llamadas.toLocaleString()}</div><div class="sub">${D.vc.promedio} intentos promedio · ${D.vc.phones_unicos.toLocaleString()} n\u00fameros</div></div>
     <div class="kpi-card purple" onclick="switchSource('vc',document.querySelector('[data-src=vc]'))"><div class="lbl">Llamadas (Vici)</div><div class="val">${D.vc.total_llamadas.toLocaleString()}</div><div class="sub">${D.vc.phones_unicos.toLocaleString()} n\u00fameros \u00fanicos</div></div>
   `;
 }
@@ -528,6 +539,33 @@ function renderVici() {
   `;
 }
 
+function renderPassDetail() {
+  const pass = D.vc.pass;
+  const total = D.vc.phones_unicos;
+  const llamadas = D.vc.total_llamadas;
+  let sum = 0, rows = '';
+  const summary = {
+    '1 vez': pass.filter(p=>p.i===1).reduce((s,d)=>s+d.n,0),
+    '2-3 veces': pass.filter(p=>p.i>=2&&p.i<=3).reduce((s,d)=>s+d.n,0),
+    '4-5 veces': pass.filter(p=>p.i>=4&&p.i<=5).reduce((s,d)=>s+d.n,0),
+    '6-10 veces': pass.filter(p=>p.i>=6&&p.i<=10).reduce((s,d)=>s+d.n,0),
+    '11+ veces': pass.filter(p=>p.i>=11).reduce((s,d)=>s+d.n,0)
+  };
+  document.getElementById('vcPassSummary').innerHTML = Object.entries(summary).map(([k,v]) =>
+    `<div style="text-align:center;padding:10px;background:#f0f4ff;border-radius:6px;">
+      <div style="font-size:20px;font-weight:700;color:#1a1a2e;">${v.toLocaleString()}</div>
+      <div style="font-size:10px;color:#666;text-transform:uppercase;">${k}</div>
+    </div>`
+  ).join('');
+  pass.forEach((d,i) => {
+    sum += d.n;
+    const pct = (d.n/total*100).toFixed(1);
+    const acum = (sum/total*100).toFixed(1);
+    rows += `<tr><td>${i+1}</td><td><strong>${d.i}</strong></td><td class="rt">${d.n.toLocaleString()}</td><td class="rt">${pct}%</td><td class="rt">${acum}%</td></tr>`;
+  });
+  document.getElementById('vcPassBody').innerHTML = rows;
+}
+
 renderKPI();
 renderFuentes();
 renderMrcFuentes();
@@ -538,6 +576,7 @@ renderNp();
 renderWb();
 renderCs();
 renderVici();
+renderPassDetail();
 </script>
 </body>
 </html>
