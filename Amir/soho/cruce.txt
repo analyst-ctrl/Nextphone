@@ -3,7 +3,7 @@
   Gerente: Amir Josue Rodriguez Chavarria
 ==============================================================================
 
-  Fecha generacion: 2026-07-31 11:13
+  Fecha generacion: 2026-07-31 11:33
   Llave de cruce:  CUENTA / CUST_NO (Nextphone, Movil sin fijo, Cross-sell)
                    CLIENTE normalizado (Winback)
 
