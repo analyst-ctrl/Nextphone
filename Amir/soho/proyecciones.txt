@@ -1,0 +1,48 @@
+==============================================================================
+  PROYECCIONES SOHO - ESCENARIO WHAT-IF (valores por defecto)
+  Dashboard relacionado: proyecciones.html
+  Fuente: cruce de bases por CUENTA/CUST_NO (julio 2026)
+  Gerente: Amir Josue Rodriguez Chavarria
+==============================================================================
+
+  Metodologia: penetracion -> clientes = base x tasa%;
+               nuevo MRC/mes = base x tasa% x MRC unitario.
+
+------------------------------------------------------------------------------
+  1. SUPUESTOS POR INICIATIVA
+------------------------------------------------------------------------------
+   📱 Cross-sell Movil           base     55 | Tasa conversion (%)     15% | MRC unitario $49.84
+   📡 Cross-sell FLBBTV          base   3872 | Tasa conversion (%)      3% | MRC unitario $25.00
+   🔙 Winback                    base    140 | Tasa recuperacion (%)     15% | MRC unitario $56.57
+   🚀 Upgrade Convergente        base   1012 | Take rate (%)     10% | MRC unitario $5.00
+
+------------------------------------------------------------------------------
+  2. RESULTADOS (por mes)
+------------------------------------------------------------------------------
+   Iniciativa                       Clientes    Nuevo MRC
+   -------------------------------------------------------
+   Cross-sell Movil                        8      $411.18
+   Cross-sell FLBBTV                     116    $2,904.00
+   Winback                                21    $1,187.97
+   Upgrade Convergente                   101      $506.00
+   -------------------------------------------------------
+   TOTAL nuevo MRC/mes                   246    $5,009.15
+
+------------------------------------------------------------------------------
+  3. RESUMEN
+------------------------------------------------------------------------------
+   MRC actual (clientes unicos) ...........  $166,262.89
+   MRC proyectado total ...................  $171,272.04
+   Crecimiento esperado ...................       +3.01%
+   Clientes nuevos por mes ................          246
+   Upside anualizado (nuevo MRC x 12) .....   $60,109.80
+   Winback MRC en riesgo (base) ...........    $7,919.15
+
+------------------------------------------------------------------------------
+  NOTA: proyeccion consultiva (what-if). Los valores se pueden
+  ajustar en vivo en proyecciones.html. No incluye costos de
+  ejecucion ni horizonte temporal de implementacion.
+
+==============================================================================
+  FIN PROYECCIONES - AMIR / SOHO
+==============================================================================
