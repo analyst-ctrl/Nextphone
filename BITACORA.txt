@@ -42,6 +42,18 @@
          * Soporte UTF-8 en consola Windows y silencio del aviso de symlinks.
      - Pendiente: probar con grabaciones reales de llamadas; transcribir en lote.
 
+  3) TRANSCRIPCION DE AUDIO REAL (grabacion de Camtasia del dashboard)
+     - Archivo: C:\Users\Near\Documents\Camtasia Studio\recording dawshboard\
+       recording dawshboard.mp3 (36.6 MB, 25 min 25 s).
+       NO se subio a GitHub por su tamano (queda solo en el PC).
+     - Modelo base, idioma detectado: espanol (acento panameno).
+     - Tiempo de proceso: 319 s (4.8x tiempo real).
+     - Resultado: Transcripcion/salidas/recording dawshboard.txt (3,385 palabras).
+     - Contenido: reunion donde se explican los requisitos del dashboard SOHO de
+       renovacion (equipo de Marinel Moreno): cartera MRC anterior/actual,
+       venta cruzada (lineas nuevas, portabilidad), recorrido de la base,
+       top de ejecutivos y tipificaciones.
+
 --------------------------------------------------------------------------------
   PROXIMAS ENTRADAS (agregar aqui abajo con la fecha)
 --------------------------------------------------------------------------------
