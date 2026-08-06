@@ -116,6 +116,30 @@
      - Nota: el equipo de Julio quedo como campana 'SOHO' (sus bases Winback/
        Cross-selling son de JULIO 2026; el reporte Vici/Ventas es ene-jun).
 
+  8) CAMPANAS COMPLETAS WINBACK Y CROSS-SELLING (2026-08-06)
+     - Diseno acordado con el usuario: cada campana con sus propias pestanas
+       y su supervisor en el encabezado. Estructura de 2 niveles:
+         * Barra de campanas: Renovacion (Marinel) / Winback (Julio) /
+           Cross-selling (Julio) / Global (Resumen + Equipo Julio + Metas).
+         * Sub-pestanas por campana:
+             - Renovacion: Equipo, Rendimiento, Marcaciones, Tipificacion,
+               Ventas & RGU, Recorrido (como estaba).
+             - Winback: Base, Marcaciones, Tipificacion, Recorrido (nuevas).
+             - Cross-selling: Base, Marcaciones, Tipificacion, Ventas,
+               Recorrido (nuevas).
+     - El encabezado muestra 'Supervisor: X' (span supAct) y cambia al
+       seleccionar campana (setCamp).
+     - Pipeline: seccion 6ad genera 'winback_camp' y 'cross_camp'
+       (llamadas SOHO sobre la base, tipificaciones, recorrido por
+       agente/mes, detalle enriquecido, ventas del equipo de Julio).
+     - Resultados del cruce (bases de julio 2026 vs reporte ene-jun):
+         * Cross-selling: 762 llamadas SOHO sobre la base, 49.1% marcado.
+         * Winback: 2 llamadas (telefonos fijos de julio; subira con datos
+           del mismo periodo).
+         * Ventas del equipo de Julio: 36 movil / 21 fijo (cross-selling).
+     - Validado: node --check OK, divs 230/230 balanceados, 60 IDs de JS
+       presentes en el HTML (0 faltantes), pipeline sin errores.
+
 --------------------------------------------------------------------------------
   PROXIMAS ENTRADAS (agregar aqui abajo con la fecha)
 --------------------------------------------------------------------------------

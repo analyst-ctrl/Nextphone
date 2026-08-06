@@ -1082,6 +1082,98 @@ print('Recorrido Winback:', recorrido_campanas['WINBACK'])
 print('Recorrido Cross-sell:', recorrido_campanas['CROSS_SELL'])
 
 # =============================================================================
+# 6ad. CAMPANAS WINBACK Y CROSS-SELLING COMPLETAS (como Renovacion pero con
+#      sus condiciones): llamadas SOHO sobre la base, tipificaciones, recorrido
+#      por agente/mes, y ventas del equipo de Julio
+# =============================================================================
+def campana_base(tels_set):
+    """Estadisticas de las llamadas SOHO (equipo de Julio) sobre una base."""
+    llam = [r for r in llamadas if r['campana'] == 'SOHO' and tel8(r['phone']) in tels_set]
+    stats = stats_vici(llam)
+    tipif = Counter(r['status'] or '(SIN TIPIFICACION)' for r in llam).most_common()
+    por_mes = {}
+    for m in MESES_ORDEN:
+        lm = [r for r in llam if (r['mes'] or '') == m]
+        mt = set(tel8(r['phone']) for r in lm)
+        ct = set(t for t in mt if any(r['status'] and r['status'] not in STATUS_NO_CONTACTO
+                                      for r in lm if tel8(r['phone']) == t))
+        por_mes[m] = {'marcados': len(mt), 'contactados': len(ct)}
+    por_ag = defaultdict(lambda: {'tels': set(), 'llamadas': 0, 'contactados': set()})
+    for r in llam:
+        a = por_ag[r['miembro'] or 'SIN AGENTE']
+        a['tels'].add(tel8(r['phone']))
+        a['llamadas'] += 1
+        if r['status'] and r['status'] not in STATUS_NO_CONTACTO:
+            a['contactados'].add(tel8(r['phone']))
+    por_ag = [{'agente': k, 'tels': len(v['tels']), 'llamadas': v['llamadas'],
+               'contactados': len(v['contactados'])}
+              for k, v in por_ag.items()]
+    por_ag.sort(key=lambda x: -x['tels'])
+    return {'stats': stats, 'tipif': tipif, 'por_mes': por_mes, 'por_agente': por_ag}
+
+winback_tels_set = set(t for t in win_tels if t)
+cross_tels_set = set(t for t in cross_tels if t)
+winback_camp = campana_base(winback_tels_set)
+cross_camp = campana_base(cross_tels_set)
+
+# Enriquecer el detalle de cada base con marcado/llamadas/agente
+por_tel_wb = defaultdict(list)
+por_tel_cross = defaultdict(list)
+for r in llamadas:
+    if r['campana'] != 'SOHO':
+        continue
+    t = tel8(r['phone'])
+    if t in winback_tels_set:
+        por_tel_wb[t].append(r)
+    if t in cross_tels_set:
+        por_tel_cross[t].append(r)
+for d in winback['detalle']:
+    ts = [tel8(x) for x in (d['t1'], d['t2']) if x and x != '#N/A']
+    hit = [t for t in ts if t in por_tel_wb]
+    d['m'] = 1 if hit else 0
+    d['ll'] = sum(len(por_tel_wb[t]) for t in hit)
+    d['ag'] = por_tel_wb[hit[-1]][-1]['miembro'] if hit else ''
+for d in cross_data['detalle']:
+    t = tel8(d['tel']) if d['tel'] and d['tel'] != '#N/A' else ''
+    if t and t in por_tel_cross:
+        d['m'] = 1
+        d['ll'] = len(por_tel_cross[t])
+        d['ag'] = por_tel_cross[t][-1]['miembro']
+    else:
+        d['m'] = 0
+        d['ll'] = 0
+        d['ag'] = ''
+
+# Ventas del equipo de Julio (cross-selling = ventas de la campana SOHO)
+soho_vmov = [s for s in ventas_moviles if s['campana'] == 'SOHO']
+soho_vfij = [s for s in ventas_fijo if s['campana'] == 'SOHO']
+soho_lin = [s for s in lineas_fact if s['campana'] == 'SOHO']
+cross_camp['ventas'] = {
+    'movil': len(soho_vmov),
+    'fijo': len(soho_vfij),
+    'lineas': len(soho_lin),
+    'mrc': round(sum(s['mrc'] for s in soho_vmov) + sum(s['mrc'] for s in soho_vfij), 2),
+    'rgu': round(sum(s['rgu'] for s in soho_vfij) + sum(s['cant'] for s in soho_lin), 1),
+    'por_mes': {m: {
+        'movil': sum(1 for s in soho_vmov if s['mes'] == m),
+        'fijo': sum(1 for s in soho_vfij if s['mes'] == m),
+        'mrc': round(sum(s['mrc'] for s in soho_vmov if s['mes'] == m)
+                     + sum(s['mrc'] for s in soho_vfij if s['mes'] == m), 2),
+    } for m in MESES_ORDEN},
+}
+winback_camp['resumen'] = winback['resumen']
+winback_camp['por_ejecutiva'] = winback['por_ejecutiva']
+winback_camp['por_razon'] = winback['por_razon']
+winback_camp['detalle'] = winback['detalle']
+cross_camp['resumen'] = cross_data['resumen']
+cross_camp['por_ejecutiva'] = cross_data['por_ejecutiva']
+cross_camp['detalle'] = cross_data['detalle']
+print('Campana Winback: llamadas SOHO sobre base =', winback_camp['stats']['llamadas'])
+print('Campana Cross: llamadas SOHO sobre base =', cross_camp['stats']['llamadas'],
+      '| ventas SOHO:', cross_camp['ventas']['movil'], 'movil /',
+      cross_camp['ventas']['fijo'], 'fijo')
+
+# =============================================================================
 # 6b. RESUMEN MRC / VENTA CRUZADA (visual de Amir): MRC anterior, MRC actual y
 # MRC de venta cruzada por separado, + RGU de renovación y RGU cruzados
 # =============================================================================
@@ -1138,6 +1230,8 @@ data = {
     'soho_por_mes': soho_por_mes,
     'resumen_campanas': resumen_campanas,
     'recorrido_campanas': recorrido_campanas,
+    'winback_camp': winback_camp,
+    'cross_camp': cross_camp,
     'metas': {'RENOVACION': {'rgu': 0, 'mrc': 0}, 'SOHO': {'rgu': 0, 'mrc': 0}},
     'recorrido_base': recorrido_base,
     'winback': winback,
@@ -1189,6 +1283,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1220;color:#e8eaf6;pa
 .tab{padding:9px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);color:#b0bec5;border:1px solid transparent;transition:.2s}
 .tab:hover{background:rgba(255,255,255,.12)}
 .tab.active{background:#7b1fa2;color:#fff;border-color:#9c27b0}
+.camp-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.camp-btn{padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:800;background:rgba(255,255,255,.06);color:#b0bec5;border:1px solid rgba(255,255,255,.1);transition:.2s}
+.camp-btn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+.camp-btn.active{background:linear-gradient(135deg,#1a73e8,#7b1fa2);color:#fff;border-color:rgba(255,255,255,.25);box-shadow:0 2px 10px rgba(26,115,232,.3)}
+.hidden{display:none!important}
 .content{display:none}.content.active{display:block}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
@@ -1229,7 +1328,7 @@ tr:hover td{background:rgba(123,31,162,.12)}
   <div>
     <span class="badge-camp">CANAL SOHO · TODAS LAS CAMPAÑAS</span>
     <h1>Renovación · Winback · Cross-selling</h1>
-    <div class="sub">SOHO · Iniciativa Nextphone · Marcaciones ViciDial + Ventas · Gerente: Amir Josue Rodriguez Chavarria · Datos: <span id="fechaGen"></span></div>
+    <div class="sub"><span id="supAct" style="color:#ffd54f;font-weight:700">Supervisor: Marinel Moreno</span> · SOHO · Iniciativa Nextphone · Gerente: Amir Josue Rodriguez Chavarria · Datos: <span id="fechaGen"></span></div>
   </div>
   <div style="text-align:right;font-size:12px;opacity:.8;">
     <div id="totCall"></div>
@@ -1254,17 +1353,37 @@ tr:hover td{background:rgba(123,31,162,.12)}
 
 <div class="kpi-row" id="kpiRow"></div>
 
-<div class="tabs">
+<div class="camp-bar">
+  <button class="camp-btn active" data-camp="RENOVACION" onclick="setCamp('RENOVACION',this)">🏆 Renovación · Marinel</button>
+  <button class="camp-btn" data-camp="WINBACK" onclick="setCamp('WINBACK',this)">🔄 Winback · Julio</button>
+  <button class="camp-btn" data-camp="CROSS" onclick="setCamp('CROSS',this)">🛒 Cross-selling · Julio</button>
+  <button class="camp-btn" data-camp="GLOBAL" onclick="setCamp('GLOBAL',this)">🌐 Global (Resumen · Equipos · Metas)</button>
+</div>
+
+<div class="tabs subtab-bar" data-camp="RENOVACION">
   <button class="tab active" onclick="sw('renov',this)">🏆 Equipo Renovación</button>
   <button class="tab" onclick="sw('rend',this)">📊 Rendimiento del Equipo</button>
-  <button class="tab" onclick="sw('marc',this)">📞 Marcaciones (quién llama más/menos)</button>
+  <button class="tab" onclick="sw('marc',this)">📞 Marcaciones</button>
   <button class="tab" onclick="sw('tipif',this)">🏷️ Tipificación</button>
   <button class="tab" onclick="sw('ventas',this)">💰 Ventas & RGU</button>
   <button class="tab" onclick="sw('rec',this)">🗺️ Recorrido de la Base</button>
-  <button class="tab" onclick="sw('winback',this)">🔄 Winback</button>
-  <button class="tab" onclick="sw('cross',this)">🛒 Cross-selling</button>
-  <button class="tab" onclick="sw('resumen',this)">📋 Resumen de Campañas</button>
-  <button class="tab" onclick="sw('julio',this)">👥 Equipo Julio (SOHO)</button>
+</div>
+<div class="tabs subtab-bar hidden" data-camp="WINBACK">
+  <button class="tab active" onclick="sw('winback',this)">🔄 Base Winback</button>
+  <button class="tab" onclick="sw('winb-marc',this)">📞 Marcaciones</button>
+  <button class="tab" onclick="sw('winb-tip',this)">🏷️ Tipificación</button>
+  <button class="tab" onclick="sw('winb-rec',this)">🗺️ Recorrido</button>
+</div>
+<div class="tabs subtab-bar hidden" data-camp="CROSS">
+  <button class="tab active" onclick="sw('cross',this)">🛒 Base Cross-selling</button>
+  <button class="tab" onclick="sw('cross-marc',this)">📞 Marcaciones</button>
+  <button class="tab" onclick="sw('cross-tip',this)">🏷️ Tipificación</button>
+  <button class="tab" onclick="sw('cross-ventas',this)">💰 Ventas</button>
+  <button class="tab" onclick="sw('cross-rec',this)">🗺️ Recorrido</button>
+</div>
+<div class="tabs subtab-bar hidden" data-camp="GLOBAL">
+  <button class="tab active" onclick="sw('resumen',this)">📋 Resumen de Campañas</button>
+  <button class="tab" onclick="sw('julio',this)">👥 Equipo Julio</button>
   <button class="tab" onclick="sw('metas',this)">🎯 Metas y Cumplimiento</button>
 </div>
 
@@ -1505,6 +1624,121 @@ tr:hover td{background:rgba(123,31,162,.12)}
       <span id="metasMsg" style="margin-left:10px;font-size:12px;color:#81c784"></span>
     </div>
     <div class="note" id="metasNota"></div>
+  </div>
+</div>
+
+<div id="v-winb-marc" class="content">
+  <div class="kpi-row" id="winbKpiRow"></div>
+  <div class="grid-2">
+    <div class="card"><h2>👤 Quién marcó los teléfonos de la base Winback</h2><div class="chart-box-sm"><canvas id="winbAgChart"></canvas></div></div>
+    <div class="card"><h2>📅 Marcados por Mes</h2><div class="chart-box-sm"><canvas id="winbMes"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📞 Agentes (equipo de Julio) que llamaron a la base Winback</h2>
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+    <table id="winbAgTab"><thead><tr>
+      <th>Agente</th><th class="rt">Tel. de la base marcados</th><th class="rt">Llamadas</th><th class="rt">Contactados</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="winbMarcNota"></div>
+  </div>
+</div>
+
+<div id="v-winb-tip" class="content">
+  <div class="grid-2">
+    <div class="card"><h2>🏷️ Tipificación de las llamadas a la base Winback</h2><div class="chart-box"><canvas id="winbTip"></canvas></div></div>
+    <div class="card"><h2>Detalle (barras)</h2><div class="chart-box"><canvas id="winbTipBar"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>Detalle de Tipificaciones (base Winback)</h2>
+    <table><thead><tr><th>#</th><th>Tipificación</th><th class="rt">Llamadas</th><th class="rt">% del Total</th></tr></thead>
+    <tbody id="winbTipTab"></tbody></table>
+  </div>
+</div>
+
+<div id="v-winb-rec" class="content">
+  <div class="kpi-row" id="winbRecKpi"></div>
+  <div class="card full">
+    <h2>🗺️ Detalle de la Base Winback (marcados primero)</h2>
+    <div class="filter-bar" style="margin-bottom:8px">
+      <label>Buscar cliente / plan:</label>
+      <input type="text" id="winbDetQ" onkeyup="renderWinbDet()" placeholder="Ej: COIMSA..." style="min-width:200px">
+      <label>Estado:</label>
+      <select id="winbDetF" onchange="renderWinbDet()"><option value="">Todos</option><option value="1">Marcados</option><option value="0">Sin tocar</option></select>
+      <span style="flex:1"></span><span id="winbDetCount" style="font-size:12px;color:#7986cb"></span>
+    </div>
+    <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+    <table id="winbDetTab"><thead><tr>
+      <th>Ejecutiva</th><th>Cliente</th><th>Plan</th><th>Razón</th><th class="rt">RGU</th><th class="rt">MRC $</th>
+      <th class="ct">Marcado</th><th class="rt">Llamadas</th><th>Agente que llamó</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="v-cross-marc" class="content">
+  <div class="kpi-row" id="crossKpiRow"></div>
+  <div class="grid-2">
+    <div class="card"><h2>👤 Quién marcó los teléfonos de la base Cross-selling</h2><div class="chart-box-sm"><canvas id="crossAgChart"></canvas></div></div>
+    <div class="card"><h2>📅 Marcados por Mes</h2><div class="chart-box-sm"><canvas id="crossMes"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📞 Agentes (equipo de Julio) que llamaron a la base Cross-selling</h2>
+    <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+    <table id="crossAgTab"><thead><tr>
+      <th>Agente</th><th class="rt">Tel. de la base marcados</th><th class="rt">Llamadas</th><th class="rt">Contactados</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="crossMarcNota"></div>
+  </div>
+</div>
+
+<div id="v-cross-tip" class="content">
+  <div class="grid-2">
+    <div class="card"><h2>🏷️ Tipificación de las llamadas a la base Cross-selling</h2><div class="chart-box"><canvas id="crossTip"></canvas></div></div>
+    <div class="card"><h2>Detalle (barras)</h2><div class="chart-box"><canvas id="crossTipBar"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>Detalle de Tipificaciones (base Cross-selling)</h2>
+    <table><thead><tr><th>#</th><th>Tipificación</th><th class="rt">Llamadas</th><th class="rt">% del Total</th></tr></thead>
+    <tbody id="crossTipTab"></tbody></table>
+  </div>
+</div>
+
+<div id="v-cross-ventas" class="content">
+  <div class="kpi-row" id="crossVentKpi"></div>
+  <div class="grid-2">
+    <div class="card"><h2>📊 Ventas Móvil vs Fijo por Mes (equipo de Julio)</h2><div class="chart-box"><canvas id="crossVentMes"></canvas></div></div>
+    <div class="card"><h2>💰 MRC por Mes</h2><div class="chart-box"><canvas id="crossVentMrc"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>Ventas por Vendedor (equipo de Julio)</h2>
+    <div style="overflow-x:auto;max-height:460px;overflow-y:auto;">
+    <table id="crossVentTab"><thead><tr>
+      <th>Agente</th><th class="rt">Ventas Móvil</th><th class="rt">Ventas Fijo</th><th class="rt">MRC $</th><th class="rt">RGU</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="crossVentNota"></div>
+  </div>
+</div>
+
+<div id="v-cross-rec" class="content">
+  <div class="kpi-row" id="crossRecKpi"></div>
+  <div class="card full">
+    <h2>🗺️ Detalle de la Base Cross-selling (marcados primero)</h2>
+    <div class="filter-bar" style="margin-bottom:8px">
+      <label>Buscar cliente / cuenta:</label>
+      <input type="text" id="crossDetQ" onkeyup="renderCrossDet()" placeholder="Ej: VIELKA..." style="min-width:200px">
+      <label>Estado:</label>
+      <select id="crossDetF" onchange="renderCrossDet()"><option value="">Todos</option><option value="1">Marcados</option><option value="0">Sin tocar</option></select>
+      <span style="flex:1"></span><span id="crossDetCount" style="font-size:12px;color:#7986cb"></span>
+    </div>
+    <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+    <table id="crossDetTab"><thead><tr>
+      <th>Fecha</th><th>Cuenta</th><th>Cliente</th><th>Provincia</th><th class="ct">Teléfono</th>
+      <th>Ejecutiva</th><th class="ct">Marcado</th><th class="rt">Llamadas</th><th>Agente que llamó</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
   </div>
 </div>
 
@@ -2242,6 +2476,150 @@ function limpiarMetas(){
   renderMetas();
 }
 
+// ---------- SELECTOR DE CAMPANA (cada campana con sus pestanas y supervisor) ----------
+const SUPS = {'RENOVACION':'Marinel Moreno','WINBACK':'Julio César Arauz','CROSS':'Julio César Arauz','GLOBAL':'todas las campañas'};
+const FIRST_TAB = {'RENOVACION':'renov','WINBACK':'winback','CROSS':'cross','GLOBAL':'resumen'};
+function setCamp(c, btn){
+  document.querySelectorAll('.camp-btn').forEach(b=>b.classList.toggle('active', b===btn));
+  document.querySelectorAll('.subtab-bar').forEach(b=>b.classList.toggle('hidden', b.getAttribute('data-camp')!==c));
+  const sup = document.getElementById('supAct');
+  if(sup) sup.textContent = 'Supervisor: '+(SUPS[c]||'');
+  const bar = document.querySelector('.subtab-bar[data-camp="'+c+'"]');
+  const btns = bar ? bar.querySelectorAll('.tab') : [];
+  if(btns.length) sw(FIRST_TAB[c], btns[0]);
+}
+
+// ---------- VISTAS DE CAMPANA (Winback / Cross) ----------
+function renderBaseMarc(key, pref, cfg){
+  const C = D[key]; if(!C) return;
+  const s = C.stats||{};
+  const el = document.getElementById(pref+'KpiRow');
+  if(el) el.innerHTML = [
+    ['Llamadas a la base', (s.llamadas||0).toLocaleString(), 'del equipo de Julio (SOHO)', 'purple'],
+    ['Contactados', (s.contactados||0).toLocaleString(), (s.tasa_contacto||0)+'% tasa contacto', 'green'],
+    ['Tel. únicos marcados', (s.numeros_unicos||0).toLocaleString(), 'de la base '+cfg.base, 'blue'],
+    ['Intentos / tel', (s.intentos_prom||0), 'promedio', 'orange'],
+  ].map(a=>`<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  const ag = C.por_agente||[];
+  const t = document.getElementById(pref+'AgTab');
+  if(t) t.querySelector('tbody').innerHTML = ag.map(x=>`<tr>
+      <td><strong>${x.agente}</strong></td><td class="rt">${x.tels}</td><td class="rt">${x.llamadas}</td><td class="rt">${x.contactados}</td>
+    </tr>`).join('') || '<tr><td colspan="4" class="ct">Sin resultados</td></tr>';
+  const lm = ag.slice(0,10);
+  nuevoChart(pref+'AgChart',{type:'bar',data:{labels:lm.map(x=>x.agente.length>22?x.agente.slice(0,22)+'…':x.agente),datasets:[{label:'Tel. base marcados',data:lm.map(x=>x.tels),backgroundColor:'#42a5f5',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  const pm = C.por_mes||{};
+  nuevoChart(pref+'Mes',{type:'bar',data:{labels:MESES,datasets:[
+    {label:'Marcados',data:MESES.map(m=>(pm[m]||{}).marcados||0),backgroundColor:'#ab47bc',borderRadius:3},
+    {label:'Contactados',data:MESES.map(m=>(pm[m]||{}).contactados||0),backgroundColor:'#66bb6a',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:9}}}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}});
+  const n = document.getElementById(pref+'MarcNota');
+  if(n) n.textContent = cfg.nota;
+}
+function renderBaseTip(key, pref){
+  const C = D[key]; if(!C) return;
+  const tip = C.tipif||[];
+  const t = tip.slice(0,10);
+  const otros = tip.slice(10).reduce((s,x)=>s+x[1],0);
+  const labs = t.map(x=>x[0]), vals = t.map(x=>x[1]);
+  if(otros>0){labs.push('Otros');vals.push(otros);}
+  nuevoChart(pref+'Tip',{type:'doughnut',data:{labels:labs,datasets:[{data:vals,backgroundColor:COLORS,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:10}}}}}});
+  const tb = tip.slice(0,10);
+  nuevoChart(pref+'TipBar',{type:'bar',data:{labels:tb.map(x=>x[0].length>24?x[0].slice(0,24)+'…':x[0]),datasets:[{label:'Llamadas',data:tb.map(x=>x[1]),backgroundColor:'#ffa726',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  const el = document.getElementById(pref+'TipTab');
+  if(el){ const total = tip.reduce((s,x)=>s+x[1],0)||1;
+    el.innerHTML = tip.slice(0,25).map((x,i)=>`<tr>
+      <td>${i+1}</td><td>${x[0]}</td><td class="rt">${x[1]}</td><td class="rt">${(x[1]/total*100).toFixed(1)}%</td>
+    </tr>`).join(''); }
+}
+function renderBaseRec(key, pref){
+  const C = D[key]; if(!C) return;
+  const tot = C.total||0, mar = C.marcados||0, cont = C.contactados||0;
+  const el = document.getElementById(pref+'RecKpi');
+  if(el) el.innerHTML = [
+    ['Base Total', tot.toLocaleString(), 'tel. únicos en la base', 'purple'],
+    ['Marcados', mar.toLocaleString(), (C.pct||0)+'% recorrido', 'blue'],
+    ['Contactados', cont.toLocaleString(), mar? (cont/mar*100).toFixed(1)+'% de los marcados':'', 'green'],
+    ['Sin Tocar', (tot-mar).toLocaleString(), 'pendientes de llamar', 'red'],
+  ].map(a=>`<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  if(pref==='winb') renderWinbDet(); else renderCrossDet();
+}
+
+function renderWinbMarc(){ renderBaseMarc('winback_camp','winb',{base:'Winback',nota:'Llamadas SOHO (equipo de Julio) que tocaron teléfonos de la base Winback (julio 2026) vs reporte ene-jun. Con bases del mismo periodo el cruce subirá.'}); }
+function renderWinbTip(){ renderBaseTip('winback_camp','winb'); }
+function renderWinbRec(){ renderBaseRec('winback_camp','winb'); }
+function renderWinbDet(){
+  const C = D.winback_camp; if(!C) return;
+  const q = (document.getElementById('winbDetQ').value||'').toUpperCase().trim();
+  const f = document.getElementById('winbDetF').value;
+  const rows = (C.detalle||[]).filter(x=>{
+    const okM = f==='' || String(x.m)===f;
+    return okM && (!q || (x.cli+' '+(x.plan||'')).toUpperCase().includes(q));
+  });
+  document.getElementById('winbDetCount').textContent = rows.length.toLocaleString()+' de '+(C.detalle||[]).length.toLocaleString()+' registros';
+  document.getElementById('winbDetTab').querySelector('tbody').innerHTML = rows.slice(0,400).map(x=>`<tr class="${x.m?'':'tr-low'}">
+      <td>${x.e}</td><td><strong>${x.cli||'—'}</strong></td><td>${x.plan||'—'}</td><td>${x.razon||'—'}</td>
+      <td class="rt">${x.rgu||0}</td><td class="rt">${fmt$(x.mrc||0)}</td>
+      <td class="ct">${x.m?'<span class="st-badge st-act">SÍ</span>':'<span class="st-badge st-low">NO</span>'}</td>
+      <td class="rt">${x.ll||0}</td><td>${x.ag||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="ct">Sin resultados</td></tr>';
+}
+
+function renderCrossMarc(){ renderBaseMarc('cross_camp','cross',{base:'Cross-selling',nota:'Llamadas SOHO (equipo de Julio) que tocaron teléfonos de la base Cross-selling (julio 2026) vs reporte ene-jun.'}); }
+function renderCrossTip(){ renderBaseTip('cross_camp','cross'); }
+function renderCrossRec(){ renderBaseRec('cross_camp','cross'); }
+function renderCrossDet(){
+  const C = D.cross_camp; if(!C) return;
+  const q = (document.getElementById('crossDetQ').value||'').toUpperCase().trim();
+  const f = document.getElementById('crossDetF').value;
+  const rows = (C.detalle||[]).filter(x=>{
+    const okM = f==='' || String(x.m)===f;
+    return okM && (!q || (x.cli+' '+x.cuenta).toUpperCase().includes(q));
+  });
+  document.getElementById('crossDetCount').textContent = rows.length.toLocaleString()+' de '+(C.detalle||[]).length.toLocaleString()+' registros';
+  document.getElementById('crossDetTab').querySelector('tbody').innerHTML = rows.slice(0,500).map(x=>`<tr class="${x.m?'':'tr-low'}">
+      <td>${x.fecha||'—'}</td><td class="ct">${x.cuenta||'—'}</td><td><strong>${x.cli||'—'}</strong></td>
+      <td>${x.prov||'—'}</td><td class="ct">${x.tel&&x.tel!=='#N/A'?x.tel:'—'}</td>
+      <td>${x.e}</td>
+      <td class="ct">${x.m?'<span class="st-badge st-act">SÍ</span>':'<span class="st-badge st-low">NO</span>'}</td>
+      <td class="rt">${x.ll||0}</td><td>${x.ag||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="9" class="ct">Sin resultados</td></tr>';
+}
+function renderCrossVentas(){
+  const C = D.cross_camp; if(!C || !C.ventas) return;
+  const v = C.ventas;
+  const el = document.getElementById('crossVentKpi');
+  if(el) el.innerHTML = [
+    ['Ventas Móvil', (v.movil||0), 'del equipo de Julio', 'purple'],
+    ['Ventas Fijo', (v.fijo||0), 'cross-selling (fijo/internet)', 'blue'],
+    ['MRC Generado', fmt$(v.mrc||0), 'móvil + fijo', 'green'],
+    ['RGU', (v.rgu||0), 'servicios', 'orange'],
+  ].map(a=>`<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  const pm = v.por_mes||{};
+  nuevoChart('crossVentMes',{type:'bar',data:{labels:MESES,datasets:[
+    {label:'Móvil',data:MESES.map(m=>(pm[m]||{}).movil||0),backgroundColor:'#42a5f5',borderRadius:3},
+    {label:'Fijo',data:MESES.map(m=>(pm[m]||{}).fijo||0),backgroundColor:'#ffa726',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:9}}}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}});
+  nuevoChart('crossVentMrc',{type:'bar',data:{labels:MESES,datasets:[{label:'MRC $',data:MESES.map(m=>(pm[m]||{}).mrc||0),backgroundColor:'#66bb6a',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}});
+  const J = D.equipo_soho||[];
+  const rows = J.filter(a=>a.ventas_total>0).sort((a,b)=>b.ventas_total-a.ventas_total);
+  const t = document.getElementById('crossVentTab');
+  if(t) t.querySelector('tbody').innerHTML = rows.map(x=>`<tr>
+      <td><strong>${x.agente}</strong></td><td class="rt">${x.ventas_movil}</td><td class="rt">${x.ventas_fijo}</td>
+      <td class="rt">${fmt$(x.mrc)}</td><td class="rt">${x.rgu.toLocaleString()}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="ct">Sin ventas</td></tr>';
+  const n = document.getElementById('crossVentNota');
+  if(n) n.textContent = 'Ventas del reporte ene-jun del equipo de Julio (campaña SOHO = Winback y Cross-selling, móvil y fijo). El detalle completo por vendedor está en la vista global "Equipo Julio".';
+}
+
 function renderAll(){
   const safe = fn => { try { fn(); } catch(e){ console.error('Error en '+fn.name+':', e); } };
   safe(kpis);
@@ -2257,6 +2635,13 @@ function renderAll(){
   safe(renderResumen);
   safe(renderJulio);
   safe(renderMetas);
+  safe(renderWinbMarc);
+  safe(renderWinbTip);
+  safe(renderWinbRec);
+  safe(renderCrossMarc);
+  safe(renderCrossTip);
+  safe(renderCrossVentas);
+  safe(renderCrossRec);
 }
 
 renderAll();
