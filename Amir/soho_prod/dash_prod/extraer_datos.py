@@ -58,14 +58,6 @@ def cuenta12(v):
     if len(s) >= 8: return s[-8:]
     return ''
 
-def phone8(v):
-    """Normaliza un teléfono a 8 dígitos (móvil panameño)."""
-    if v is None: return ''
-    s = str(v).replace('.0', '').strip()
-    s = re.sub(r'\D', '', s)
-    if len(s) >= 8: return s[-8:]
-    if len(s) == 7: return '6' + s
-    return ''
 
 def tokens(name):
     return set(norm(name).split())
@@ -439,10 +431,23 @@ def ventas_por_agente(sales):
         if s.get('status'): a['status'][s['status']] += 1
     return d
 
+# Clasificación de trámites/tipos de venta (definición de Amir):
+#   RENOVACION -> renovación (MRC anterior/actual solo de este grupo)
+#   LINEA NUEVA + PORTABILIDAD + PORTABILIDAD EXTERNA -> VENTA CRUZADA
+#   PORTABILIDAD INTERNA NO cuenta (no es renovación ni cruzada)
+TRAMITE_RENOV = {'RENOVACION'}
+TRAMITE_CRUZ = {'LINEA NUEVA', 'PORTABILIDAD', 'PORTABILIDAD EXTERNA'}
+TIPOVENTA_RENOV = {'RENOVACION'}
+TIPOVENTA_CRUZ = {'LINEA NUEVA', 'PORTABILIDAD EXTERNA', 'PROTABILIDAD EXTERNA'}  # typo 'PROTABILIDAD' en los datos
+
 def ventas_por_mes_agente():
-    """ventas por agente y mes: {clave: {mes: {movil,fijo,lineas,mrc,rgu,tramite,tipoventa}}}"""
+    """ventas por agente y mes: {clave: {mes: {movil,fijo,lineas,mrc,rgu,tramite,tipoventa,
+    renov,cruz,mrc_ant_renov,mrc_act_renov,mrc_cruz,rgu_renov,rgu_cruz}}}"""
     d = defaultdict(lambda: {m: {'movil': 0, 'fijo': 0, 'lineas': 0, 'mrc': 0.0, 'rgu': 0.0,
-                                 'tramite': {}, 'tipoventa': {}}
+                                 'tramite': {}, 'tipoventa': {},
+                                 'renov': 0, 'cruz': 0,
+                                 'mrc_ant_renov': 0.0, 'mrc_act_renov': 0.0, 'mrc_cruz': 0.0,
+                                 'rgu_renov': 0.0, 'rgu_cruz': 0.0}
                              for m in MESES_ORDEN})
     for sales, tipo in [(ventas_moviles, 'movil'), (ventas_fijo, 'fijo'), (lineas_fact, 'lineas')]:
         for s in sales:
@@ -453,10 +458,24 @@ def ventas_por_mes_agente():
             v[tipo] += 1
             v['mrc'] += (s.get('mrc') or 0) + (s.get('valor') or 0)
             v['rgu'] += (s.get('rgu') or 0) + (s.get('cant') or 0)
+            # VENTAS = trámites de la hoja 'Ventas Moviles' (una fila = una venta).
+            # RGU = líneas de la hoja 'lineas facturadas' (cantidad de líneas).
+            # Fuentes separadas: NO mezclar trámites con líneas en la misma métrica.
             if tipo == 'movil' and s.get('tramite'):
                 v['tramite'][s['tramite']] = v['tramite'].get(s['tramite'], 0) + 1
+                if s['tramite'] in TRAMITE_RENOV:
+                    v['renov'] += 1
+                    v['mrc_ant_renov'] += s.get('mrc_ant') or 0
+                    v['mrc_act_renov'] += s.get('mrc') or 0
+                elif s['tramite'] in TRAMITE_CRUZ:
+                    v['cruz'] += 1
+                    v['mrc_cruz'] += s.get('mrc') or 0
             if tipo == 'lineas' and s.get('tipoventa'):
                 v['tipoventa'][s['tipoventa']] = v['tipoventa'].get(s['tipoventa'], 0) + 1
+                if s['tipoventa'] in TIPOVENTA_RENOV:
+                    v['rgu_renov'] += s.get('cant') or 0
+                elif s['tipoventa'] in TIPOVENTA_CRUZ:
+                    v['rgu_cruz'] += s.get('cant') or 0
     return d
 
 vm_por = ventas_por_agente(ventas_moviles)
@@ -495,6 +514,118 @@ print('Gestiones cross-sell:', sum(cross_por_agente.values()))
 print('  Cross-sell por mes:', {m: sum(cm.get(m, 0) for cm in cross_mes.values()) for m in MESES_ORDEN})
 
 # =============================================================================
+# 4b. RECORRIDO DE LA BASE (bases de ViciDial vs marcaciones RENOVACION)
+# =============================================================================
+# Llave de cruce: TELÉFONO (últimos 8 dígitos). Las bases descargadas de
+# ViciDial (Base de datos Nextphone + Base Móvil sin fijo) se cruzan contra las
+# marcaciones de los agentes RENOVACION para ver cuánto se recorrió de la base:
+# marcados, contactados, sin tocar, % de avance, por agente y por mes.
+BASES_RECORRIDO = [
+    # (patron, nombre_corto, col_cuenta12, col_tel, col_nombre, col_ejecutiva)
+    ('Base de datos Nextphone 14072026*.xlsx', 'NEXTPHONE', 4, 10, 5, 0),
+    ('Base Móvil sin fijo 02072026 ren*.xlsx', 'MOVIL',     3, 9,  4, None),
+]
+
+def tel8(v):
+    """Teléfono a 8 dígitos: últimos 8 dígitos (o todos si hay menos).
+    Equivale a la antigua phone8 pero sin anteponer '6' a los de 7 dígitos
+    (los fijos de Vici no deben convertirse en móviles para el match)."""
+    s = str(v).replace('.0', '') if v is not None else ''
+    s = re.sub(r'\D', '', s)
+    return s[-8:] if s else ''
+
+base_rows = []
+for patron, corto, c_cuenta, c_tel, c_nom, c_eje in BASES_RECORRIDO:
+    f = glob.glob(os.path.join(PROD, 'bases', patron))
+    if not f:
+        print('Base no encontrada:', patron); continue
+    bwb = openpyxl.load_workbook(f[0], read_only=True, data_only=True)
+    bws = bwb[bwb.sheetnames[0]]
+    seen = set()
+    for r in bws.iter_rows(values_only=True):
+        if r is None: continue
+        tel = tel8(r[c_tel]) if c_tel is not None and c_tel < len(r) else ''
+        if not tel or tel in seen: continue
+        seen.add(tel)
+        cuenta = cuenta12(r[c_cuenta]) if c_cuenta is not None and c_cuenta < len(r) else ''
+        nombre = norm(r[c_nom]) if c_nom is not None and c_nom < len(r) and r[c_nom] else ''
+        ejecutiva = norm(r[c_eje]) if c_eje is not None and c_eje < len(r) and r[c_eje] else ''
+        if ejecutiva in ('MOVIL', 'SIN FIJO'):
+            ejecutiva = ''
+        base_rows.append({'base': corto, 'cuenta': cuenta, 'tel': tel,
+                          'nombre': nombre, 'ejecutiva': ejecutiva})
+    bwb.close()
+print('Bases de recorrido:', len(base_rows), 'telefonos unicos')
+
+# Cruce contra las marcaciones de la campaña RENOVACION
+renov_llam = [r for r in llamadas if r['campana'] == 'RENOVACION']
+por_tel = defaultdict(list)
+for r in renov_llam:
+    t = tel8(r['phone'])
+    if t:
+        por_tel[t].append(r)
+
+base_tels = {r['tel'] for r in base_rows}
+marcados_tels = set(por_tel) & base_tels
+contactados_tels = set()
+for t in marcados_tels:
+    if any(r['status'] and r['status'] not in STATUS_NO_CONTACTO for r in por_tel[t]):
+        contactados_tels.add(t)
+
+rec_por_mes = {}
+for m in MESES_ORDEN:
+    rec_por_mes[m] = {
+        'marcados': len({t for t in marcados_tels
+                         if any((r['mes'] or '') == m for r in por_tel[t])}),
+        'contactados': len({t for t in contactados_tels
+                            if any((r['mes'] or '') == m and r['status'] not in STATUS_NO_CONTACTO
+                                   for r in por_tel[t])}),
+    }
+
+rec_por_agente = defaultdict(lambda: {'tels': set(), 'llamadas': 0, 'contactados': set()})
+for t in marcados_tels:
+    for r in por_tel[t]:
+        a = rec_por_agente[r['miembro'] or 'SIN AGENTE']
+        a['tels'].add(t)
+        a['llamadas'] += 1
+        if r['status'] and r['status'] not in STATUS_NO_CONTACTO:
+            a['contactados'].add(t)
+
+rec_por_base = {}
+for b in ['NEXTPHONE', 'MOVIL']:
+    bt = {r['tel'] for r in base_rows if r['base'] == b}
+    rec_por_base[b] = {'total': len(bt), 'marcados': len(bt & marcados_tels)}
+
+recorrido_base = {
+    'llave': 'telefono (8 digitos)',
+    'total': len(base_rows),
+    'marcados': len(marcados_tels),
+    'sin_tocar': len(base_rows) - len(marcados_tels),
+    'pct_recorrido': round(len(marcados_tels) / len(base_rows) * 100, 1) if base_rows else 0,
+    'contactados': len(contactados_tels),
+    'intentos_prom': round(sum(len(por_tel[t]) for t in marcados_tels) / len(marcados_tels), 2) if marcados_tels else 0,
+    'por_mes': rec_por_mes,
+    'por_base': rec_por_base,
+    'por_agente': [{'agente': k, 'telefonos': len(v['tels']), 'llamadas': v['llamadas'],
+                    'contactados': len(v['contactados'])}
+                   for k, v in rec_por_agente.items()],
+    'detalle': sorted(
+        [{'b': r['base'], 'c': r['cuenta'], 't': r['tel'], 'n': r['nombre'],
+          'e': r['ejecutiva'],
+          'm': 1 if r['tel'] in marcados_tels else 0,
+          'co': 1 if r['tel'] in contactados_tels else 0,
+          'll': len(por_tel[r['tel']]) if r['tel'] in por_tel else 0,
+          'ag': por_tel[r['tel']][-1]['miembro'] if r['tel'] in por_tel and por_tel[r['tel']] else '',
+          'ms': [m for m in MESES_ORDEN
+                 if any((rr['mes'] or '') == m for rr in por_tel.get(r['tel'], []))]}
+         for r in base_rows],
+        key=lambda x: -x['m']),
+}
+print('Recorrido base: %d/%d marcados (%.1f%%)' % (
+    len(marcados_tels), len(base_rows),
+    round(len(marcados_tels) / len(base_rows) * 100, 1) if base_rows else 0))
+
+# =============================================================================
 # 5. ARMAR DATOS POR AGENTE (ranking top performance)
 # =============================================================================
 agentes = {}
@@ -512,6 +643,7 @@ for k in all_keys:
     rgu = (vf_s['rgu'] if vf_s else 0) + (lf_s['rgu'] if lf_s else 0)
     mrc_total = (vm_s['mrc'] if vm_s else 0) + (vf_s['mrc'] if vf_s else 0) + (lf_s['valor'] if lf_s else 0)
     cruzada = sum(n for (n_, m_), n in cross_por_agente.items() if m_ == miembro)
+    vpk = vpm[k]
     agentes[k] = {
         'agente': miembro,
         'campana': campana,
@@ -528,7 +660,15 @@ for k in all_keys:
         'ventas_total': ventas,
         'rgu': round(rgu, 1),
         'mrc': round(mrc_total, 2),
-        'venta_cruzada': cruzada,
+        'venta_cruzada': sum(vpk[m]['cruz'] for m in MESES_ORDEN),
+        'gestiones_cross': cruzada,
+        'ventas_renov': sum(vpk[m]['renov'] for m in MESES_ORDEN),
+        'ventas_cruz': sum(vpk[m]['cruz'] for m in MESES_ORDEN),
+        'mrc_ant_renov': round(sum(vpk[m]['mrc_ant_renov'] for m in MESES_ORDEN), 2),
+        'mrc_act_renov': round(sum(vpk[m]['mrc_act_renov'] for m in MESES_ORDEN), 2),
+        'mrc_cruz': round(sum(vpk[m]['mrc_cruz'] for m in MESES_ORDEN), 2),
+        'rgu_renov': int(round(sum(vpk[m]['rgu_renov'] for m in MESES_ORDEN))),
+        'rgu_cruz': int(round(sum(vpk[m]['rgu_cruz'] for m in MESES_ORDEN))),
         'tramites': dict(vm_s['tramite']) if vm_s else {},
         'tipoventa': dict(lf_s['tipoventa']) if lf_s else {},
         'status_fijo': dict(vf_s['status']) if vf_s else {},
@@ -570,10 +710,16 @@ for i, k1 in enumerate(sin_keys):
         for k2 in grupo[1:]:
             b = agentes[k2]
             for campo in ['llamadas','no_contesta','contactados','numeros','ventas_movil',
-                          'ventas_fijo','lineas_fact','ventas_total','venta_cruzada']:
+                          'ventas_fijo','lineas_fact','ventas_total','venta_cruzada',
+                          'gestiones_cross','ventas_renov','ventas_cruz']:
                 base[campo] += b[campo]
             base['rgu'] += b['rgu']
             base['mrc'] += b['mrc']
+            base['mrc_ant_renov'] += b['mrc_ant_renov']
+            base['mrc_act_renov'] += b['mrc_act_renov']
+            base['mrc_cruz'] += b['mrc_cruz']
+            base['rgu_renov'] += b['rgu_renov']
+            base['rgu_cruz'] += b['rgu_cruz']
             for m in MESES_ORDEN:
                 base['por_mes'][m] = base['por_mes'].get(m, 0) + b['por_mes'].get(m, 0)
                 base['contactados_por_mes'][m] += b['contactados_por_mes'].get(m, 0)
@@ -588,7 +734,8 @@ for i, k1 in enumerate(sin_keys):
                         (base['duracion_por_mes'].get(m, 0) * llam_bb_antes + b['duracion_por_mes'].get(m, 0) * llam_bb)
                         / (llam_bb_antes + llam_bb), 0) if llam_bb_antes else b['duracion_por_mes'].get(m, 0)
                 bm = b['ventas_por_mes'].get(m, {})
-                for kk in ('movil', 'fijo', 'lineas', 'mrc', 'rgu'):
+                for kk in ('movil', 'fijo', 'lineas', 'mrc', 'rgu', 'renov', 'cruz',
+                           'mrc_ant_renov', 'mrc_act_renov', 'mrc_cruz', 'rgu_renov', 'rgu_cruz'):
                     base['ventas_por_mes'][m][kk] += bm.get(kk, 0)
                 for kk in ('tramite', 'tipoventa'):
                     for k_, v_ in bm.get(kk, {}).items():
@@ -639,14 +786,19 @@ def armar_equipo(campana):
                 'llamadas': 0, 'no_contesta': 0, 'contactados': 0, 'tasa_contacto': 0.0,
                 'numeros': 0, 'intentos_prom': 0.0, 'duracion_prom_s': 0.0,
                 'ventas_movil': 0, 'ventas_fijo': 0, 'lineas_fact': 0, 'ventas_total': 0,
-                'rgu': 0.0, 'mrc': 0.0, 'venta_cruzada': 0,
+                'rgu': 0.0, 'mrc': 0.0, 'venta_cruzada': 0, 'gestiones_cross': 0,
+                'ventas_renov': 0, 'ventas_cruz': 0,
+                'mrc_ant_renov': 0.0, 'mrc_act_renov': 0.0, 'mrc_cruz': 0.0,
+                'rgu_renov': 0.0, 'rgu_cruz': 0.0,
                 'tramites': {}, 'tipoventa': {}, 'status_fijo': {},
                 'por_mes': {m: 0 for m in MESES_ORDEN},
                 'contactados_por_mes': {m: 0 for m in MESES_ORDEN},
                 'no_contesta_por_mes': {m: 0 for m in MESES_ORDEN},
                 'numeros_por_mes': {m: 0 for m in MESES_ORDEN},
                 'duracion_por_mes': {m: 0.0 for m in MESES_ORDEN},
-                'ventas_por_mes': {m: {'movil':0,'fijo':0,'lineas':0,'mrc':0.0,'rgu':0.0,'tramite':{},'tipoventa':{}} for m in MESES_ORDEN},
+                'ventas_por_mes': {m: {'movil':0,'fijo':0,'lineas':0,'mrc':0.0,'rgu':0.0,'tramite':{},'tipoventa':{},
+                                        'renov':0,'cruz':0,'mrc_ant_renov':0.0,'mrc_act_renov':0.0,'mrc_cruz':0.0,
+                                        'rgu_renov':0.0,'rgu_cruz':0.0} for m in MESES_ORDEN},
                 'cruzada_por_mes': {m: 0 for m in MESES_ORDEN},
                 'ef_ventas_x_llamada': 0.0, 'ef_conv_pct': 0.0, 'ef_mrc_x_venta': 0.0,
                 'en_roster': True,
@@ -694,6 +846,39 @@ for m in MESES_ORDEN:
         renov_por_mes[m]['contactados'] / renov_por_mes[m]['llamadas'] * 100, 1) if renov_por_mes[m]['llamadas'] else 0
 
 # =============================================================================
+# 6b. RESUMEN MRC / VENTA CRUZADA (visual de Amir): MRC anterior, MRC actual y
+# MRC de venta cruzada por separado, + RGU de renovación y RGU cruzados
+# =============================================================================
+# MRC anterior/actual SOLO del trámite RENOVACION (hoja Ventas Moviles, 150 ventas).
+# MRC de venta cruzada = LINEA NUEVA + PORTABILIDAD + PORTABILIDAD EXTERNA (aparte).
+# RGU renovación = cantidad de líneas RENOVACION | RGU cruzados = líneas cruzadas.
+mrc_resumen = {
+    'clientes_base': recorrido_base['total'],
+    'mrc_anterior': round(sum(a['mrc_ant_renov'] for a in renov_con_datos), 2),
+    'mrc_actual': round(sum(a['mrc_act_renov'] for a in renov_con_datos), 2),
+    'mrc_cruzada': round(sum(a['mrc_cruz'] for a in renov_con_datos), 2),
+    'rgu_renovacion': int(round(sum(a['rgu_renov'] for a in renov_con_datos))),
+    'rgu_cruzada': int(round(sum(a['rgu_cruz'] for a in renov_con_datos))),
+    'ventas_renovacion': sum(a['ventas_renov'] for a in renov_con_datos),
+    'ventas_cruzadas': sum(a['ventas_cruz'] for a in renov_con_datos),
+}
+mrc_por_mes = {}
+for m in MESES_ORDEN:
+    mrc_por_mes[m] = {
+        'mrc_anterior': round(sum(a['ventas_por_mes'][m]['mrc_ant_renov'] for a in renov_con_datos), 2),
+        'mrc_actual': round(sum(a['ventas_por_mes'][m]['mrc_act_renov'] for a in renov_con_datos), 2),
+        'mrc_cruzada': round(sum(a['ventas_por_mes'][m]['mrc_cruz'] for a in renov_con_datos), 2),
+        'rgu_renovacion': int(round(sum(a['ventas_por_mes'][m]['rgu_renov'] for a in renov_con_datos))),
+        'rgu_cruzada': int(round(sum(a['ventas_por_mes'][m]['rgu_cruz'] for a in renov_con_datos))),
+        'ventas_renovacion': sum(a['ventas_por_mes'][m]['renov'] for a in renov_con_datos),
+        'ventas_cruzadas': sum(a['ventas_por_mes'][m]['cruz'] for a in renov_con_datos),
+    }
+mrc_resumen['por_mes'] = mrc_por_mes
+print('Resumen MRC: anterior $%s -> actual $%s | cruzada $%s | RGU renov %s / cruz %s' % (
+    f"{mrc_resumen['mrc_anterior']:,.2f}", f"{mrc_resumen['mrc_actual']:,.2f}",
+    f"{mrc_resumen['mrc_cruzada']:,.2f}", mrc_resumen['rgu_renovacion'], mrc_resumen['rgu_cruzada']))
+
+# =============================================================================
 # 7. DATOS PARA EL DASHBOARD
 # =============================================================================
 data = {
@@ -709,6 +894,8 @@ data = {
     'renov_por_mes': renov_por_mes,
     'equipo_renovacion': renov_con_datos,
     'renov_sin_actividad': renov_sin_actividad,
+    'recorrido_base': recorrido_base,
+    'mrc_resumen': mrc_resumen,
     'totales_ventas': {
         'moviles': len(ventas_moviles),
         'fijo': len(ventas_fijo),
@@ -826,6 +1013,7 @@ tr:hover td{background:rgba(123,31,162,.12)}
   <button class="tab" onclick="sw('marc',this)">📞 Marcaciones (quién llama más/menos)</button>
   <button class="tab" onclick="sw('tipif',this)">🏷️ Tipificación</button>
   <button class="tab" onclick="sw('ventas',this)">💰 Ventas & RGU</button>
+  <button class="tab" onclick="sw('rec',this)">🗺️ Recorrido de la Base</button>
 </div>
 
 <div id="v-renov" class="content active">
@@ -834,9 +1022,18 @@ tr:hover td{background:rgba(123,31,162,.12)}
     <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
     <table id="tabRenov"><thead><tr>
       <th>#</th><th>Agente</th><th class="rt">Llamadas</th><th class="rt">Contactados</th><th class="rt">% Contacto</th>
-      <th class="rt">Ventas</th><th class="rt">RGU</th><th class="rt">MRC $</th><th class="rt">Venta Cruzada</th><th>Progreso</th>
+      <th class="rt">Ventas Renov</th><th class="rt">Ventas Cruz</th><th class="rt">RGU</th><th class="rt">MRC $</th><th>Progreso</th>
     </tr></thead><tbody></tbody></table>
     </div>
+  </div>
+  <div class="card full">
+    <h2>💰 Cartera MRC — Solo RENOVACION <span class="period-chip" id="mrcPeriod" style="font-size:10px">TODOS LOS MESES</span></h2>
+    <div class="kpi-row" id="mrcKpiRow"></div>
+    <div class="grid-2">
+      <div class="card"><h2>💰 MRC Anterior vs Actual vs Cruzada (por agente)</h2><div class="chart-box"><canvas id="chMrcAg"></canvas></div></div>
+      <div class="card"><h2>📊 RGU: Renovación vs Cruzados (por agente)</h2><div class="chart-box"><canvas id="chRguAg"></canvas></div></div>
+    </div>
+    <div class="note" id="mrcNota"></div>
   </div>
   <div class="grid-2">
     <div class="card"><h2>📈 Marcaciones por Mes — EQUIPO RENOVACIÓN</h2><div class="chart-box-sm"><canvas id="chMesRenov"></canvas></div></div>
@@ -907,6 +1104,43 @@ tr:hover td{background:rgba(123,31,162,.12)}
   </div>
 </div>
 
+<div id="v-rec" class="content">
+  <div class="kpi-row" id="recKpiRow"></div>
+  <div class="grid-3" style="margin-bottom:14px">
+    <div class="card"><h2>🚗 Marcados vs Sin Tocar</h2><div class="chart-box-sm"><canvas id="chRecDonut"></canvas></div></div>
+    <div class="card"><h2>👤 Tel. de la base marcados por Agente</h2><div class="chart-box-sm"><canvas id="chRecAg"></canvas></div></div>
+    <div class="card"><h2>📅 Marcados por Mes</h2><div class="chart-box-sm"><canvas id="chRecMes"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>🗺️ Recorrido por Agente RENOVACIÓN <span class="period-chip" id="recPeriod" style="font-size:10px">TODOS LOS MESES</span></h2>
+    <div style="overflow-x:auto;max-height:400px;overflow-y:auto;">
+    <table id="tabRecAg"><thead><tr>
+      <th>#</th><th>Agente</th><th class="rt">Tel. base marcados</th><th class="rt">% de la base</th>
+      <th class="rt">Llamadas</th><th class="rt">Contactados</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="recNota"></div>
+  </div>
+  <div class="card full">
+    <h2>🔍 Detalle de la Base (marcados primero)</h2>
+    <div class="filter-bar" style="margin-bottom:8px">
+      <label>Buscar teléfono / cuenta / nombre:</label>
+      <input type="text" id="recQ" onkeyup="renderRecDetalle()" placeholder="Ej: 6887 o EDIL..." style="min-width:200px">
+      <label>Base:</label>
+      <select id="recFBase" onchange="renderRecDetalle()"><option value="">Todas</option><option>NEXTPHONE</option><option>MOVIL</option></select>
+      <label>Estado:</label>
+      <select id="recFEst" onchange="renderRecDetalle()"><option value="">Todos</option><option value="1">Marcados</option><option value="0">Sin tocar</option></select>
+      <span style="flex:1"></span><span id="recCount" style="font-size:12px;color:#7986cb"></span>
+    </div>
+    <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+    <table id="tabRecDet"><thead><tr>
+      <th>Base</th><th class="ct">Cuenta</th><th class="ct">Teléfono</th><th>Cliente</th><th>Ejecutiva (base)</th>
+      <th class="ct">Marcado</th><th class="ct">Contactado</th><th class="rt">Llamadas</th><th>Agente que marcó</th><th>Meses</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
 <script>
 const D = __DATA__;
 const fmt$ = v => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -949,7 +1183,14 @@ function agFiltrado(a){
     tasa_contacto: pm ? +(cm/pm*100).toFixed(1) : 0,
     ventas_movil: mov, ventas_fijo: fij, lineas_fact: lin,
     ventas_total: vt, mrc: mrc, rgu: rgu,
-    venta_cruzada: a.cruzada_por_mes[m]||0,
+    venta_cruzada: vp.cruz||0,
+    ventas_renov: vp.renov||0,
+    ventas_cruz: vp.cruz||0,
+    mrc_ant_renov: vp.mrc_ant_renov||0,
+    mrc_act_renov: vp.mrc_act_renov||0,
+    mrc_cruz: vp.mrc_cruz||0,
+    rgu_renov: vp.rgu_renov||0,
+    rgu_cruz: vp.rgu_cruz||0,
     tramites: vp.tramite||{}, tipoventa: vp.tipoventa||{},
     ef_ventas_x_llamada: pm ? +(vt/pm).toFixed(3) : 0,
     ef_conv_pct: pm ? +(vt/pm*100).toFixed(2) : 0,
@@ -1010,7 +1251,7 @@ function kpis(){
     ['Ventas Subidas', ventasR, vsub, 'blue'],
     ['MRC Generado', fmt$(mrcR), 'móvil + fijo + líneas', 'orange'],
     ['RGU Total', rguR.toLocaleString(), 'servicios vendidos', 'teal'],
-    ['Venta Cruzada', xcR, 'gestiones cross-sell', 'red'],
+    ['Venta Cruzada', xcR, 'línea nueva + portabilidad + port. externa', 'red'],
   ];
   document.getElementById('kpiRow').innerHTML = arr.map(a=>
     `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`
@@ -1042,17 +1283,17 @@ function renderRenov(){
       <td class="rt">${r.llamadas.toLocaleString()}</td>
       <td class="rt">${r.contactados.toLocaleString()}</td>
       <td class="rt">${r.tasa_contacto}%</td>
-      <td class="rt"><strong>${r.ventas_total}</strong></td>
+      <td class="rt"><strong>${r.ventas_renov}</strong></td>
+      <td class="rt">${r.ventas_cruz}</td>
       <td class="rt">${r.rgu.toLocaleString()}</td>
       <td class="rt">${fmt$(r.mrc)}</td>
-      <td class="rt">${r.venta_cruzada}</td>
       <td style="min-width:140px"><div class="bar" style="width:${pct}%"></div><span style="font-size:10px;color:#7986cb">${pct}% de máx</span></td>
     </tr>`;
   }).join('');
 }
 document.querySelector('#tabRenov thead').addEventListener('click', e=>{
   const th = e.target.closest('th'); if(!th) return;
-  const map = {0:'agente',1:'agente',2:'llamadas',3:'contactados',4:'tasa_contacto',5:'ventas_total',6:'rgu',7:'mrc',8:'venta_cruzada'};
+  const map = {0:'agente',1:'agente',2:'llamadas',3:'contactados',4:'tasa_contacto',5:'ventas_renov',6:'ventas_cruz',7:'rgu',8:'mrc'};
   const idx = Array.from(th.parentNode.children).indexOf(th);
   const k = map[idx]; if(!k) return;
   if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir = (k==='agente')?1:-1;}
@@ -1308,14 +1549,124 @@ function renderMarc(){
   document.getElementById('marcPeriod').textContent = mesAct==='TODOS' ? 'TODOS LOS MESES' : mesAct;
 }
 
+function renderRecorrido(){
+  const R = D.recorrido_base;
+  if(!R || !R.total){ return; }
+  const esTodos = mesAct==='TODOS';
+  const marc = esTodos ? R.marcados : ((R.por_mes||{})[mesAct]||{}).marcados||0;
+  const cont = esTodos ? R.contactados : ((R.por_mes||{})[mesAct]||{}).contactados||0;
+  const sinT = R.total - marc;
+  const pct = R.total ? (marc/R.total*100).toFixed(1) : 0;
+  document.getElementById('recKpiRow').innerHTML = [
+    ['Base Total', R.total.toLocaleString(), 'teléfonos únicos (Nextphone + Móvil sin fijo)', 'purple'],
+    ['Marcados', marc.toLocaleString(), pct+'% de la base · NP '+((R.por_base.NEXTPHONE||{}).marcados||0)+' · MOV '+((R.por_base.MOVIL||{}).marcados||0), 'blue'],
+    ['Sin Tocar', sinT.toLocaleString(), esTodos? 'en la base sin ninguna llamada' : 'sin llamada en este período', 'red'],
+    ['Contactados', cont.toLocaleString(), marc? (cont/marc*100).toFixed(1)+'% de marcados':'—', 'green'],
+    ['Intentos prom', esTodos? (R.intentos_prom||0).toFixed(2) : '—', 'llamadas por teléfono marcado', 'orange'],
+  ].map(a=>`<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  nuevoChart('chRecDonut',{type:'doughnut',data:{labels:['Marcados','Sin tocar'],datasets:[{data:[marc,sinT],backgroundColor:['#66bb6a','#ef5350'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:10}}}}}});
+  const ags = (R.por_agente||[]).slice().sort((a,b)=>b.telefonos-a.telefonos);
+  const top = ags.slice(0,10);
+  nuevoChart('chRecAg',{type:'bar',data:{labels:top.map(x=>x.agente),datasets:[{label:'Tel. base marcados',data:top.map(x=>x.telefonos),backgroundColor:COLORS,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:10}}}}}});
+  nuevoChart('chRecMes',{type:'bar',data:{labels:MESES,datasets:[{label:'Marcados',data:MESES.map(mm=>(R.por_mes[mm]||{}).marcados||0),backgroundColor:MESES.map(mm=>(esTodos||mesAct===mm)?'#42a5f5':'rgba(66,165,245,.25)'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}});
+  document.getElementById('tabRecAg').querySelector('tbody').innerHTML = ags.map((x,i)=>{
+    const pctB = R.total ? (x.telefonos/R.total*100).toFixed(1) : 0;
+    return `<tr><td><span class="pos pos-${i+1}">${i+1}</span></td><td><strong>${x.agente}</strong></td>
+      <td class="rt">${x.telefonos}</td><td class="rt">${pctB}%</td>
+      <td class="rt">${x.llamadas.toLocaleString()}</td><td class="rt">${x.contactados}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="ct">Sin datos</td></tr>';
+  document.getElementById('recPeriod').textContent = esTodos ? 'TODOS LOS MESES' : mesAct;
+  document.getElementById('recNota').textContent =
+    'Llave de cruce: '+(R.llave||'telefono')+'. De los '+R.total.toLocaleString()+' teléfonos de la base, '+
+    R.marcados.toLocaleString()+' ('+pct+'%) fueron marcados por el equipo RENOVACIÓN y '+
+    R.contactados.toLocaleString()+' contactados.';
+  renderRecDetalle();
+}
+
+function renderRecDetalle(){
+  const R = D.recorrido_base; if(!R) return;
+  const q = (document.getElementById('recQ').value||'').toUpperCase().trim();
+  const fb = document.getElementById('recFBase').value;
+  const fe = document.getElementById('recFEst').value;
+  let rows = R.detalle||[];
+  if(fb) rows = rows.filter(x=>x.b===fb);
+  if(fe!=='') rows = rows.filter(x=>String(x.m)===fe);
+  if(q) rows = rows.filter(x=>x.t.includes(q)||x.c.includes(q)||(x.n||'').toUpperCase().includes(q)||(x.e||'').toUpperCase().includes(q)||(x.ag||'').toUpperCase().includes(q));
+  document.getElementById('recCount').textContent = rows.length.toLocaleString()+' de '+(R.detalle||[]).length.toLocaleString()+' registros';
+  document.getElementById('tabRecDet').querySelector('tbody').innerHTML = rows.slice(0,500).map(x=>{
+    const mesL = (x.ms||[]).join(', ') || (x.m?'?':'—');
+    return `<tr class="${x.m?'':'tr-low'}">
+      <td>${x.b}</td><td class="ct">${x.c||'—'}</td><td class="ct"><strong>${x.t}</strong></td>
+      <td>${x.n||'—'}</td><td>${x.e||'—'}</td>
+      <td class="ct">${x.m?'<span class="st-badge st-act">SÍ</span>':'<span class="st-badge st-low">NO</span>'}</td>
+      <td class="ct">${x.co?'<span class="st-badge st-top">SÍ</span>':'—'}</td>
+      <td class="rt">${x.ll||0}</td><td>${x.ag||'—'}</td><td>${mesL}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="10" class="ct">Sin resultados</td></tr>';
+}
+
+function renderMrc(){
+  const M = D.mrc_resumen;
+  if(!M){ return; }
+  const esTodos = mesAct==='TODOS';
+  const pm = esTodos ? null : ((M.por_mes||{})[mesAct]||{});
+  const val = k => pm ? (pm[k]||0) : (M[k]||0);
+  const cli = esTodos ? M.clientes_base : (D.recorrido_base||{}).total;
+  const kpisM = [
+    ['Clientes Base', (cli||0).toLocaleString(), 'teléfonos únicos en la base', 'purple'],
+    ['MRC Anterior', fmt$(val('mrc_anterior')), 'cartera antes de renovar (solo RENOVACION)', 'blue'],
+    ['MRC Actual', fmt$(val('mrc_actual')), 'cartera con renovación hecha (solo RENOVACION)', 'green'],
+    ['MRC Venta Cruzada', fmt$(val('mrc_cruzada')), 'línea nueva + portabilidad + port. externa', 'orange'],
+    ['RGU Renovación', (val('rgu_renovacion')||0).toLocaleString(), 'cantidad de líneas RENOVACION', 'teal'],
+    ['RGU Cruzados', (val('rgu_cruzada')||0).toLocaleString(), 'líneas de venta cruzada', 'red'],
+  ];
+  const elM = document.getElementById('mrcKpiRow');
+  if(elM) elM.innerHTML = kpisM.map(a=>
+    `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`
+  ).join('');
+  const elP = document.getElementById('mrcPeriod');
+  if(elP) elP.textContent = esTodos ? 'TODOS LOS MESES' : mesAct;
+  const elN = document.getElementById('mrcNota');
+  if(elN) elN.textContent = 'MRC Anterior/Actual = cartera del trámite RENOVACION únicamente (sin venta cruzada). ' +
+    'MRC Venta Cruzada = líneas nuevas, portabilidades y portabilidades externas (va aparte). ' +
+    'La portabilidad interna no cuenta en ninguno de los dos grupos.';
+  const rows = agentesActuales().slice().sort((a,b)=> (b.mrc_act_renov+b.mrc_cruz) - (a.mrc_act_renov+a.mrc_cruz)).slice(0,12);
+  nuevoChart('chMrcAg',{type:'bar',
+    data:{labels:rows.map(r=>r.agente.length>22?r.agente.slice(0,22)+'…':r.agente),
+      datasets:[
+        {label:'MRC Anterior',data:rows.map(r=>r.mrc_ant_renov),backgroundColor:'#42a5f5',borderRadius:3},
+        {label:'MRC Actual (renov)',data:rows.map(r=>r.mrc_act_renov),backgroundColor:'#66bb6a',borderRadius:3},
+        {label:'MRC Cruzada',data:rows.map(r=>r.mrc_cruz),backgroundColor:'#ffa726',borderRadius:3},
+      ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:9}}}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da',font:{size:9}}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  nuevoChart('chRguAg',{type:'bar',
+    data:{labels:rows.map(r=>r.agente.length>22?r.agente.slice(0,22)+'…':r.agente),
+      datasets:[
+        {label:'RGU Renovación',data:rows.map(r=>r.rgu_renov),backgroundColor:'#ab47bc',borderRadius:3},
+        {label:'RGU Cruzados',data:rows.map(r=>r.rgu_cruz),backgroundColor:'#ffa726',borderRadius:3},
+      ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:9}}}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da',font:{size:9}}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+}
+
 function renderAll(){
   const safe = fn => { try { fn(); } catch(e){ console.error('Error en '+fn.name+':', e); } };
   safe(kpis);
   safe(renderRenov); safe(renderMesRenov); safe(renderAgLlam);
+  safe(renderMrc);
   safe(renderRend);
   safe(renderMarc);
   safe(renderTipif);
   safe(renderVentas);
+  safe(renderRecorrido);
 }
 
 renderAll();

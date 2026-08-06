@@ -36,6 +36,55 @@
       Tipificacion 34).
 
 ------------------------------------------------------------------------------
+  0b. CARTERA MRC Y VENTA CRUZADA (definiciones - corregidas 06/08)
+  - VENTAS de renovacion = SOLO tramites de la hoja 'Ventas Moviles' con
+    TRAMITE = RENOVACION (una fila = una venta). NUNCA sumar lineas facturadas.
+  - VENTAS CRUZADAS = SOLO tramites de 'Ventas Moviles' con TRAMITE en
+    {LINEA NUEVA, PORTABILIDAD, PORTABILIDAD EXTERNA} (portabilidad interna NO).
+  - RGU de renovacion = cantidad de lineas de 'lineas facturadas' con
+    Tipoventa = RENOVACION (columna 'Cantidad lineas').
+  - RGU de productos cruzados = cantidad de lineas con Tipoventa en
+    {LINEA NUEVA, PORTABILIDAD EXTERNA} (ojo: el dato dice 'PROTABILIDAD').
+  - MRC ANTERIOR / MRC ACTUAL = columnas 'MRC Anterior'/'MRC Actual' de
+    'Ventas Moviles' SOLO para tramite RENOVACION del equipo Marinel (sin
+    mezclar el equipo de Julio, que va aparte).
+  - MRC DE VENTA CRUZADA = columna 'MRC Actual' de los tramites cruzados.
+  - CORRECCION 06/08: se elimino el doble conteo que mezclaba tramites
+    (ventas) con lineas facturadas (RGU) en la misma metrica 'ventas_renov'.
+    Ahora ventas y RGU usan fuentes separadas. RGU se muestra como entero.
+
+  0c. RECORRIDO DE LA BASE (pestana agregada 6 de agosto 2026)
+------------------------------------------------------------------------------
+  Nueva pestana "Recorrido de la Base" (requerimiento de Amir: descargar las
+  bases de ViciDial y cruzarlas contra las marcaciones de los agentes de la
+  campana de renovacion para ver el RECORRIDO de esa base).
+
+  QUE HACE:
+    - Lee las bases descargadas de ViciDial (bases/Base de datos Nextphone
+      14072026 y bases/Base Movil sin fijo 02072026 ren) y extrae los
+      telefonos unicos (ultimos 8 digitos, llave de cruce).
+    - Cruza contra las marcaciones de Vici de los agentes RENOVACION
+      (phone_number_dialed) y calcula:
+        * Base Total (telefonos unicos en la base)
+        * Marcados (con al menos 1 llamada del equipo RENOVACION)
+        * Sin Tocar (en la base pero sin ninguna llamada)
+        * Contactados (de la base, con al menos 1 contacto efectivo)
+        * % Recorrido = marcados / total
+        * Intentos promedio por telefono marcado
+        * Por agente: cuantos telefonos de la base marco cada uno
+        * Por mes: telefonos de la base marcados en cada mes
+    - Tabla de detalle con filtros: buscar por telefono/cuenta/nombre,
+      filtrar por base (NEXTPHONE/MOVIL) y por estado (marcado/sin tocar).
+
+  RESULTADO ACTUAL (datos julio 2026 vs reporte ene-jun 2026):
+    - 3,647 telefonos unicos en la base | 128 marcados (3.5%) | 79 contactados
+    - Interpretacion: la base descargada es de julio 2026 y el reporte Vici es
+      de enero-junio, por eso el recorrido es bajo. Con bases y reporte del
+      mismo periodo el % subira. Es el dato real, no un bug.
+    - Las columnas de las bases se fijan en BASES_RECORRIDO (col cuenta,
+      col telefono, col nombre, col ejecutiva) - ajustar si cambia el formato.
+
+------------------------------------------------------------------------------
   1. OBJETIVO
 ------------------------------------------------------------------------------
   Crear un dashboard web (HTML + JavaScript) que muestre EXCLUSIVAMENTE la
