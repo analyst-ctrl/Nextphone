@@ -734,7 +734,7 @@ html = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Renovación SOHO — Equipo Marinel Moreno</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1220;color:#e8eaf6;padding:16px}
@@ -828,7 +828,7 @@ tr:hover td{background:rgba(123,31,162,.12)}
   <button class="tab" onclick="sw('ventas',this)">💰 Ventas & RGU</button>
 </div>
 
-
+<div id="v-renov" class="content active">
   <div class="card full">
     <h2>🏆 Top Performance — Equipo Renovación <span class="period-chip" id="topPeriod" style="font-size:10px">TODOS LOS MESES</span> <span style="font-weight:400;color:#7986cb;font-size:11px">(clic en columna para ordenar)</span></h2>
     <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
@@ -907,7 +907,7 @@ tr:hover td{background:rgba(123,31,162,.12)}
   </div>
 </div>
 
-
+<script>
 const D = __DATA__;
 const fmt$ = v => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
 const COLORS = ['#ab47bc','#42a5f5','#66bb6a','#ffa726','#ef5350','#26a69a','#ec407a','#5c6bc0','#ffca28','#8d6e63'];
@@ -1024,7 +1024,8 @@ function sw(id, btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('v-'+id).classList.add('active');
+  const el = document.getElementById('v-'+id);
+  if(el) el.classList.add('active');
 }
 
 // ---------- RENOVACION ----------
@@ -1308,12 +1309,13 @@ function renderMarc(){
 }
 
 function renderAll(){
-  kpis();
-  renderRenov(); renderMesRenov(); renderAgLlam();
-  renderRend();
-  renderMarc();
-  renderTipif();
-  renderVentas();
+  const safe = fn => { try { fn(); } catch(e){ console.error('Error en '+fn.name+':', e); } };
+  safe(kpis);
+  safe(renderRenov); safe(renderMesRenov); safe(renderAgLlam);
+  safe(renderRend);
+  safe(renderMarc);
+  safe(renderTipif);
+  safe(renderVentas);
 }
 
 renderAll();
