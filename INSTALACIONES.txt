@@ -1,0 +1,45 @@
+================================================================================
+  REGISTRO DE INSTALACIONES - PROYECTO CHAMBA PANAMA
+  Todo el software/paquetes/modelos instalados, con comandos para reproducir.
+  Fecha de inicio: 2026-08-06
+================================================================================
+
+  EQUIPO: Windows, Python 3.13.14 (Microsoft Store), pip 26.1.2
+  NOTA: la descarga de paquetes es LENTA en este equipo (~230 kB/s desde PyPI);
+        usar tiempos generosos al instalar y verificar con pip show.
+
+--------------------------------------------------------------------------------
+  2026-08-06 - Motor de transcripcion de audio (Whisper local)
+--------------------------------------------------------------------------------
+
+  Proposito: transcribir grabaciones MP3 en espanol a texto, 100% local
+  (carpeta Transcripcion/). NO se instalo ffmpeg: PyAV lo reemplaza.
+
+  PAQUETES PYTHON INSTALADOS (pip):
+    - ctranslate2 4.8.1        (motor de IA; requiere Python 3.13, wheel cp313)
+    - faster-whisper 1.2.1     (transcriptor)
+    - PyAV 18.0.0              (decodifica MP3/WAV/M4A sin ffmpeg)
+    - onnxruntime 1.28.0       (filtro VAD de silencios)
+    - edge-tts                 (solo para generar audios de prueba)
+    - dependencias: numpy 2.5.1, pyyaml 6.0.3, setuptools 83.0.0,
+                    tokenizers, huggingface-hub
+
+  COMANDO USADO:
+    python -m pip install faster-whisper edge-tts
+
+  MODELOS DE IA DESCARGADOS (HuggingFace, primera ejecucion de cada uno):
+    - Systran/faster-whisper-base   ~140 MB   (~67 s de descarga)
+    - Systran/faster-whisper-small  ~460 MB   (~200 s; la descarga se reanuda
+                                               si se corta por tiempo)
+    Cache de modelos: C:\Users\Near\.cache\huggingface\hub\
+
+  NOTAS:
+    - Los modelos se descargan SOLO la primera vez que se usan; despues
+      funcionan sin internet.
+    - Aviso de "symlinks" de HuggingFace en Windows: inofensivo, ignorar.
+    - Para borrar un modelo descargado (liberar espacio):
+      borrar la carpeta correspondiente en el cache de huggingface.
+
+--------------------------------------------------------------------------------
+  PROXIMAS INSTALACIONES (agregar aqui abajo con la fecha)
+--------------------------------------------------------------------------------

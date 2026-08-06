@@ -1,0 +1,47 @@
+================================================================================
+  BITACORA DE ACTIVIDADES - PROYECTO CHAMBA PANAMA
+  Registro cronologico de todo lo que se hace con el asistente.
+  Fecha de inicio: 2026-08-06
+================================================================================
+
+  REGLAS:
+  - Cada sesion agrega una entrada con fecha y resumen.
+  - Las instalaciones de software/paquetes/modelos van en INSTALACIONES.txt
+    (archivo aparte).
+  - Los errores/bugs van en TROUBLESHOOTING.txt.
+
+--------------------------------------------------------------------------------
+  2026-08-06
+--------------------------------------------------------------------------------
+
+  1) SUBIDA A GITHUB (verificada)
+     - Se subio el archivo pendiente "Enrique/1. Saber hacer todo lo que hace Leo.txt"
+     - Commit: docs(enrique): subir archivo de funciones Leo (a1f38ba)
+     - Repositorio limpio y sincronizado con origin/main.
+
+  2) SISTEMA DE TRANSCRIPCION LOCAL DE AUDIOS (NUEVO)
+     - Pregunta del usuario: se puede extraer texto en espanol de MP3 con este
+       hardware? Respuesta: SI, y se construyo el sistema completo.
+     - Hardware verificado: Intel i7-4650U (2 nucleos/4 hilos), 8 GB RAM,
+       sin GPU dedicada, Python 3.13.14, sin ffmpeg (no hizo falta).
+     - El usuario eligio la opcion LOCAL y GRATIS (faster-whisper), para
+       llamadas de 10-30 min. Los audios nunca salen del PC (privacidad).
+     - Se creo la carpeta Transcripcion/ con:
+         * transcribir.py    -> MP3/WAV/M4A a texto .txt o subtitulos .srt
+         * generar_prueba.py -> genera un MP3 de muestra en espanol (edge-tts)
+         * README.txt        -> guia de uso completa
+     - Prueba real exitosa con un MP3 de 51 segundos:
+         * modelo base  -> 11 s de proceso (5x tiempo real); marca "Nextphone"
+                           salio como "Nespón" (normal en nombres propios)
+         * modelo small -> 30 s de proceso (1.7x tiempo real); mejor puntuacion
+     - Correcciones aplicadas tras revision de codigo:
+         * Parrafos: se corta por tope de ~90 palabras (el filtro VAD eliminaba
+           los silencios y antes todo quedaba en UN solo parrafo gigante).
+         * beam_size configurable (--beam, default 3) para CPU debil.
+         * Mensajes de error amigables si falta el paquete o falla la descarga.
+         * Soporte UTF-8 en consola Windows y silencio del aviso de symlinks.
+     - Pendiente: probar con grabaciones reales de llamadas; transcribir en lote.
+
+--------------------------------------------------------------------------------
+  PROXIMAS ENTRADAS (agregar aqui abajo con la fecha)
+--------------------------------------------------------------------------------
