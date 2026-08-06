@@ -514,6 +514,121 @@ print('Gestiones cross-sell:', sum(cross_por_agente.values()))
 print('  Cross-sell por mes:', {m: sum(cm.get(m, 0) for cm in cross_mes.values()) for m in MESES_ORDEN})
 
 # =============================================================================
+# 4c. WINBACK - base de clientes a recuperar (campaña de Julio)
+# =============================================================================
+winback = {'detalle': [], 'por_ejecutiva': [], 'por_razon': [], 'resumen': {}}
+wb_glob = glob.glob(os.path.join(PROD, 'bases', 'Winback SOHO*.xlsx'))
+if wb_glob:
+    wbw = openpyxl.load_workbook(wb_glob[0], read_only=True, data_only=True)
+    wws = wbw['BASE 1.3'] if 'BASE 1.3' in wbw.sheetnames else wbw[wbw.sheetnames[0]]
+    rows = wws.iter_rows(values_only=True)
+    header = next(rows, None)
+    hdr = {norm(h): i for i, h in enumerate(header or [])}
+    c_eje = get_col(hdr, 'Ejecutivas', 'Ejecutivo')
+    c_cli = get_col(hdr, 'CLIENTE', 'Cliente')
+    c_plan = get_col(hdr, 'DESCRIPCIÓN DE PLAN', 'Descripcion de plan', 'Plan')
+    c_raz = get_col(hdr, 'RAZÓN DE SALIDA', 'Razon de salida', 'Razón de salida')
+    c_rgu = get_col(hdr, 'RGU')
+    c_mrc = get_col(hdr, 'MRC Acum', 'MRC', 'MRC acumulado')
+    c_cont = get_col(hdr, 'Persona de contacto')
+    c_corr = get_col(hdr, 'Correo')
+    c_t1 = get_col(hdr, 'Contacto 1')
+    c_t2 = get_col(hdr, 'Contacto 2')
+    for r in rows:
+        if r is None:
+            continue
+        def g(c): return r[c] if c is not None and c < len(r) else None
+        eje = norm(g(c_eje)) if g(c_eje) else 'SIN EJECUTIVA'
+        razon = norm(g(c_raz)) if g(c_raz) else 'SIN RAZON'
+        winback['detalle'].append({
+            'e': eje, 'cli': str(g(c_cli) or '').strip(),
+            'plan': str(g(c_plan) or '').strip(),
+            'razon': razon, 'rgu': to_num(g(c_rgu)), 'mrc': to_num(g(c_mrc)),
+            'cont': str(g(c_cont) or '').strip(), 'correo': str(g(c_corr) or '').strip(),
+            't1': str(g(c_t1) or '').strip(), 't2': str(g(c_t2) or '').strip(),
+        })
+    wbw.close()
+    por_eje = defaultdict(lambda: {'clientes': 0, 'rgu': 0.0, 'mrc': 0.0})
+    por_raz = defaultdict(lambda: {'clientes': 0, 'rgu': 0.0, 'mrc': 0.0})
+    for d in winback['detalle']:
+        por_eje[d['e']]['clientes'] += 1
+        por_eje[d['e']]['rgu'] += d['rgu']
+        por_eje[d['e']]['mrc'] += d['mrc']
+        por_raz[d['razon']]['clientes'] += 1
+        por_raz[d['razon']]['rgu'] += d['rgu']
+        por_raz[d['razon']]['mrc'] += d['mrc']
+    winback['por_ejecutiva'] = sorted(
+        [{'e': k, 'clientes': v['clientes'], 'rgu': v['rgu'], 'mrc': v['mrc']}
+         for k, v in por_eje.items()], key=lambda x: -x['clientes'])
+    winback['por_razon'] = sorted(
+        [{'r': k, 'clientes': v['clientes'], 'rgu': v['rgu'], 'mrc': v['mrc']}
+         for k, v in por_raz.items()], key=lambda x: -x['clientes'])
+    winback['resumen'] = {
+        'clientes': len(winback['detalle']),
+        'rgu': round(sum(d['rgu'] for d in winback['detalle']), 1),
+        'mrc': round(sum(d['mrc'] for d in winback['detalle']), 2),
+        'razones': len(winback['por_razon']),
+    }
+print('Winback:', winback['resumen'])
+
+# =============================================================================
+# 4d. CROSS-SELL - detalle de gestiones (campaña de Julio)
+# =============================================================================
+cross_data = {'detalle': [], 'por_ejecutiva': [], 'resumen': {}}
+if cs:
+    cwb2 = openpyxl.load_workbook(cs[0], read_only=True, data_only=True)
+    sin_tel_base = 0
+    for sn in ['Base para gestionar CC ', 'con contacto telefonos']:
+        if sn not in cwb2.sheetnames:
+            continue
+        ws = cwb2[sn]
+        rows = ws.iter_rows(values_only=True)
+        header = next(rows, None)
+        hdr = {norm(h): i for i, h in enumerate(header or [])}
+        c_eje = get_col(hdr, 'Ejecutivo', 'AGENTE', 'Agentes', 'Ejecutiva')
+        c_fecha = get_col(hdr, 'FECHA', 'Fecha')
+        c_cuenta = get_col(hdr, 'CUENTA', 'Cuenta')
+        c_cust = get_col(hdr, 'CUST_NO')
+        c_cli = get_col(hdr, 'ALIAS', 'NOMBRE_CIS', 'Nombre')
+        c_prov = get_col(hdr, 'PROVINCIA', 'Provincia')
+        c_tel = get_col(hdr, 'contact_mobile', 'Contacto 1', 'Telefono')
+        c_est = get_col(hdr, 'Estatus', 'Status', 'Estado')
+        c_com = get_col(hdr, 'COMENTARIOS', 'Comentarios')
+        for r in rows:
+            if r is None:
+                continue
+            def g(c): return r[c] if c is not None and c < len(r) else None
+            eje = norm(g(c_eje)) if g(c_eje) else 'SIN EJECUTIVA'
+            tel = str(g(c_tel) or '').replace('.0', '').strip()
+            cross_data['detalle'].append({
+                'fecha': str(g(c_fecha) or '').strip(),
+                'cuenta': str(g(c_cuenta) or '').replace('.0', '').strip(),
+                'cust': str(g(c_cust) or '').replace('.0', '').strip(),
+                'cli': str(g(c_cli) or '').strip(),
+                'prov': str(g(c_prov) or '').strip(),
+                'tel': tel,
+                'e': eje,
+                'est': str(g(c_est) or '').strip(),
+                'com': str(g(c_com) or '').strip(),
+            })
+    if 'sin contactos telefonicos' in cwb2.sheetnames:
+        ws = cwb2['sin contactos telefonicos']
+        for _ in ws.iter_rows(min_row=2, values_only=True):
+            sin_tel_base += 1
+    cwb2.close()
+    por_eje_c = Counter(d['e'] for d in cross_data['detalle'])
+    cross_data['por_ejecutiva'] = sorted(
+        [{'e': k, 'gestiones': v} for k, v in por_eje_c.items()],
+        key=lambda x: -x['gestiones'])
+    cross_data['resumen'] = {
+        'gestiones': len(cross_data['detalle']),
+        'con_tel': sum(1 for d in cross_data['detalle'] if d['tel'] and d['tel'] != '#N/A'),
+        'sin_tel_base': sin_tel_base,
+        'ejecutivas': len(por_eje_c),
+    }
+print('Cross-sell detalle:', cross_data['resumen'])
+
+# =============================================================================
 # 4b. RECORRIDO DE LA BASE (bases de ViciDial vs marcaciones RENOVACION)
 # =============================================================================
 # Llave de cruce: TELÉFONO (últimos 8 dígitos). Las bases descargadas de
@@ -895,6 +1010,8 @@ data = {
     'equipo_renovacion': renov_con_datos,
     'renov_sin_actividad': renov_sin_actividad,
     'recorrido_base': recorrido_base,
+    'winback': winback,
+    'cross_sell': cross_data,
     'mrc_resumen': mrc_resumen,
     'totales_ventas': {
         'moviles': len(ventas_moviles),
@@ -980,8 +1097,8 @@ tr:hover td{background:rgba(123,31,162,.12)}
 
 <div class="header">
   <div>
-    <span class="badge-camp">CAMPAÑA RENOVACIÓN</span>
-    <h1>Desempeño Equipo Marinel Moreno</h1>
+    <span class="badge-camp">CANAL SOHO · TODAS LAS CAMPAÑAS</span>
+    <h1>Renovación · Winback · Cross-selling</h1>
     <div class="sub">SOHO · Iniciativa Nextphone · Marcaciones ViciDial + Ventas · Gerente: Amir Josue Rodriguez Chavarria · Datos: <span id="fechaGen"></span></div>
   </div>
   <div style="text-align:right;font-size:12px;opacity:.8;">
@@ -1014,6 +1131,8 @@ tr:hover td{background:rgba(123,31,162,.12)}
   <button class="tab" onclick="sw('tipif',this)">🏷️ Tipificación</button>
   <button class="tab" onclick="sw('ventas',this)">💰 Ventas & RGU</button>
   <button class="tab" onclick="sw('rec',this)">🗺️ Recorrido de la Base</button>
+  <button class="tab" onclick="sw('winback',this)">🔄 Winback</button>
+  <button class="tab" onclick="sw('cross',this)">🛒 Cross-selling</button>
 </div>
 
 <div id="v-renov" class="content active">
@@ -1136,6 +1255,58 @@ tr:hover td{background:rgba(123,31,162,.12)}
     <table id="tabRecDet"><thead><tr>
       <th>Base</th><th class="ct">Cuenta</th><th class="ct">Teléfono</th><th>Cliente</th><th>Ejecutiva (base)</th>
       <th class="ct">Marcado</th><th class="ct">Contactado</th><th class="rt">Llamadas</th><th>Agente que marcó</th><th>Meses</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="v-winback" class="content">
+  <div class="kpi-row" id="winKpiRow"></div>
+  <div class="grid-2">
+    <div class="card"><h2>🎯 Clientes a recuperar por Razón de Salida</h2><div class="chart-box"><canvas id="chWinRazon"></canvas></div></div>
+    <div class="card"><h2>👥 Clientes por Ejecutiva</h2><div class="chart-box"><canvas id="chWinEje"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📋 Base Winback — clientes a recuperar (campaña de Julio)</h2>
+    <div class="filter-bar" style="margin-bottom:8px">
+      <label>Buscar cliente / plan:</label>
+      <input type="text" id="winQ" onkeyup="renderWinTabla()" placeholder="Ej: COIMSA..." style="min-width:200px">
+      <label>Ejecutiva:</label>
+      <select id="winFEje" onchange="renderWinTabla()"><option value="">Todas</option></select>
+      <label>Razón:</label>
+      <select id="winFRazon" onchange="renderWinTabla()"><option value="">Todas</option></select>
+      <span style="flex:1"></span><span id="winCount" style="font-size:12px;color:#7986cb"></span>
+    </div>
+    <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+    <table id="tabWin"><thead><tr>
+      <th>Ejecutiva</th><th>Cliente</th><th>Plan</th><th>Razón de salida</th>
+      <th class="rt">RGU</th><th class="rt">MRC $</th><th>Contacto</th><th>Correo</th><th class="ct">Tel 1</th><th class="ct">Tel 2</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="v-cross" class="content">
+  <div class="kpi-row" id="crossKpiRow"></div>
+  <div class="grid-2">
+    <div class="card"><h2>🛒 Gestiones por Ejecutiva</h2><div class="chart-box"><canvas id="chCrossEje"></canvas></div></div>
+    <div class="card"><h2>📞 Con vs Sin Teléfono (gestiones)</h2><div class="chart-box"><canvas id="chCrossTel"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📋 Gestiones Cross-selling — clientes móvil (se les ofrece fijo/internet)</h2>
+    <div class="filter-bar" style="margin-bottom:8px">
+      <label>Buscar cliente / cuenta:</label>
+      <input type="text" id="crossQ" onkeyup="renderCrossTabla()" placeholder="Ej: VIELKA..." style="min-width:200px">
+      <label>Ejecutiva:</label>
+      <select id="crossFEje" onchange="renderCrossTabla()"><option value="">Todas</option></select>
+      <label>Con teléfono:</label>
+      <select id="crossFTel" onchange="renderCrossTabla()"><option value="">Todos</option><option value="1">Sí</option><option value="0">No</option></select>
+      <span style="flex:1"></span><span id="crossCount" style="font-size:12px;color:#7986cb"></span>
+    </div>
+    <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+    <table id="tabCross"><thead><tr>
+      <th>Fecha</th><th>Cuenta</th><th>Cliente</th><th>Provincia</th><th class="ct">Teléfono</th>
+      <th>Ejecutiva</th><th>Estatus / Comentario</th>
     </tr></thead><tbody></tbody></table>
     </div>
   </div>
@@ -1657,6 +1828,92 @@ function renderMrc(){
       scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da',font:{size:9}}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
 }
 
+// ---------- WINBACK ----------
+function renderWin(){
+  const W = D.winback; if(!W || !W.resumen) return;
+  const r = W.resumen;
+  const kpisW = [
+    ['Clientes a Recuperar', (r.clientes||0).toLocaleString(), 'base Winback (julio 2026)', 'purple'],
+    ['RGU Potencial', (r.rgu||0).toLocaleString(), 'líneas que se podrían recuperar', 'blue'],
+    ['MRC Acumulado', fmt$(r.mrc||0), 'cartera mensual que se recuperaría', 'green'],
+    ['Razones de Salida', (r.razones||0), 'motivos distintos de baja', 'orange'],
+  ];
+  document.getElementById('winKpiRow').innerHTML = kpisW.map(a=>
+    `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  const porE = W.por_ejecutiva||[], porR = W.por_razon||[];
+  const se = document.getElementById('winFEje');
+  if(se && se.options.length<=1) se.innerHTML = '<option value="">Todas</option>'+porE.map(x=>`<option>${x.e}</option>`).join('');
+  const sr = document.getElementById('winFRazon');
+  if(sr && sr.options.length<=1) sr.innerHTML = '<option value="">Todas</option>'+porR.map(x=>`<option>${x.r}</option>`).join('');
+  const raz = porR.slice(0,10);
+  nuevoChart('chWinRazon',{type:'bar',data:{labels:raz.map(x=>x.r.length>24?x.r.slice(0,24)+'…':x.r),datasets:[{label:'Clientes',data:raz.map(x=>x.clientes),backgroundColor:COLORS,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  const eje = porE.slice(0,12);
+  nuevoChart('chWinEje',{type:'bar',data:{labels:eje.map(x=>x.e.length>22?x.e.slice(0,22)+'…':x.e),datasets:[{label:'Clientes',data:eje.map(x=>x.clientes),backgroundColor:'#ffa726',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  renderWinTabla();
+}
+function renderWinTabla(){
+  const W = D.winback; if(!W) return;
+  const q = (document.getElementById('winQ').value||'').toUpperCase().trim();
+  const fe = document.getElementById('winFEje').value;
+  const fr = document.getElementById('winFRazon').value;
+  const rows = W.detalle.filter(x=>
+    (!q || (x.cli+' '+x.plan).toUpperCase().includes(q)) &&
+    (!fe || x.e===fe) && (!fr || x.razon===fr));
+  document.getElementById('winCount').textContent = rows.length.toLocaleString()+' de '+(W.detalle||[]).length.toLocaleString()+' registros';
+  document.getElementById('tabWin').querySelector('tbody').innerHTML = rows.slice(0,400).map(x=>`<tr>
+      <td>${x.e}</td><td><strong>${x.cli||'—'}</strong></td><td>${x.plan||'—'}</td><td>${x.razon}</td>
+      <td class="rt">${x.rgu||0}</td><td class="rt">${fmt$(x.mrc||0)}</td>
+      <td>${x.cont||'—'}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${x.correo||'—'}</td>
+      <td class="ct">${x.t1||'—'}</td><td class="ct">${x.t2||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="10" class="ct">Sin resultados</td></tr>';
+}
+
+// ---------- CROSS-SELL ----------
+function renderCross(){
+  const C = D.cross_sell; if(!C || !C.resumen) return;
+  const r = C.resumen;
+  const tot = r.gestiones||0, conT = r.con_tel||0;
+  const kpisC = [
+    ['Gestiones Totales', (tot).toLocaleString(), 'gestiones registradas en la base', 'purple'],
+    ['Con Teléfono', (conT).toLocaleString(), tot? (conT/tot*100).toFixed(1)+'% del total':'', 'green'],
+    ['Sin Teléfono (base)', (r.sin_tel_base||0).toLocaleString(), 'clientes de la base sin contacto', 'red'],
+    ['Ejecutivas Activas', (r.ejecutivas||0), 'que registraron gestiones', 'blue'],
+  ];
+  document.getElementById('crossKpiRow').innerHTML = kpisC.map(a=>
+    `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  const porE = C.por_ejecutiva||[];
+  const se = document.getElementById('crossFEje');
+  if(se && se.options.length<=1) se.innerHTML = '<option value="">Todas</option>'+porE.map(x=>`<option>${x.e}</option>`).join('');
+  const eje = porE.slice(0,12);
+  nuevoChart('chCrossEje',{type:'bar',data:{labels:eje.map(x=>x.e.length>22?x.e.slice(0,22)+'…':x.e),datasets:[{label:'Gestiones',data:eje.map(x=>x.gestiones),backgroundColor:'#42a5f5',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  nuevoChart('chCrossTel',{type:'doughnut',data:{labels:['Con teléfono','Sin teléfono'],datasets:[{data:[conT, Math.max(tot-conT,0)],backgroundColor:['#66bb6a','#ef5350'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:10}}}}}});
+  renderCrossTabla();
+}
+function renderCrossTabla(){
+  const C = D.cross_sell; if(!C) return;
+  const q = (document.getElementById('crossQ').value||'').toUpperCase().trim();
+  const fe = document.getElementById('crossFEje').value;
+  const ft = document.getElementById('crossFTel').value;
+  const rows = C.detalle.filter(x=>{
+    const conT = x.tel && x.tel !== '#N/A';
+    const okT = ft==='' || (ft==='1' ? conT : !conT);
+    return (!q || (x.cli+' '+x.cuenta).toUpperCase().includes(q)) && (!fe || x.e===fe) && okT;
+  });
+  document.getElementById('crossCount').textContent = rows.length.toLocaleString()+' de '+(C.detalle||[]).length.toLocaleString()+' registros';
+  document.getElementById('tabCross').querySelector('tbody').innerHTML = rows.slice(0,500).map(x=>`<tr>
+      <td>${x.fecha||'—'}</td><td class="ct">${x.cuenta||'—'}</td><td><strong>${x.cli||'—'}</strong></td>
+      <td>${x.prov||'—'}</td><td class="ct">${x.tel&&x.tel!=='#N/A'?x.tel:'—'}</td>
+      <td>${x.e}</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.com||x.est||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="7" class="ct">Sin resultados</td></tr>';
+}
+
 function renderAll(){
   const safe = fn => { try { fn(); } catch(e){ console.error('Error en '+fn.name+':', e); } };
   safe(kpis);
@@ -1667,6 +1924,8 @@ function renderAll(){
   safe(renderTipif);
   safe(renderVentas);
   safe(renderRecorrido);
+  safe(renderWin);
+  safe(renderCross);
 }
 
 renderAll();

@@ -85,6 +85,35 @@
       col telefono, col nombre, col ejecutiva) - ajustar si cambia el formato.
 
 ------------------------------------------------------------------------------
+  0d. PESTAÑAS WINBACK Y CROSS-SELLING (agregadas 6 de agosto 2026)
+------------------------------------------------------------------------------
+  Nuevas pestanas en el MISMO dashboard (canal SOHO completo):
+
+  - WINBACK (pestana 🔄): base de clientes a recuperar
+      bases/Winback SOHO 2026 Julio-Iniciativa Nextphone 17 julio 2026.xlsx
+      hoja 'BASE 1.3' -> 210 clientes | 382 RGU | $8,242 MRC acumulado
+      Muestra KPIs, grafico por Razon de Salida, por Ejecutiva y la base
+      completa con filtros (buscar, por ejecutiva, por razon).
+
+  - CROSS-SELLING (pestana 🛒): gestiones de venta cruzada móvil
+      bases/Base para campaña cross-sell movil Nextphone.xlsx
+      hojas 'Base para gestionar CC ' + 'con contacto telefonos'
+      -> 2,209 gestiones | 2,033 con teléfono (92%) | 14 ejecutivas
+      Muestra KPIs, grafico por Ejecutiva, Con vs Sin Teléfono y el detalle
+      de gestiones con filtros (buscar, por ejecutiva, con/sin teléfono).
+
+  ORIGEN EN extraer_datos.py:
+    - Seccion 4c (WINBACK) y 4d (CROSS-SELL detalle).
+    - El JSON agrega las llaves 'winback' y 'cross_sell'.
+    - El HTML agrega 2 pestanas, 2 divs de contenido y las funciones JS
+      renderWin/renderWinTabla y renderCross/renderCrossTabla.
+
+  NOTA: estas bases son de JULIO 2026 y pertenecen a la campana del equipo
+  de Julio (SOHO general). Cuando lleguen el HC y las metas (RGU/MRC) de ese
+  equipo se podran agregar metas y recorrido de base por campana (requisito
+  mencionado en la reunion del 6 de agosto).
+
+------------------------------------------------------------------------------
   1. OBJETIVO
 ------------------------------------------------------------------------------
   Crear un dashboard web (HTML + JavaScript) que muestre EXCLUSIVAMENTE la

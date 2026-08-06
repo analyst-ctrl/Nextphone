@@ -63,6 +63,35 @@
      - REGLA: el folder original dash_prod/ podra modificarse para cumplir
        los requisitos de la reunion, pero el respaldo NO se toca.
 
+  5) VERIFICACION DEL RESPALDO + MUESTRA DEL DASHBOARD (2026-08-06)
+     - Se confirmo con diff que Respaldo_Renovacion_2026-08-06 es IDENTICO
+       a dash_prod/ (el respaldo esta al dia, nada que rehacer).
+     - Se abrio el dashboard en el navegador y se verifico con navegador
+       automatizado: carga correctamente, KPIs visibles (Llamadas 8,858,
+       Contactados 3,433/38.8%, Ventas 408, MRC $14,609.97, RGU 289,
+       Venta cruzada 7), tablas Top Performance y Cartera MRC, filtros
+       TODOS/ENE-JUN. Un error 404 menor en consola (recurso externo,
+       no afecta el funcionamiento).
+     - SIGUIENTE PASO: construir las otras campanas (Winback y
+       Cross-selling, equipo de Julio) segun los requisitos de la reunion.
+
+  6) DASHBOARD CON CAMPANAS WINBACK Y CROSS-SELLING (2026-08-06)
+     - El usuario eligio: MISMO dashboard con pestanas (no dashboards
+       separados). El respaldo Respaldo_Renovacion_2026-08-06 NO se toca.
+     - Se extendio Amir/soho_prod/dash_prod/ con 2 pestanas nuevas:
+         * WINBACK: 210 clientes a recuperar | 382 RGU | $8,242 MRC
+           acumulado | 4 razones de salida. Base completa con filtros
+           (buscar, por ejecutiva, por razon).
+         * CROSS-SELLING: 2,209 gestiones (2,033 con telefono = 92%) |
+           14 ejecutivas. Detalle con filtros.
+     - Pipeline: extraer_datos.py secciones 4c/4d generan 'winback' y
+       'cross_sell' en el JSON; el HTML agrega pestanas, vistas y funciones
+       renderWin/renderCross. Header actualizado a 'Canal SOHO'.
+     - Verificado en navegador automatizado: 8 pestanas, sin errores de
+       consola, KPIs y tablas correctos en ambas pestanas nuevas.
+     - PENDIENTE (segun reunion): HC y metas (RGU/MRC) del equipo de Julio
+       para agregar metas por supervisor y recorrido de base por campana.
+
 --------------------------------------------------------------------------------
   PROXIMAS ENTRADAS (agregar aqui abajo con la fecha)
 --------------------------------------------------------------------------------
