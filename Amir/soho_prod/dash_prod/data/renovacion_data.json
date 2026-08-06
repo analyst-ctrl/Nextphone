@@ -41172,18 +41172,6 @@
     "contactados": 15
    },
    {
-    "agente": "LILIAN MILENA MOJICA DE LAS SALAS",
-    "telefonos": 5,
-    "llamadas": 12,
-    "contactados": 5
-   },
-   {
-    "agente": "MARINEL MORENO",
-    "telefonos": 21,
-    "llamadas": 38,
-    "contactados": 8
-   },
-   {
     "agente": "MASSIEL TOLEDO",
     "telefonos": 13,
     "llamadas": 26,
@@ -41194,6 +41182,18 @@
     "telefonos": 12,
     "llamadas": 129,
     "contactados": 7
+   },
+   {
+    "agente": "LILIAN MILENA MOJICA DE LAS SALAS",
+    "telefonos": 5,
+    "llamadas": 12,
+    "contactados": 5
+   },
+   {
+    "agente": "MARINEL MORENO",
+    "telefonos": 21,
+    "llamadas": 38,
+    "contactados": 8
    }
   ],
   "detalle": [
