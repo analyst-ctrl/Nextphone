@@ -1,0 +1,5 @@
+1. Ningún grupo supera el 90% crítico, lo que revela que el proceso de onboarding no está garantizando un estándar mínimo de calidad independientemente de la oleada.
+
+2. La alta variabilidad entre grupos (55% a 75.7%) sugiere que los resultados dependen de factores coyunturales de cada cohorte y no de un proceso formativo consistente y replicable.
+
+3. La caída en la medición del grupo más reciente indica que el acompañamiento post-entrenamiento es insuficiente; se necesita extender el refuerzo en las primeras semanas de operación autónoma para sostener el desempeño inicial.

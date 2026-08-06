@@ -1,0 +1,348 @@
+================================================================================
+  TROUBLESHOOTING - INGRIS DASHBOARD
+  Proyecto: Calidad Nextphone / OJT
+  Archivo:  INFORME DE CALIDAD NEXTPHONE 2026 Actualizado..xlsm
+  Dashboard: Ingris/dashboard/index.html
+================================================================================
+
+  Este documento contiene SOLO los errores encontrados en el proyecto
+  de Ingris y su solución en el dashboard.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  ÍNDICE                                                             │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │    1. Score dividido por 100 (CRÍTICO)                             │
+  │    2. Score leía columna equivocada                                 │
+  │    3. Duplicación al extraer datos                                  │
+  │    4. Referencias #REF! rotas                                       │
+  │    5. Rangos inconsistentes Evalucion vs Evalucion(2)               │
+  │    6. Fórmula redundante /100%                                      │
+  │    7. Doble corrección Python vs PHP                                │
+  │    8. XLOOKUP con columna completa                                  │
+  │    9. Sin backend para GitHub Pages                                 │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  1. SCORE DIVIDIDO POR 100 🔴 CRÍTICO
+================================================================================
+
+  SÍNTOMA:
+    El Score de Calidad mostraba valores entre 0.1% y 10% en vez de
+    10% a 100%. Todas las evaluaciones aparecían como "Críticas"
+    (score < 90%) aunque no lo fueran.
+
+  DIAGNÓSTICO:
+    En la hoja "Evalucion", fila 17, la fórmula del score por factor
+    tenía un `/100` extra:
+
+    ❌ = +F17*1/G17/100
+
+    Ejemplo con 3 respuestas correctas de 4 preguntas:
+    → 3 × 1 / 4 / 100 = 0.0075 (0.75%) ← MAL
+
+    ✅ Debería ser:
+    = +F17*1/G17
+    → 3 × 1 / 4 = 0.75 (75%) ← BIEN
+
+  IMPACTO:
+    - Todos los scores de factores individuales estaban 100× más pequeños
+    - Tablas dinámicas promediaban valores incorrectos
+    - Gráficos del PPT semanal mostraban datos erróneos
+    - Clasificación "Crítica/No Crítica" incorrecta
+    - Ranking de agentes distorsionado
+
+  SOLUCIÓN EN EL DASHBOARD:
+    Multiplicar todos los scores por 100 al extraer los datos del .xlsm.
+
+    Archivo: Ingris/dashboard/scripts/extract_data.py
+    ```python
+    if score is not None:
+        try:
+            score = float(score)
+            if score < 1:  # Si está en decimal (0.75), convertir a porcentaje (75)
+                score = score * 100
+        except:
+            score = None
+    ```
+
+
+================================================================================
+  2. SCORE LEÍA COLUMNA EQUIVOCADA 🔴 CRÍTICO
+================================================================================
+
+  SÍNTOMA:
+    El score extraído no coincidía con el Score de Calidad total.
+    Valores inconsistentes entre evaluaciones.
+
+  DIAGNÓSTICO:
+    El script de extracción buscaba la palabra "SCORE" y encontraba
+    primero la columna "Apertura y cierre corporativo Score" (Col 114)
+    en vez de "SCORE CALIDAD" (Col 187).
+
+    Col 114 = Score de un factor individual (ej: 0.15 = 15%)
+    Col 187 = Score de Calidad TOTAL (ej: 0.75 = 75%) ← LA CORRECTA
+
+  SOLUCIÓN:
+    Priorizar la búsqueda: primero buscar "SCORE CALIDAD" exacto,
+    luego "Score calidad", luego "SCORE" genérico como fallback.
+
+    Archivo: Ingris/dashboard/scripts/extract_data.py
+    ```python
+    score_col = col_idx.get('SCORE CALIDAD')
+    if score_col is None:
+        score_col = col_idx.get('Score calidad')
+    if score_col is None:
+        score_col = col_idx.get('Score')
+    if score_col is None:
+        # Fallback: buscar cualquier columna cuyo nombre contenga 'SCORE'
+        for col_name, col_num in col_idx.items():
+            if 'SCORE' in str(col_name).upper():
+                score_col = col_num
+                break
+    ```
+
+  RESULTADO:
+    Antes: Score promedio = 0.7 (0.7%) → todo crítico
+    Ahora: Score promedio = 64.7 ✅, mínimo = 10, máximo = 100
+
+
+================================================================================
+  3. DUPLICACIÓN AL EXTRAER DATOS 🟡
+================================================================================
+
+  SÍNTOMA:
+    El dashboard mostraba el doble de evaluaciones de las esperadas
+    (900 en vez de 450).
+
+  DIAGNÓSTICO:
+    El script ejecutaba INSERT sin limpiar la tabla primero.
+    Cada ejecución duplicaba los registros existentes.
+
+  SOLUCIÓN:
+    Agregar DELETE FROM antes del INSERT en el script de extracción:
+
+    Archivo: Ingris/dashboard/scripts/extract_data.py
+    ```python
+    c.execute('DELETE FROM evaluaciones')
+    c.execute('DELETE FROM evaluacion_factores')
+    ```
+
+
+================================================================================
+  4. REFERENCIAS #REF! ROTAS 🟡
+================================================================================
+
+  SÍNTOMA:
+    Más de 10 fórmulas en la hoja BD mostraban `#REF!` (error de
+    referencia). Las preguntas afectadas NO se evaluaban.
+
+  DIAGNÓSTICO:
+    Se eliminaron columnas de la hoja BD después de crear las fórmulas.
+    Las referencias a esas columnas ahora apuntan a celdas inexistentes.
+
+    Ejemplo de fórmulas rotas:
+    ❌ = IF(#REF!="No", #REF!, "")
+
+    Columnas probablemente borradas:
+    - Cerca de AQ, AR (preguntas 29-31)
+    - Cerca de HT (posiblemente "venta cruzada")
+    - Cerca de HU (posiblemente "indagar necesidades")
+
+  SOLUCIÓN EN EL DASHBOARD:
+    Las filas con #REF! se omiten automáticamente al extraer los datos
+    (el script ignora valores no numéricos).
+
+    Para arreglar el Excel ORIGINAL (.xlsm):
+    1. Abrir el archivo
+    2. Ir a la hoja BD
+    3. Buscar celdas con #REF!
+    4. Restaurar las columnas borradas o reescribir las fórmulas
+
+
+================================================================================
+  5. RANGOS INCONSISTENTES 🟡
+      Evalucion vs Evalucion(2)
+================================================================================
+
+  SÍNTOMA:
+    El archivo tiene DOS hojas de evaluación casi idénticas pero con
+    rangos diferentes. La hoja oculta "Evalucion (2)" tiene 2 filas
+    menos de cobertura.
+
+  DIAGNÓSTICO:
+                          Evalucion   Evalucion(2)   Diferencia
+    SUM(H17:H...)         67          65              -2 filas
+    COUNTIF(D51:D...,No)  63          61              -2 filas
+    COUNTIF(D64:D...,No)  67          65              -2 filas
+
+    La copia oculta está DESACTUALIZADA. Probablemente se agregaron
+    preguntas al formulario y solo se actualizó la hoja visible.
+
+  SOLUCIÓN:
+    - No usar "Evalucion (2)" para nada
+    - Si se necesita como respaldo, actualizarla manualmente
+    - El dashboard nuevo solo lee de la BD, no de las hojas ocultas
+    - En el script extract_data.py, leer solo de la hoja "Evalucion"
+      (no la hoja "Evalucion (2)")
+
+
+================================================================================
+  6. FÓRMULA REDUNDANTE /100% 🟢
+================================================================================
+
+  SÍNTOMA:
+    En hoja BD, una fórmula dividía entre 100%, que es matemáticamente
+    redundante (100% = 1, dividir por 1 no cambia nada).
+
+  DIAGNÓSTICO:
+    ❌ = IF(SUM(DK4,DP4,DU4,DW4)>335%, 100%, SUM(DK4,DP4,DU4,DW4)/100%)
+
+    La intención probable era promediar 4 factores:
+    ✅ = IF(SUM(DK4,DP4,DU4,DW4)>335%, 100%, SUM(DK4,DP4,DU4,DW4)/4)
+
+  IMPACTO:
+    No afecta el resultado final (dividir por 1 es igual que no dividir).
+    Pero es código confuso que puede llevar a errores si alguien lo copia.
+
+  SOLUCIÓN:
+    No requiere corrección urgente. Documentado para referencia futura.
+
+
+================================================================================
+  7. DOBLE CORRECCIÓN PYTHON vs PHP 🟡
+================================================================================
+
+  SÍNTOMA:
+    El script Python corregía scores con un umbral, mientras que el
+    PHP original corregía con otro umbral diferente, causando
+    inconsistencias.
+
+  DIAGNÓSTICO:
+    Python original:  if 0 < score < 0.2: score = score * 100
+    PHP original:     CASE WHEN AVG(x) < 1 THEN 100 ELSE 1 END
+
+    Esto creaba resultados dispares para el mismo score original:
+    - 0.10 → Python ×100 = 10.0 → PHP no corrige (10>1) → se ve como 10%
+    - 0.30 → Python NO corrige (0.3>0.2) → PHP ×100 → se ve como 30%
+    - 0.003 → Python ×100 = 0.3 → PHP ×100 → se ve como 30%
+
+  SOLUCIÓN:
+    Unificar: Python multiplica TODOS los scores < 1 por 100, y el
+    PHP ya no necesita hacer ninguna corrección adicional.
+
+    ```python
+    if score < 1:
+        score = score * 100
+    ```
+
+    Archivo: Ingris/dashboard/scripts/extract_data.py
+    Línea: `if score < 1: score = score * 100`
+
+
+================================================================================
+  8. XLOOKUP INEFICIENTE 🟢
+================================================================================
+
+  SÍNTOMA:
+    Fórmula XLOOKUP que escanea toda la columna A:A en vez de un rango.
+
+  DIAGNÓSTICO:
+    ❌ = XLOOKUP(A:A, HC!B:B, HC!E:E, , 0)
+    Escanea 1,048,576 filas por cada evaluación (450 veces).
+
+    ✅ = XLOOKUP(A2:A450, HC!B2:B100, HC!E2:E100, , 0)
+    Escanea solo las filas con datos.
+
+  SOLUCIÓN:
+    No crítica pero ralentiza el Excel. Recomendable acotar rangos
+    en el archivo .xlsm original.
+
+
+================================================================================
+  9. SIN BACKEND PARA GITHUB PAGES 🟢
+================================================================================
+
+  SÍNTOMA:
+    El dashboard original usaba PHP (api.php + config.php) para servir
+    datos desde SQLite. GitHub Pages NO SOPORTA PHP.
+
+  DIAGNÓSTICO:
+    La versión PHP requería un servidor con PHP habilitado (XAMPP/LAMP).
+    Para GitHub Pages se necesita HTML+JS+CSS estático.
+
+  SOLUCIÓN:
+    Se reescribió el dashboard como HTML+CSS+JS puro con los datos
+    precargados desde un archivo JSON (data/calidad_data.json).
+    Se creó export_json.py para convertir la SQLite → JSON.
+
+    FLUJO DE TRABAJO PARA ACTUALIZAR DATOS:
+    1. cd Ingris/dashboard
+    2. python scripts/export_json.py    ← genera calidad_data.json
+    3. git add data/calidad_data.json
+    4. git commit -m "data: actualizar calidad"
+    5. git push
+    6. Abrir https://analyst-ctrl.github.io/Nextphone/Ingris/dashboard/index.html
+
+
+================================================================================
+  DATOS CORREGIDOS - ANTES vs DESPUÉS
+================================================================================
+
+  MÉTRICA                ANTES (roto)       AHORA (corregido)
+  ─────────────────────────────────────────────────────────────
+  Score promedio         0.7 (0.7%)         64.7% ✅
+  Score mínimo           0.003              10.0%
+  Score máximo           10.0               100.0%
+  Evaluaciones críticas  450 (100%)         415 (92.2%)
+  Evaluaciones no crític 0 (0%)             35 (7.8%)
+
+  RANKING SUPERVISORES:
+  Supervisor              Score (corregido)
+  ─────────────────────────────────────
+  Lizeth González        71.4% 🥇
+  Maycol Lima            69.5% 🥈
+  Miliceth Ortega        66.5% 🥉
+  Manuel García          61.5%
+  Jonathan Ortega        58.6%
+
+
+================================================================================
+  ARCHIVOS DEL DASHBOARD
+================================================================================
+
+  Ingris/dashboard/
+  ├── index.html                   ← Dashboard standalone (HTML+CSS+JS)
+  ├── README.md                    ← Instrucciones de uso
+  ├── troubleshooting_ingrisdashboard.txt  ← ESTE ARCHIVO
+  ├── scripts/
+  │   ├── extract_data.py          ← Lee .xlsm → SQLite (corrige scores)
+  │   └── export_json.py           ← SQLite → JSON para dashboard
+  └── data/
+      ├── calidad.db               ← SQLite (datos crudos)
+      └── calidad_data.json        ← JSON (para el dashboard)
+
+
+================================================================================
+  COMANDOS RÁPIDOS
+================================================================================
+
+  # Regenerar datos del dashboard
+  cd Ingris/dashboard
+  python scripts/export_json.py
+
+  # Abrir el dashboard
+  start Ingris/dashboard/index.html
+  # O en GitHub Pages:
+  # https://analyst-ctrl.github.io/Nextphone/Ingris/dashboard/index.html
+
+  # Subir cambios a GitHub
+  git add Ingris/dashboard/data/calidad_data.json
+  git commit -m "data: actualizar datos calidad Ingris"
+  git push
+
+================================================================================
+  FIN DEL DOCUMENTO
+  Nextphone Analytics - Julio 2026
+================================================================================

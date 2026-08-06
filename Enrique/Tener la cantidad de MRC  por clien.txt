@@ -1,0 +1,23 @@
+Tener la cantidad de MRC  por client o el valor
+
+agrupar campanas por product, Amir pedira el HC
+Nextphone los KPI son diferente
+Movil and fijo hay un crosscell
+
+Agrupamiento de renovacion con rgu y mrc y ventas cruzadas
+mostrar solamente asesores que vendan movil y fijo, recorrido de las bases
+
+Juliana, tener todo de las bases de datos, analisis de KPIs , mes en gnal y las conversions de ventas y recorridos por bases , llamadas etc
+
+63206666-> Amir
+
+Saber si se llamo un top de llamadas y saber si se vendio
+************************************
+Curce
+Revisar la grid -> cual fue el product que le vendimos
+prod, venderdor
+
+recorrido * campana
+
+campana de mas ventqas o menos ventas
+KPI

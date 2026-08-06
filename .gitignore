@@ -25,3 +25,5 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+sesion 1 leonardo.trec
+*.trec

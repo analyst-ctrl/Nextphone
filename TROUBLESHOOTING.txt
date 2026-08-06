@@ -1,0 +1,624 @@
+================================================================================
+  TROUBLESHOOTING GENERAL - PROYECTOS NEXTPHONE
+  Fecha: Julio 2026
+================================================================================
+
+  Este documento recopila TODOS los errores, bugs y problemas encontrados
+  durante el análisis de los 3 proyectos: Ingris (Calidad), Lixi (Ventas iPhone)
+  y Amir (SOHO/Reportes). Incluye diagnóstico, impacto y solución.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  ÍNDICE                                                             │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  PROYECTO 1: INGRIS - CALIDAD                                      │
+  │    1.1  Score dividido por 100 (CRÍTICO)                           │
+  │    1.2  Score leía columna equivocada                              │
+  │    1.3  Duplicación al extraer datos                               │
+  │    1.4  Referencias #REF! rotas                                    │
+  │    1.5  Rangos inconsistentes Evalucion vs Evalucion(2)             │
+  │    1.6  Fórmula redundante /100%                                   │
+  │    1.7  Doble corrección Python vs PHP                             │
+  │    1.8  XLOOKUP con columna completa                               │
+  │    1.9  Sin backend para GitHub Pages                              │
+  │                                                                     │
+  │  PROYECTO 2: LIXI - VENTAS IPHONE                                  │
+  │    2.1  Diferencia de 7 registros vs hoja Tabla                    │
+  │    2.2  3 bases de datos redundantes                               │
+  │    2.3  Cache XML de 60 MB                                         │
+  │    2.4  Duplicación de archivos HTML                               │
+  │    2.5  Fechas no parseadas correctamente                          │
+  │                                                                     │
+  │  PROYECTO 3: AMIR - SOHO                                           │
+  │    3.1  Reporte manual sin automatización                          │
+  │    3.2  4 fuentes de datos no normalizadas                         │
+  │    3.3  Sin validación de datos                                    │
+  │    3.4  Formato .xlsb incompatible con herramientas modernas        │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  PROYECTO 1: INGRIS - CALIDAD NEXTPHONE / OJT
+================================================================================
+
+  Responsable: Ingris (Shanyda Botello)
+  Archivo:     INFORME DE CALIDAD NEXTPHONE 2026 Actualizado..xlsm
+  Dashboard:   Ingris/dashboard/index.html (reconstruido)
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.1 SCORE DIVIDIDO POR 100 🔴 CRÍTICO                             │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El Score de Calidad mostraba valores entre 0.1% y 10% en vez de
+    10% a 100%. Todas las evaluaciones aparecían como "Críticas"
+    (score < 90%) aunque no lo fueran.
+
+  DIAGNÓSTICO:
+    En la hoja "Evalucion", fila 17, la fórmula del score por factor
+    tenía un `/100` extra:
+
+    ❌ = +F17*1/G17/100
+
+    Ejemplo con 3 respuestas correctas de 4 preguntas:
+    → 3 × 1 / 4 / 100 = 0.0075 (0.75%) ← MAL
+
+    ✅ Debería ser:
+    = +F17*1/G17
+    → 3 × 1 / 4 = 0.75 (75%) ← BIEN
+
+  IMPACTO:
+    - Todos los scores de factores individuales estaban 100× más pequeños
+    - Tablas dinámicas promediaban valores incorrectos
+    - Gráficos del PPT semanal mostraban datos erróneos
+    - Clasificación "Crítica/No Crítica" incorrecta
+    - Ranking de agentes distorsionado
+
+  SOLUCIÓN:
+    Multiplicar todos los scores por 100 al extraer los datos del .xlsm:
+    Python: if score < 1: score = score * 100
+
+    Ver archivo: Ingris/dashboard/scripts/extract_data.py
+    Línea: `score = score * 100` (se aplica a TODOS los valores < 1)
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.2 SCORE LEÍA COLUMNA EQUIVOCADA 🔴 CRÍTICO                      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El score extraído no coincidía con el Score de Calidad total.
+    Valores inconsistentes entre evaluaciones.
+
+  DIAGNÓSTICO:
+    El script de extracción buscaba la palabra "SCORE" y encontraba
+    primero la columna "Apertura y cierre corporativo Score" (Col 114)
+    en vez de "SCORE CALIDAD" (Col 187).
+
+    Col 114 = Score de un factor individual (ej: 0.15 = 15%)
+    Col 187 = Score de Calidad TOTAL (ej: 0.75 = 75%) ← LA CORRECTA
+
+  SOLUCIÓN:
+    Priorizar la búsqueda: primero buscar "SCORE CALIDAD" exacto,
+    luego "SCORE" genérico como fallback.
+
+    Python:
+    ```python
+    score_col = col_idx.get('SCORE CALIDAD')
+    if score_col is None:
+        score_col = col_idx.get('Score calidad')
+    if score_col is None:
+        # Fallback: buscar cualquier columna con SCORE
+        ...
+    ```
+
+  IMPACTO:
+    Los scores individuales de factores se usaban como score total,
+    dando valores muy por debajo del score real (ej: 15% vs 75%).
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.3 DUPLICACIÓN AL EXTRAER DATOS 🟡                               │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El dashboard mostraba el doble de evaluaciones de las esperadas
+    (900 en vez de 450).
+
+  DIAGNÓSTICO:
+    El script ejecutaba INSERT sin limpiar la tabla primero.
+    Cada ejecución duplicaba los registros existentes.
+
+  SOLUCIÓN:
+    Agregar DELETE FROM antes del INSERT en el script de extracción:
+    ```python
+    c.execute('DELETE FROM evaluaciones')
+    ```
+    Y también limpiar tablas dimensionales para evitar duplicados:
+    ```python
+    for table in ['evaluaciones', 'agentes', 'supervisores', ...]:
+        c.execute(f'DELETE FROM {table}')
+    ```
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.4 REFERENCIAS #REF! ROTAS 🟡                                    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    Más de 10 fórmulas en la hoja BD mostraban `#REF!` (error de
+    referencia). Las preguntas afectadas NO se evaluaban.
+
+  DIAGNÓSTICO:
+    Se eliminaron columnas de la hoja BD después de crear las fórmulas.
+    Las referencias a esas columnas ahora apuntan a celdas inexistentes.
+
+    Ejemplo de fórmulas rotas:
+    ❌ = IF(#REF!="No", #REF!, "")
+
+    Columnas probablemente borradas:
+    - Cerca de AQ, AR (preguntas 29-31)
+    - Cerca de HT (posiblemente "venta cruzada")
+    - Cerca de HU (posiblemente "indagar necesidades")
+
+  SOLUCIÓN EN EL DASHBOARD:
+    Las filas con #REF! se omiten automáticamente al extraer los datos
+    (el script ignora valores no numéricos). Para arreglar el Excel
+    original, habría que restaurar las columnas borradas y actualizar
+    las fórmulas.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.5 RANGOS INCONSISTENTES 🟡                                      │
+  │      Evalucion vs Evalucion(2)                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El archivo tiene DOS hojas de evaluación casi idénticas pero con
+    rangos diferentes. La hoja oculta "Evalucion (2)" tiene 2 filas
+    menos de cobertura.
+
+  DIAGNÓSTICO:
+                          Evalucion   Evalucion(2)   Diferencia
+    SUM(H17:H...)         67          65              -2 filas
+    COUNTIF(D51:D...,No)  63          61              -2 filas
+    COUNTIF(D64:D...,No)  67          65              -2 filas
+
+    La copia oculta está DESACTUALIZADA. Probablemente se agregaron
+    preguntas al formulario y solo se actualizó la hoja visible.
+
+  SOLUCIÓN:
+    - No usar "Evalucion (2)" para nada
+    - Si se necesita como respaldo, actualizarla manualmente
+    - El dashboard nuevo solo lee de la BD, no de las hojas ocultas
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.6 FÓRMULA REDUNDANTE /100% 🟢                                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    En hoja BD, una fórmula dividía entre 100%, que es matemáticamente
+    redundante.
+
+  DIAGNÓSTICO:
+    ❌ = IF(SUM(DK4,DP4,DU4,DW4)>335%, 100%, SUM(DK4,DP4,DU4,DW4)/100%)
+
+    100% = 1 en Excel, por lo tanto dividir por 100% es dividir por 1,
+    que no hace nada. La intención probable era promediar:
+
+    ✅ = IF(SUM(DK4,DP4,DU4,DW4)>335%, 100%, SUM(DK4,DP4,DU4,DW4)/4)
+
+  SOLUCIÓN:
+    No crítica (no afecta el resultado final), pero es código confuso.
+    Se documentó en Ingris/formulas.txt para referencia futura.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.7 DOBLE CORRECCIÓN PYTHON vs PHP 🟡                             │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El script Python corregía scores con un umbral (< 0.2 → ×100),
+    mientras que el PHP original corregía con otro umbral (< 1 → ×100).
+
+  DIAGNÓSTICO:
+    Python: if 0 < score < 0.2: score = score * 100
+    PHP:    CASE WHEN AVG(x) < 1 THEN 100 ELSE 1 END
+
+    Esto creaba inconsistencias:
+    - Score = 0.10 → Python ×100 = 10.0 → PHP no corrige (10>1) → 10%
+    - Score = 0.30 → Python no corrige (0.3>0.2) → PHP ×100 → 30%
+    - Score = 0.003 → Python ×100 = 0.3 → PHP ×100 → 30%
+
+    Mismos datos originales, distintas correcciones, resultados dispares.
+
+  SOLUCIÓN:
+    Unificar la corrección: Python multiplica TODOS los scores < 1 por 100.
+    ```python
+    if score < 1:
+        score = score * 100
+    ```
+    Y el PHP ahora no necesita hacer ninguna corrección adicional porque
+    los datos ya vienen en porcentaje (0-100).
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.8 XLOOKUP INEFICIENTE 🟢                                        │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    Fórmula XLOOKUP que escanea toda la columna A:A en vez de un rango.
+
+  DIAGNÓSTICO:
+    ❌ = XLOOKUP(A:A, HC!B:B, HC!E:E, , 0)
+    Escanea 1,048,576 filas por cada evaluación (450 veces).
+
+    ✅ = XLOOKUP(A2:A450, HC!B2:B100, HC!E2:E100, , 0)
+    Escanea solo las filas con datos.
+
+  SOLUCIÓN:
+    No crítica pero ralentiza el Excel. Recomendable acotar rangos.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  1.9 SIN BACKEND PARA GITHUB PAGES 🟢                              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El dashboard original usaba PHP (api.php + config.php) para servir
+    datos desde SQLite. GitHub Pages NO SOPORTA PHP.
+
+  DIAGNÓSTICO:
+    La versión PHP requería un servidor con PHP habilitado (XAMPP/LAMP).
+    Para GitHub Pages se necesita HTML+JS+CSS estático.
+
+  SOLUCIÓN:
+    Se reescribió el dashboard como HTML+CSS+JS puro con los datos
+    precargados desde un archivo JSON (data/calidad_data.json).
+    Se creó export_json.py para convertir la SQLite → JSON.
+
+    Flujo de trabajo:
+    1. python scripts/export_json.py  → genera calidad_data.json
+    2. git add Ingris/dashboard/data/calidad_data.json
+    3. git push
+    4. Abrir en GitHub Pages
+
+
+================================================================================
+  PROYECTO 2: LIXI - VENTAS IPHONE (3 DÍAS POR SEMANA)
+================================================================================
+
+  Responsable: Lixi
+  Archivos:    Sharep.xlsx (19 MB), Iphone_7_24_2026.xlsx
+  Dashboards:  dashboard_3diasporsemana.html, dashboard_iphone_promo.html
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  2.1 DIFERENCIA DE 7 REGISTROS vs HOJA TABLA 🟡                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El dashboard mostraba 55 registros de iPhone 17 en julio, pero la
+    hoja "Tabla" del Excel mostraba solo 31 (MG=18, JO=13).
+
+  DIAGNÓSTICO:
+    Se ejecutaron scripts de matching (_match_tabla.py) para encontrar
+    qué días estaban causando la diferencia. Se probaron combinaciones
+    de exclusión de días pero ninguna coincidía exactamente.
+
+    Causas posibles:
+    - La hoja Tabla aplica filtros adicionales (ej: solo ciertos status)
+    - La hoja Tabla excluye ciertos días del mes
+    - Hay duplicados en el Excel que el dashboard no filtra
+    - La hoja Tabla tiene restricciones de modelo específicas
+
+    Archivos de diagnóstico:
+    - Lixi/3diasporsemana/pruebas/_check_dias.py
+    - Lixi/3diasporsemana/pruebas/_check_tabla.py
+    - Lixi/3diasporsemana/pruebas/_match_tabla.py
+
+  SOLUCIÓN:
+    Se documentó la discrepancia. Se recomienda preguntar a Lixi qué
+    criterios exactos usa la hoja Tabla para filtrar. Mientras tanto,
+    el dashboard muestra TODOS los registros de iPhone en julio sin
+    excluir ningún día.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  2.2 TRES BASES DE DATOS REDUNDANTES 🟡                            │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    Existen 3 bases SQLite con la MISMA estructura pero datos diferentes:
+    - iphone_julio_7_24.db (56 KB)
+    - sharep.db (~150 KB)
+    - promo_3dias.db
+
+  DIAGNÓSTICO:
+    Cada DB se creó para un propósito diferente pero con el mismo esquema:
+    - iphone_julio_7_24.db → iPhone julio 2026
+    - sharep.db → Todos los datos normalizados
+    - promo_3dias.db → Solo promoción 3 días
+
+    Esto duplica código y hace difícil mantener la consistencia.
+    Si se actualiza una tabla en una DB, hay que actualizar las otras 2.
+
+  SOLUCIÓN RECOMENDADA:
+    Unificar en UNA SOLA base de datos con un campo `tipo_extraccion`
+    o usar vistas para los diferentes filtros. Ejemplo:
+
+    ```sql
+    CREATE VIEW iphone_julio AS
+    SELECT * FROM ventas
+    WHERE modelo LIKE '%IPHONE%'
+      AND strftime('%Y-%m', fecha_creacion) = '2026-07';
+
+    CREATE VIEW promo_3dias AS
+    SELECT * FROM ventas
+    WHERE promo = 'SI'
+      AND dia_crea IN ('Lunes','Miércoles','Viernes');
+    ```
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  2.3 CACHE XML DE 60 MB 🟡                                         │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El archivo cache_records_iphone1.xml ocupa 60 MB en el repositorio.
+
+  DIAGNÓSTICO:
+    Estos archivos XML son caches generados por openpyxl al leer el
+    Excel. Son temporales/artefactos de ejecución, NO datos del proyecto.
+
+  SOLUCIÓN:
+    Agregar al .gitignore:
+    ```
+    *.xml
+    ```
+    O mejor, específicamente:
+    ```
+    cache_*.xml
+    ```
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  2.4 DUPLICACIÓN DE ARCHIVOS HTML 🟢                               │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    Hay dashboards HTML duplicados en diferentes ubicaciones:
+    - Lixi/3diasporsemana/dashboard_3diasporsemana.html
+    - Lixi/3diasporsemana/output/dashboard_3diasporsemana.html
+    - Lixi/3diasporsemana/output/dashboard_iphone_promo.html
+
+  DIAGNÓSTICO:
+    Los scripts generan los HTML en la carpeta output/, pero también
+    hay copias en la raíz. Es confuso saber cuál es la versión vigente.
+
+  SOLUCIÓN:
+    Usar siempre la carpeta output/ como destino de los scripts y
+    eliminar las copias sueltas. O viceversa.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  2.5 FECHAS NO PARSEADAS CORRECTAMENTE 🟢                          │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    Algunas fechas en la columna "Created" no se parseaban bien, lo que
+    hacía que ciertos registros se perdieran en los filtros.
+
+  DIAGNÓSTICO:
+    El Excel tiene mezcla de formatos de fecha:
+    - Timestamps: "2026-07-22 14:30:00"
+    - Fechas: "2026-07-22" y "22/07/2026"
+    - Algunas celdas tienen texto en vez de fecha
+
+    El script parse_date() probaba 4 formatos, pero algunos valores
+    escapaban a todos los formatos.
+
+  SOLUCIÓN:
+    Mejorar parse_date() para que intente más formatos y para que
+    en caso extremo use el valor de la columna "Dia Crea" como fallback.
+    Se actualizó en pipeline_iphone_7_24.py.
+
+
+================================================================================
+  PROYECTO 3: AMIR - SOHO
+================================================================================
+
+  Responsable: Amir Josue Rodriguez Chavarria
+  Archivos:    Reporte_soho_junio_25 (1).xlsb
+               Bases: Nextphone 14072026, Móvil sin fijo,
+                      Cross-sell movil, Winback SOHO
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  3.1 REPORTE MANUAL SIN AUTOMATIZACIÓN 🟡                          │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El reporte SOHO se actualiza MANUALMENTE cada mes. La ejecutiva
+    llena formularios a mano y cruza 4 bases de datos manualmente.
+
+  DIAGNÓSTICO:
+    El flujo de trabajo actual requiere:
+    1. Descargar 4 Excel de SharePoint/sistemas
+    2. Copiar datos a las hojas correspondientes del .xlsb
+    3. Cruzar registros manualmente por CUENTA/CUST_NO
+    4. Actualizar KPIs del dashboard manualmente
+    5. Verificar consistencia visualmente
+
+    Esto toma horas cada mes y es propenso a errores humanos.
+
+  SOLUCIÓN RECOMENDADA:
+    Crear un script Python que automatice:
+    1. Lectura de las 4 bases Excel
+    2. Cruce por CUENTA/CUST_NO (JOIN)
+    3. Generación de KPIs automática
+    4. Exportación a un dashboard HTML estático
+
+    Similar a lo que se hizo con Ingris y Lixi.
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  3.2 CUATRO FUENTES DE DATOS NO NORMALIZADAS 🟡                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    Los datos están repartidos en 4 archivos Excel diferentes, cada uno
+    con estructura distinta. No hay una fuente única de verdad.
+
+  FUENTES:
+    Base 1: Nextphone 14072026 (24 cols)
+      - Datos: clientes fijo+móvil, canal, supervisor
+      - Llave: CUENTA / CUST_NO
+
+    Base 2: Móvil sin fijo 02072026 (23 cols)
+      - Datos: clientes solo móvil
+      - Llave: CUENTA / CUST_NO
+
+    Base 3: Cross-sell movil (26-28 cols)
+      - Datos: segmentación para venta cruzada
+      - Llave: CUENTA / CUST_NO
+
+    Base 4: Winback SOHO (10 cols)
+      - Datos: clientes perdidos para recuperar
+      - Llave: CLIENTE (nombre)
+
+  DIAGNÓSTICO:
+    - Sin esquema unificado, cada base tiene columnas diferentes
+    - La Base 4 usa nombre de cliente como llave (no CUENTA)
+    - Las ejecutivas deben saber qué base usar para cada cliente
+    - No hay integridad referencial
+
+  SOLUCIÓN RECOMENDADA:
+    Unificar en un modelo de datos SQLite:
+
+    ```sql
+    CREATE TABLE clientes (
+        cust_no    INT PRIMARY KEY,
+        cuenta     INT,
+        nombre     TEXT,
+        tipo       TEXT,  -- M=Persona, J=Empresa
+        provincia  TEXT,
+        direccion  TEXT
+    );
+
+    CREATE TABLE servicios (
+        cust_no     INT,
+        servicio    TEXT,  -- Fijo, Movil, Internet
+        plan        TEXT,
+        monto       DECIMAL,
+        descuento   DECIMAL,
+        FOREIGN KEY (cust_no) REFERENCES clientes(cust_no)
+    );
+    ```
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  3.3 SIN VALIDACIÓN DE DATOS 🟡                                    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    No hay controles de calidad sobre los datos ingresados.
+
+  PROBLEMAS IDENTIFICADOS:
+    - Nombres de clientes escritos en mayúsculas y minúsculas mezclados
+    - Teléfonos en formatos inconsistentes (4-858-71 vs 68879413)
+    - Fechas en formatos mezclados (2025-12-27 vs 27/12/2025)
+    - Códigos de plan sin validación (Y, V, T, B vs G, A, C, F, I)
+    - Columnas con "#N/A" en vez de NULL
+
+  SOLUCIÓN RECOMENDADA:
+    Agregar validaciones al ingresar datos:
+    - Normalizar mayúsculas/minúsculas
+    - Estandarizar formato de teléfono (ej: +507-6887-9413)
+    - Validar códigos de plan contra tabla maestra
+    - Reemplazar #N/A por NULL
+
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  3.4 FORMATO .XLSB INCOMPATIBLE 🟢                                 │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  SÍNTOMA:
+    El archivo Reporte_soho_junio_25 (1).xlsb usa formato binario .xlsb,
+    que NO es compatible con openpyxl (solo .xlsx/.xlsm).
+
+  DIAGNÓSTICO:
+    .xlsb = Excel Binary Workbook (formato binario propietario)
+    Para leerlo con Python se necesita la librería pyxlsb o pandas.
+
+    Esto limita las opciones de automatización.
+
+  SOLUCIÓN:
+    Convertir el .xlsb a .xlsx usando Excel mismo (Guardar Como → .xlsx),
+    o usar pandas para leerlo:
+
+    ```python
+    import pandas as pd
+    df = pd.read_excel('reporte.xlsb', engine='pyxlsb')
+    ```
+
+    O instalar pyxlsb: pip install pyxlsb
+
+
+================================================================================
+  RECOMENDACIONES GENERALES
+================================================================================
+
+  PRIORIDAD ALTA (corregir ahora):
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ ✔  Score de Ingris corregido (×100 al extraer)                     │
+  │ ✔  Columna de score corregida (SCORE CALIDAD)                      │
+  │ ✔  Dashboard Ingris convertido a HTML+JS+CSS para GitHub Pages     │
+  │ ✔  .nojekyll + README agregados para despliegue                    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  PRIORIDAD MEDIA (corregir pronto):
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ ☐  Unificar las 3 DBs de Lixi en una sola                         │
+  │ ☐  Automatizar reporte SOHO de Amir                                │
+  │ ☐  Arreglar referencias #REF! en Excel Ingris                     │
+  │ ☐  Decidir diferencia de 7 registros en Lixi                      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  PRIORIDAD BAJA (mejora continua):
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ ☐  Normalizar formato de teléfonos en Amir                        │
+  │ ☐  Validación de datos en todas las fuentes                       │
+  │ ☐  Inline del JSON en index.html para eliminar fetch externo       │
+  │ ☐  Limpiar archivos cache *.xml del repositorio                   │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  COMANDOS ÚTILES
+================================================================================
+
+  # Ingris - Regenerar datos del dashboard
+  cd Ingris/dashboard
+  python scripts/export_json.py
+  # Abrir Ingris/dashboard/index.html en el navegador
+
+  # Lixi - Generar dashboard iPhone
+  cd Lixi/3diasporsemana
+  python pipeline_iphone_7_24.py
+  # Abrir output/dashboard_iphone_promo.html
+
+  # Amir - Leer .xlsb con Python (requiere pyxlsb)
+  pip install pyxlsb
+  python -c "import pandas as pd; df = pd.read_excel('reporte.xlsb', engine='pyxlsb')"
+
+  # Git - Subir cambios
+  git add -A
+  git commit -m "descripción del cambio"
+  git push origin main
+
+================================================================================
+  FIN DEL DOCUMENTO
+  Nextphone Analytics - Julio 2026
+================================================================================

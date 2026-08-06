@@ -1,0 +1,68 @@
+=== INSTRUCCIONES: REPORTE DE COBROS ===
+Archivos generados:
+  1. Reporte_Cobros.xlsx   - Excel con Dashboard, Detalle y Top Deudores
+  2. dashboard.html         - Dashboard web interactivo (ver en navegador)
+  3. Lixi/Cobros/cobros.db  - Base SQLite con datos crudos
+
+=== COMO SE CALCULO TODO ===
+
+1. EXTRACCION DE DATOS
+   - 3 archivos TSV (tabulados) en Lixi/Cobros/
+     * EXPORT_CALL_REPORT_*.txt  -> llamadas realizadas
+     * LIST_16021_*.txt          -> leads de cobros
+     * LIST_51124_*.txt          -> cuentas con detalle de ventas
+
+2. MIGRACION A SQLite
+   - Script Python que lee cada TSV con csv.reader(delimiter="\t")
+   - Crea tabla por archivo con columnas TEXT
+   - Maneja filas incompletas (rellena con NULL)
+   - DB: Lixi/Cobros/cobros.db
+
+3. CALCULOS (consultas SQL)
+
+   a) Total Cuentas: COUNT(*) sobre list_51124
+
+   b) Estado de Cuentas:
+      - "Al dia":   COUNT(*) WHERE estatus='Al dia'
+      - "Mora":     COUNT(*) WHERE estatus IN ('Mora','Mora Real','Cero Pago')
+      - Porcentaje: cantidad / total * 100
+
+   c) Ventas Totales:
+      - SUM(CAST(precio AS REAL)) WHERE precio > 0
+      - Se limpian comas con REPLACE
+
+   d) Promedio Dias Mora:
+      - AVG(CAST(dias_atraso AS INTEGER))
+      - Solo cuentas con estatus en mora y atraso > 0
+
+   e) Llamadas:
+      - COUNT(*) por status_name (resultado de llamada)
+      - COUNT(DISTINCT full_name) = clientes gestionados
+
+   f) Marcas:
+      - COUNT(*) GROUP BY marca ORDER BY 2 DESC
+
+   g) Top Deudores:
+      - SELECT nombre, dias_atraso, precio
+      - WHERE estatus IN ('Mora','Mora Real','Cero Pago')
+      - ORDER BY dias_atraso DESC LIMIT 50
+
+4. GENERACION EXCEL (Reporte_Cobros.xlsx)
+   - Libreria openpyxl en Python
+   - 3 hojas:
+     * Dashboard: KPIs + graficos (pastel, barras)
+     * Cuentas: detalle con filtros (2000 registros)
+     * Top Deudores: top 50 con resaltado
+
+5. DASHBOARD WEB (dashboard.html)
+   - HTML+CSS+Chart.js (CDN)
+   - Totalmente auto-contenido
+   - KPIs, graficos interactivos, tabla top deudores
+   - Abrir en cualquier navegador
+
+=== ACTUALIZAR DATOS NUEVOS ===
+Si llegan nuevos archivos TSV:
+  1. Reemplazar en Lixi/Cobros/
+  2. Ejecutar: python Lixi/Cobros/importar.py
+  3. Ejecutar: python Lixi/Cobros/excel_report.py
+  4. O simplemente pedirle a tu asistente que lo haga

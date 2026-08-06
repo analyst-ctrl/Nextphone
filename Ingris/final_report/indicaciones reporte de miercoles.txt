@@ -1,0 +1,120 @@
+INDICACIONES - REPORTE DE MIÉRCOLES
+====================================
+Sesión: 28-Jul-2026
+Proyecto: Ingris - Calidad Nextphone / OJT
+
+--------------------------------------------------------------
+1. CARPETA DE TRABAJO
+--------------------------------------------------------------
+Todo se guardó en: Ingris/final_report/
+  - resultados_nuevo_ingreso.png        (Score por grupo OJT - 6 barras)
+  - historico_score_general.png         (PENC, PECUF, PECNE, PECCUM + Score línea)
+  - resultados_campana.png              (Comparativa Nextphone vs OJT por campaña)
+  - factores_pares_vertical.png         (Top 5 Causales vs Afectaciones en pares)
+  - donut_factores.png                  (Donuts verticales por factor)
+  - generar_grafico.py                  (Script para regenerar gráficos)
+  - analisis.txt                        (Interpretación de 3 líneas)
+
+--------------------------------------------------------------
+2. ARCHIVOS FUENTE
+--------------------------------------------------------------
+  Ingris/OJT-REPORTE DE CALIDAD Actualizado.xlsm
+  Ingris/INFORME DE CALIDAD NEXTPHONE 2026 Actualizado..xlsm
+
+--------------------------------------------------------------
+3. DATOS DE GRUPOS DE NUEVO INGRESO (OJT)
+--------------------------------------------------------------
+  Wave 7 - 12-may:  70.0%
+  Wave 6 - 22-may:  55.0%
+  Wave 5 - 16-jun:  66.4%
+  Wave 4 - 26-jun:  60.8%
+  Jun-26 - Grupo inicial:  75.7%
+  Jul-26 - Grupo inicial:  64.5%
+
+  Score calculado con pesos: PENC=10%, PECUF=30%, PECNE=30%, PECCUM=30%
+
+--------------------------------------------------------------
+4. DATOS HISTÓRICO GENERAL (Nuevos datos agregados)
+--------------------------------------------------------------
+  Mar-26: PENC=78%, PECUF=64.29%, PECNE=38%, PECCUM=73.81% → Score 60.6%
+  Abr-26: PENC=83%, PECUF=39.39%, PECNE=30%, PECCUM=66.67% → Score 49.1%
+  May-26: PENC=86%, PECUF=40%, PECNE=48%, PECCUM=100%     → Score 65.0%
+  Jun-26: PENC=100%, PECUF=85.7%, PECNE=33.3%, PECCUM=100% → Score 75.7%
+  Jul-26: PENC=95%, PECUF=58.3%, PECNE=25%, PECCUM=100%   → Score 64.5%
+
+--------------------------------------------------------------
+5. RESULTADOS POR CAMPAÑA
+--------------------------------------------------------------
+  Nextphone - Pre2Pos:     68.8%
+  Nextphone - Renovacion:  63.6%
+  Nextphone - Total:       65.9%
+  OJT - Total:             71.6%
+  OJT - Pre2Pos:           75.7%
+  OJT - Renovacion:        64.5%
+
+--------------------------------------------------------------
+6. TOP 5 FACTORES CAUSALES (Fortalezas - todos al 100% en OJT)
+--------------------------------------------------------------
+  - Fraude:                      100%
+  - Registro en CRM:             100%
+  - Términos y condiciones:      100%
+  - Resumen Comercial:           100%
+  - Centros de pago:             100% (Nextphone: 97.1%)
+
+--------------------------------------------------------------
+7. PRINCIPALES AFECTACIONES DEL MES (Debilidades)
+--------------------------------------------------------------
+  OJT:
+    - Apertura y cierre corporativo:     15.0%
+    - PECNE (Negocio):                    25.0%
+    - Profesionalismo y control:          25.0%
+    - Identificación oportunidad comercial: 25.0%
+    - Manejo de objeciones:               25.0%
+
+  Nextphone:
+    - PECNE:                              11.4%
+    - Apertura y cierre corporativo:      14.6%
+    - Profesionalismo y control:          23.6%
+    - Identificación oportunidad comercial: 28.6%
+    - Comunicación comercial:             29.6%
+
+--------------------------------------------------------------
+8. CUMPLIMIENTO POR SEMANA
+--------------------------------------------------------------
+  Semana 25 (19-jun): 21 eval, Score 75.7%
+  Semana 29 (13-jul): 12 eval, Score 64.5%
+  Cumplimiento: 3/6 agentes monitoreados (50%) | 3/10 HC Activo (30%)
+
+--------------------------------------------------------------
+9. HOJAS CLAVE EN EXCEL OJT
+--------------------------------------------------------------
+  - Graficos:   Datos de chart (GETPIVOTDATA)
+  - BD:         Datos crudos (corregir fórmula ÷100)
+  - Resultado por atributo:  Scores por pregunta/factor
+  - Resultado por supervisor: Scores por agente
+  - Resultado por agente:    Scores, cuartil, cumplimiento
+  - Acumulado:  5 charts históricos
+  - Resultado general: 1 chart resumen
+
+--------------------------------------------------------------
+10. COLORES USADOS EN GRÁFICOS
+--------------------------------------------------------------
+  - Naranja PowerPoint: #D04423
+  - Rojo afectaciones: #f87171
+  - Verde score:       #34d399
+  - Fondo:             #0f1117
+  - Fondo gráfico:     #1a1d27
+
+--------------------------------------------------------------
+11. ANÁLISIS (3 líneas)
+--------------------------------------------------------------
+  1. Ningún grupo supera el 90% crítico, el onboarding no garantiza
+     estándar mínimo independientemente de la oleada.
+  2. Alta variabilidad entre grupos (55% a 75.7%) sugiere resultados
+     dependen de factores coyunturales, no de proceso consistente.
+  3. Caída en medición del grupo más reciente indica acompañamiento
+     post-entrenamiento insuficiente; extender refuerzo en primeras
+     semanas de operación autónoma.
+
+==============================================================
+FIN DEL REPORTE
