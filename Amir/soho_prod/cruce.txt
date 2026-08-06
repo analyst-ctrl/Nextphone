@@ -1,0 +1,99 @@
+==============================================================================
+  CRUCE DE BASES - AMIR / SOHO / NEXTPHONE
+  Gerente: Amir Josue Rodriguez Chavarria
+==============================================================================
+
+  Fecha generacion: 2026-07-31 12:03
+  Llave de cruce:  CUENTA / CUST_NO (Nextphone, Movil sin fijo, Cross-sell)
+                   CLIENTE normalizado (Winback)
+
+------------------------------------------------------------------------------
+  1. BASES PROCESADAS
+------------------------------------------------------------------------------
+   Base de datos Nextphone 14072026 .......   2001 registros
+   Base Movil sin fijo 02072026 ...........   2000 registros
+   Cross-sell movil Nextphone (3 hojas) ...   1074 cuentas
+   Winback SOHO Julio 2026 ................    210 clientes
+   ------------------------------------------------
+   TOTAL registros (suma de bases) ........   5285
+
+------------------------------------------------------------------------------
+  2. CLIENTES UNICOS TRAS EL CRUCE
+------------------------------------------------------------------------------
+   Clientes unicos (por CUENTA) ...........   5079
+   Duplicados eliminados por el cruce ......    206
+
+------------------------------------------------------------------------------
+  3. SOLAPAMIENTO (en cuantas bases aparece cada cliente)
+------------------------------------------------------------------------------
+   Clientes en 1 base ........................   5071  ( 99.8%)
+   Clientes en 2 bases ........................      8  (  0.2%)
+   Clientes en 3 bases ........................      0  (  0.0%)
+   Clientes en 4 bases ........................      0  (  0.0%)
+
+   Desglose por combinacion de bases:
+   MOV                      1970  ( 38.8%)
+   NP                       1887  ( 37.2%)
+   CS                       1074  ( 21.1%)
+   WB                        140  (  2.8%)
+   NP + WB                     6  (  0.1%)
+   MOV + NP                    1  (  0.0%)
+   MOV + WB                    1  (  0.0%)
+
+------------------------------------------------------------------------------
+  4. WINBACK vs BASES ACTIVAS
+------------------------------------------------------------------------------
+   Clientes en lista winback ................    210
+   Clientes winback unicos tras el cruce ....    147
+   Ya activos en otra base (RECUPERADOS) ....      7
+   Solo en winback (no activos) .............    140
+   MRC winback historico (lista) ............  $8,242.40
+   MRC en riesgo (clientes no activos) ......  $7,919.15
+
+------------------------------------------------------------------------------
+  5. SEGMENTACION DE CLIENTES
+------------------------------------------------------------------------------
+   SOLO MÓVIL               3872  ( 76.2%)
+   CONVERGENTE              1012  ( 19.9%)
+   WINBACK                   140  (  2.8%)
+   SIN SERVICIOS              53  (  1.0%)
+   SOLO FIJO / INTERNET        2  (  0.0%)
+
+------------------------------------------------------------------------------
+  6. OPORTUNIDADES CROSS-SELL
+------------------------------------------------------------------------------
+   Ofrecer fijo + internet (FLBBTV)           3872
+   Upgrade / más líneas                       1012
+   Recuperar (winback)                         140
+   Oferta completa (móvil + fijo + internet)     53
+   Ofrecer línea móvil Nextphone                 2
+
+------------------------------------------------------------------------------
+  7. MRC
+------------------------------------------------------------------------------
+   MRC Nextphone ............................ $99,724.17
+   MRC Winback (historico, en riesgo) .......  $8,242.40
+   MRC consolidado (clientes unicos) ........ $166,262.89
+
+------------------------------------------------------------------------------
+  8. TOP EJECUTIVAS POR MRC (clientes unicos)
+------------------------------------------------------------------------------
+    1. SIN EJECUTIVA                    $58,388.20  (2027 clientes)
+    2. Michelle Zambrano                $13,602.09  (289 clientes)
+    3. Yarelis Tulloch                  $11,027.94  (251 clientes)
+    4. Yariela Galarce                  $10,726.15  (254 clientes)
+    5. Abril Aparicio                    $9,859.15  (256 clientes)
+    6. Karla Mc Intryre                  $8,685.78  (260 clientes)
+    7. Alejandra Mabel Hawkins           $8,427.55  (167 clientes)
+    8. Ines Lizbeth Trujillo             $8,029.97  (165 clientes)
+    9. Osiris Aguilar                    $8,020.80  (169 clientes)
+   10. Yamali Rodriguez                  $7,493.28  (165 clientes)
+   11. Nailyn Martinez                   $7,244.78  (164 clientes)
+   12. Maria Fernanda                    $6,826.58  (160 clientes)
+   13. Solanye Acuña                     $5,110.93  (213 clientes)
+   14. Nailyn Martinez Johnson           $1,625.98  (128 clientes)
+   15. Maria Fernanda Rivas              $1,193.71  (130 clientes)
+
+==============================================================================
+  FIN DEL CRUCE - AMIR / SOHO
+==============================================================================

@@ -1,0 +1,18 @@
+================================================================================
+BASE: Winback SOHO 2026 Julio - Iniciativa Nextphone
+================================================================================
+
+HOJA: BASE 1.3 (10 columnas)
+
+| Columna           | Tipo   | Ejemplo                              |
+|-------------------|--------|--------------------------------------|
+| Ejecutivas        | Texto  | Michelle Zambrano                    |
+| CLIENTE           | Texto  | COIMSA                               |
+| DESCRIPCION_PLAN  | Texto  | MG DCM B2B LDI SL VWF               |
+| RAZON_SALIDA      | Texto  | Solicitado por el Cliente            |
+| RGU               | Num    | 3                                    |
+| MRC_Acum          | Num    | 95                                   |
+| Persona_contacto  | Texto  | Jorge Villarreal ced 8-299-399       |
+| Correo            | Texto  | gerencia.coimsa@gmail.com            |
+| Contacto_1        | Num    | 66776809                             |
+| Contacto_2        | Num    | 2602749                              |

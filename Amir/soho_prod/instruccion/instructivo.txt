@@ -1,0 +1,277 @@
+================================================================================
+  INSTRUCTIVO - DASHBOARD RENOVACION SOHO (dash_prod)
+  Gerente: Amir Josue Rodriguez Chavarria
+  Campaña: RENOVACION - Supervisora: Marinel Moreno
+  Iniciativa: Nextphone | Periodo analizado: enero - junio 2026
+================================================================================
+
+------------------------------------------------------------------------------
+  0. ESTADO ACTUAL: DASHBOARD 100% SOLO RENOVACION (agosto 2026)
+------------------------------------------------------------------------------
+  NOTA: el dashboard se revirtió al modo SOLO RENOVACION. Se eliminaron:
+    - El selector de campaña (TODAS / RENOVACION / SOHO / SINERGIA).
+      El filtro superior ahora es solo de PERIODO (TODOS / ENE..JUN).
+    - La pestana "Cartera & MRC" y la pestana "Comparacion de Equipos".
+    - Todo procesamiento de las campanas SOHO y SINERGIA en extraer_datos.py
+      (EQUIPOS_RAW solo lee HC AGOSTO.xlsx; los overrides SOHO se quitaron).
+  El dashboard queda enfocado EXCLUSIVAMENTE en el equipo RENOVACION
+  (Marinel Moreno), igual que la version original.
+
+------------------------------------------------------------------------------
+  1. OBJETIVO
+------------------------------------------------------------------------------
+  Crear un dashboard web (HTML + JavaScript) que muestre EXCLUSIVAMENTE la
+  información de la campaña RENOVACION: las marcaciones (ViciDial), las
+  tipificaciones (no contesta, buzón, seguimiento, etc.) y las ventas
+  (subidas, RGU y venta cruzada) del equipo de Marinel Moreno.
+
+  Así se puede ver el desempeño real de Marinel y su equipo y compararlo
+  con los demás equipos para saber cuáles son los mejores.
+
+------------------------------------------------------------------------------
+  2. LOS 3 EQUIPOS DEL CANAL SOHO (fuente: extrainfo/ - plantillas HC)
+------------------------------------------------------------------------------
+  En el canal SOHO hay TRES equipos. Cada uno trabaja una campaña distinta:
+
+  EQUIPO 1 - RENOVACION  (supervisora: Marinel Moreno)
+    Archivo HC:   extrainfo/HC AGOSTO.xlsx
+    Perfil:       Ejecutiva/Ejecutivo Soho
+    Integrantes (11):  Lizneth Ruiz, Pura Moreno, Massiel Toledo, Rafael Lopez,
+                  Danna De Las Salas, Sully Peñalba, Alison Barrios,
+                  José Cerrud, Miguel Avila, Quesiah Romero
+                  + Marinel Moreno (coordinadora de operaciones, también marca
+                  y vende, por eso se incluye en el equipo)
+
+  EQUIPO 2 - SOHO GENERAL  (supervisor: Julio Cesar Arauz)
+    Archivo HC:   extrainfo/HC Formato solicitado (2).xlsx
+    Perfil:       Vendedora Soho
+    Integrantes:  Karla Mc Intryre, Yamali Rodriguez Rose, Osiris Aguilar,
+                  Yariela Galarce, Nailyn Martinez Johnson, Ines Trujillo,
+                  Alejandra Mabel Hawkins, Yarelis Tulloch, Abril Aparicio,
+                  Michelle Zambrano, Solanye Acuña, Maria Fernanda Rivas
+
+  EQUIPO 3 - SINERGIA  (supervisora: Milliceth "Miliset" Ortega)  [EXCLUIDO]
+    Archivo HC:   extrainfo/HC Formato Solicitado (1).xlsx
+    Canal:        Sinergia
+    NOTA: ESTE EQUIPO NO SE TOMA EN CUENTA. Es la campaña Sinergia,
+    pertenece al proyecto de Lixi, no al SOHO de Amir.
+
+------------------------------------------------------------------------------
+  3. METODOLOGIA: AGUPAR BASES POR NOMBRE DE CAMPAÑA
+------------------------------------------------------------------------------
+  Paso 1 - Identificar al equipo por campaña
+    El archivo HC de cada equipo define QUIENES trabajan esa campaña.
+    La campaña se nombra igual que el equipo:
+      - Equipo Marinel Moreno  -> campaña "RENOVACION"
+      - Equipo Julio Arauz     -> campaña "SOHO" (general)
+      - Equipo Miliset Ortega  -> campaña "SINERGIA" (excluida)
+
+  Paso 2 - Matchear agentes con el ViciDial
+    La hoja "Vici" del reporte (Reporte_soho_junio_25 (1).xlsb) tiene
+    la columna full_name = nombre del agente que marcó.
+    Se normaliza el nombre (mayúsculas, sin acentos, sin espacios) y se
+    compara contra la plantilla HC para asignar equipo.
+
+    Ejemplos de match:
+      "LIZNETH RUIZ"  -> LIZNETH ESTHER RUIZ GARCIA  -> RENOVACION
+      "DANNA DE LA SALAS" -> DANNA CAROLINA DE LAS SALAS AVILA -> RENOVACION
+      "MARINEL MORENO" -> MARINEL MADELINE MORENO BARRAZA -> RENOVACION
+      "KARLA MC INTYRE" -> KARLA KARINA MC INTYRE PEREIRA -> SOHO
+      "SOLANYE ACUÑA"  -> SOLANYE JOSE ACUÑA GARCIA  -> SOHO
+
+  Paso 3 - Filtrar SOLO la campaña de renovación
+    Todas las marcaciones, ventas y métricas se filtran a los agentes
+    del equipo Marinel Moreno. Lo que no pertenece a renovación no se
+    muestra en la vista principal (solo en la comparación de equipos).
+
+------------------------------------------------------------------------------
+  4. FUENTES DE DATOS
+------------------------------------------------------------------------------
+  A) Marcaciones (llamadas):
+     Reporte_soho_junio_25 (1).xlsb  -> hoja "Vici" (57 columnas)
+     - full_name: agente que marcó
+     - status_name: tipificación de la llamada
+     - campaign_id: SOHO (12,741) / SOHO2 (3,055)
+     - call_date, length_in_sec, phone_number_dialed, Mes
+     Total: 15,796 llamadas | meses: enero a junio 2026
+
+  B) Ventas móviles:
+     Hoja "Ventas Moviles" (188 ventas, todas junio 2026)
+     - Agentes, Tramite (Renovación/Portabilidad/Línea nueva),
+       MRC Anterior, MRC Actual
+     Renovación: 150 | Portabilidad interna: 24 | Portabilidad: 7 | Línea nueva: 7
+
+  C) Ventas fijo / internet:
+     Hoja "Ventas Fijo" (45 ventas)
+     - Vendedor, Rgu (servicios), Mrc, Status Final (INSTALADA 32)
+
+  D) Líneas facturadas:
+     Hoja "lineas facturadas" (487 líneas)
+     - Vendedor, Tipoventa (RENOVACION 311, Portabilidad interna 132,
+       Portabilidad externa 28, Línea nueva 16)
+     - Valor plan, Cantidad lineas, Venta convergente (todas NO)
+
+  E) Venta cruzada (cross-sell):
+     bases/Base para campaña cross-sell movil Nextphone.xlsx
+     - Hoja "Base para gestionar CC" (columna Ejecutivo)
+     - Hoja "con contacto telefonos" (columna AGENTE)
+     = clientes gestionados para ofrecer línea móvil/fijo
+
+  F) Equipos:
+     extrainfo/HC AGOSTO.xlsx | HC Formato solicitado (2).xlsx
+     HC Formato Solicitado (1).xlsx
+
+------------------------------------------------------------------------------
+  5. TIPIFICACIONES (resultado de la llamada)
+------------------------------------------------------------------------------
+  Se agrupan los status_name del Vici en categorías para el análisis:
+
+  NO CONTACTO / NO CONTESTA     NO CONTESTA, LLAMADA NO CONTESTA,
+                                CONTESTADOR AUTOMATICO, BUZON DE VOZ,
+                                OCUPADO, AUTO BUSY, LLAMADA MUDA,
+                                LEAD BEING CALLED, OUTBOUND AUTO DIAL
+  SEGUIMIENTO / RELLAMADA       SEGUIMIENTO, VOLVER A LLAMAR, CALL BACK,
+                                SOLICITA CONTACTO POSTERIOR,
+                                CLIENTE CONTACTADO ANTES
+  OFERTA / PROPUESTA            SE ENVIA PROPUESTA, SE ENVÍA PROPUESTA
+  RECHAZO                       NO ACEPTA, RECHAZA OFERTA,
+                                CLIENTE NO INTERESADO, NO VOLVER A LLAMAR,
+                                NO ACEPTA POR AUMENTO DE MRC
+  VENTA / RESULTADO POSITIVO    ACEPTA VENTA, YA RENOVO,
+                                RENOVARA EN TIENDA, POR APROBACION,
+                                VENTA TRIPLE TV BB FL
+  GESTION / OTROS               CIERRA LLAMADA, NO ES EL TITULAR,
+                                NO ES EL TOMADOR DE DECISION,
+                                CLIENTE CUELGA, NUMERO EQUIVOCADO,
+                                CLIENTE CON DEUDA, NO APLICA PARA RENOVAR,
+                                NO TIENE COBERTURA, resto
+
+  Distribución global (15,796 llamadas):
+    No contesta (grupal):    8,268  (52.3%)  [No contesta + Llamada no contesta]
+    Buzón / contestador:       966   (6.1%)
+    Contactados:             6,562  (41.5% tasa de contacto)
+
+  NOTA: la definición de "contactado" está alineada con el consolidado
+  previo: NO cuenta como contacto No contesta, Llamada no contesta,
+  Contestador automático ni Buzón de voz. El resto (Cierra llamada,
+  Volver a llamar, Seguimiento, Propuesta, Rechazo, Venta, etc.)
+  cuenta como contacto efectivo.
+
+------------------------------------------------------------------------------
+  6. METRICAS DEL DASHBOARD
+------------------------------------------------------------------------------
+  Por agente del equipo RENOVACION:
+    - Llamadas (marcaciones totales) y por mes
+    - Números únicos marcados e intentos promedio por número
+    - Tipificaciones (no contesta, buzón, seguimiento, propuesta, rechazo)
+    - Tasa de contacto = contactados / llamadas
+    - Ventas subidas (móvil + fijo + líneas facturadas)
+    - RGU (servicios vendidos, suma de Rgu y Cantidad lineas)
+    - MRC total generado
+    - Venta cruzada (gestiones cross-sell + ventas fijo/internet)
+
+  TOP PERFORMANCE:
+    Ranking de agentes ordenable por: llamadas, ventas subidas, RGU,
+    MRC o venta cruzada. Permite ver quiénes son los mejores.
+
+------------------------------------------------------------------------------
+  7. ARCHIVOS GENERADOS
+------------------------------------------------------------------------------
+  dash_prod/
+    extraer_datos.py        -> pipeline: lee HC + xlsb + bases y genera todo
+    index.html              -> dashboard auto-contenido (abrir en navegador)
+    data/renovacion_data.json -> datos extraídos (para actualizaciones)
+
+  COMO ACTUALIZAR CON DATOS NUEVOS:
+    1. Reemplazar el .xlsb y las bases en Amir/soho_prod/
+    2. python dash_prod/extraer_datos.py
+    3. Abrir dash_prod/index.html en el navegador
+
+------------------------------------------------------------------------------
+  8.  HALLAZGOS INICIALES DEL ANALISIS (enero - junio 2026)
+------------------------------------------------------------------------------
+  - El equipo Marinel está activo en Vici: Lizneth Ruiz (2,742 llamadas),
+    Danna De La Salas (1,826), Massiel Toledo (1,504), Pura Moreno (1,003)
+    y Marinel Moreno (884) están entre los agentes que más marcaron.
+  - El equipo Renovación marcó 7,959 llamadas (50.4% del global de 15,796)
+    y generó ~$11,488 de MRC con 225 RGU (tasa de contacto 35.8%).
+  - Ventas móviles junio: el equipo sumó 104 (de 188 globales).
+  - Agentes SIN EQUIPO (no están en las plantillas HC): Lizeth Gonzalez,
+    Milena Mojica, Keisy Vargas, Longy Gordon Ward, etc. Aparecen en
+    marcaciones/ventas pero deben asignarse a un equipo en el HC.
+    Ej: Milena Mojica tiene 384 llamadas y 26 ventas móviles en junio.
+  - El 89% de las bajas winback son por solicitud del cliente (ver
+    ANALISIS_WINBACK_JULIO2026.txt).
+  - La venta convergente (fijo+móvil+internet) aún no se marca en
+    lineas facturadas (todas = NO): oportunidad de registrar cruce.
+
+------------------------------------------------------------------------------
+  8. NOTA SOBRE LA CALIDAD DE LOS DATOS
+------------------------------------------------------------------------------
+  - El .xlsb contiene texto con mojibake (UTF-8 leído como cp1252):
+    p.ej. 'SOLANYE JOSE ACUÑA GARCIA' se lee como 'SOLANYE JOSE ACUÃ…A GARCIA'.
+    El pipeline corrige esto automáticamente en la normalización de nombres.
+  - Los nombres se matchean contra la plantilla HC por tokens: primer nombre
+    + al menos 2 apellidos en común. Así 'DANNA DE LA SALAS' (Vici) y
+    'DANNA CAROLINA DE LAS SALAS AVILA' (ventas) son la misma persona.
+  - Agentes con nombres en formatos distintos (p.ej. 'MILENA MOJICA' vs
+    'LILIAN MILENA MOJICA DE LAS SALAS') se fusionan automáticamente.
+
+------------------------------------------------------------------------------
+  8b. RENDIMIENTO DEL EQUIPO (dashboard)
+------------------------------------------------------------------------------
+  - Pestana 'Rendimiento del Equipo': ranking completo de los 13 integrantes
+    (11 del HC AGOSTO + 2 asignados por override), con estados:
+      * TOP 1-3  -> mejores vendedores por ventas+MRC (amarillo)
+      * ACTIVO   -> tiene llamadas o ventas, conversion >= 2%
+      * BAJO     -> con actividad pero conversion < 2%
+      * SIN ACTIVIDAD -> integrantes del HC sin llamadas ni ventas (rojo)
+  - Columnas de eficiencia: Ventas/Llamada, % Conversion, MRC/Venta.
+  - ASIGNACIONES MANUALES (OVERRIDES en extraer_datos.py, seccion 1):
+      * MILENA MOJICA / LILIAN MILENA MOJICA DE LAS SALAS -> RENOVACION
+        (coordinador en 'lineas facturadas' = AMIR JOSE RODRIGUEZ)
+      * LIZETH GONZALEZ / LIZETH MILENA GONZALEZ RODRIGUEZ -> RENOVACION
+      * KEISY VARGAS -> SOHO (coordinador JULIO CESAR ARAUZ)
+  - El match de overrides exige el PRIMER token (nombre de pila) + >=2 tokens
+    comunes, igual que el roster, para no absorber a otros agentes
+    (ej: 'DANNA DE LAS SALAS' NO cae en 'LILIAN MILENA MOJICA DE LAS SALAS').
+  - Anomalia conocida: RAFAEL LOPEZ aparece con 72 ventas pero 0 llamadas en
+    Vici (sus marcaciones no estan registradas en el reporte). En el ranking
+    sale como TOP vendedor con conversion '—'. No es bug: es el dato real.
+  - Las ventas registradas se concentran en MAYO-JUNIO (el reporte es de
+    junio); los meses ENERO-ABRIL muestran solo marcaciones, sin ventas.
+    Por eso los graficos de rendimiento muestran 'Sin ventas en este período'
+    al filtrar meses sin ventas.
+
+------------------------------------------------------------------------------
+  9b. MARCACIONES - QUIEN LLAMA MAS / MENOS (dashboard)
+------------------------------------------------------------------------------
+  - Pestana 'Marcaciones (quien llama mas/menos)': ranking completo ordenado
+    de quien mas llama a quien menos, con Llamadas, Contactados, % Contacto,
+    No Contesta, Numeros unicos, Intentos/numero y Duracion promedio.
+  - Graficos: Quien llama MAS (top 8), Quien llama MENOS (bottom 8) y
+    Contactados vs No Contesta por agente.
+  - Los integrantes sin ninguna llamada aparecen al final marcados en rojo.
+  - La duracion promedio por mes se calcula con seg_por_mes del pipeline
+    (agFiltrado la reconstruye al filtrar por mes, no queda en '—').
+
+------------------------------------------------------------------------------
+  9. NAVEGACION POR MESES (dashboard)
+------------------------------------------------------------------------------
+  - El dashboard tiene una barra PERIODO con botones TODOS / ENE..JUN y
+    flechas ◀ ▶ para moverse entre meses.
+  - Al elegir un mes, se filtran en vivo: KPIs, Top Performance, tipificaciones,
+    ventas/RGU y comparación de equipos.
+  - Origen de los meses por fuente:
+      * Vici (marcaciones)     -> columna 'Mes' (ENERO..JUNIO)
+      * Ventas Moviles         -> columna 'Mes' ('junio') o 'Fecha' ('01/jun')
+      * Ventas Fijo            -> columna 'Mes Reg' ('may/26')
+      * Lineas facturadas      -> columna 'Fecha' (serial Excel) o 'Fecha fact'
+      * Cross-sell             -> columna 'FECHA' (texto '12 DE ENERO' / ISO)
+  - Los graficos se recrean al cambiar de mes (Chart.js destruye la instancia
+    anterior y dibuja de nuevo), evitando acumulacion de instancias.
+
+================================================================================
+  FIN DEL INSTRUCTIVO - RENOVACION SOHO
+================================================================================
+

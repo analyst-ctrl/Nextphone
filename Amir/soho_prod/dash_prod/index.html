@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovación SOHO — Equipo Marinel Moreno</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0f1220;color:#e8eaf6;padding:16px}
+.header{background:linear-gradient(135deg,#7b1fa2,#1a1a2e 60%,#16213e);padding:22px 26px;border-radius:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;border:1px solid rgba(255,255,255,.08)}
+.header h1{font-size:22px;letter-spacing:.5px}
+.header .sub{font-size:12px;opacity:.75;margin-top:4px}
+.badge-camp{background:#ffd54f;color:#1a1a2e;font-weight:700;font-size:11px;padding:3px 10px;border-radius:20px;letter-spacing:1px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.kpi .lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#9fa8da}
+.kpi .val{font-size:24px;font-weight:800;margin-top:4px}
+.kpi .sub{font-size:11px;color:#7986cb;margin-top:2px}
+.kpi.c-purple::before{background:#ab47bc}.kpi.c-blue::before{background:#42a5f5}
+.kpi.c-green::before{background:#66bb6a}.kpi.c-red::before{background:#ef5350}
+.kpi.c-orange::before{background:#ffa726}.kpi.c-teal::before{background:#26a69a}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:9px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;background:rgba(255,255,255,.06);color:#b0bec5;border:1px solid transparent;transition:.2s}
+.tab:hover{background:rgba(255,255,255,.12)}
+.tab.active{background:#7b1fa2;color:#fff;border-color:#9c27b0}
+.content{display:none}.content.active{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px}
+.card h2{font-size:13px;margin-bottom:12px;color:#c5cae9;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:8px;letter-spacing:.5px}
+.card.full{grid-column:1/-1}
+.chart-box{position:relative;height:280px}
+.chart-box-sm{position:relative;height:230px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px;background:rgba(255,255,255,.06);color:#9fa8da;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0}
+td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.06)}
+tr:hover td{background:rgba(123,31,162,.12)}
+.rt{text-align:right}.ct{text-align:center}
+.pos{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font-weight:800;font-size:11px;background:rgba(255,255,255,.08)}
+.pos-1{background:#ffd54f;color:#1a1a2e}.pos-2{background:#b0bec5;color:#1a1a2e}.pos-3{background:#ff8a65;color:#1a1a2e}
+.bar{height:8px;border-radius:4px;background:linear-gradient(90deg,#ab47bc,#7b1fa2);min-width:2px}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.note{font-size:11px;color:#7986cb;margin-top:8px}
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:10px 14px;border-radius:12px}
+.mes-btn{padding:6px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;background:rgba(255,255,255,.06);color:#b0bec5;border:1px solid rgba(255,255,255,.12);transition:.18s}
+.mes-btn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+.mes-btn.active{background:#ffd54f;color:#1a1a2e;border-color:#ffd54f}
+.mes-lbl{font-size:11px;font-weight:800;letter-spacing:1px;color:#9fa8da;margin-right:4px}
+.period-chip{font-size:12px;font-weight:800;color:#ffd54f;background:rgba(255,213,79,.12);border:1px solid rgba(255,213,79,.3);padding:4px 12px;border-radius:20px;letter-spacing:.5px}
+.st-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;letter-spacing:.4px}
+.st-top{background:rgba(255,213,79,.15);color:#ffd54f;border:1px solid rgba(255,213,79,.4)}
+.st-act{background:rgba(102,187,106,.12);color:#81c784;border:1px solid rgba(102,187,106,.35)}
+.st-low{background:rgba(239,83,80,.12);color:#ef9a9a;border:1px solid rgba(239,83,80,.35)}
+.st-warn{background:rgba(255,167,38,.12);color:#ffb74d;border:1px solid rgba(255,167,38,.35)}
+.tr-low td{background:rgba(239,83,80,.05)!important;opacity:.55}
+.tr-top td{background:rgba(255,213,79,.04)!important}
+.ef-bar{display:inline-block;height:8px;border-radius:4px;background:linear-gradient(90deg,#66bb6a,#26a69a);vertical-align:middle}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <span class="badge-camp">CAMPAÑA RENOVACIÓN</span>
+    <h1>Desempeño Equipo Marinel Moreno</h1>
+    <div class="sub">SOHO · Iniciativa Nextphone · Marcaciones ViciDial + Ventas · Gerente: Amir Josue Rodriguez Chavarria · Datos: <span id="fechaGen"></span></div>
+  </div>
+  <div style="text-align:right;font-size:12px;opacity:.8;">
+    <div id="totCall"></div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <span class="mes-lbl">PERIODO:</span>
+  <button class="mes-btn active" data-mes="TODOS" onclick="setMes('TODOS')">TODOS</button>
+  <button class="mes-btn" data-mes="ENERO" onclick="setMes('ENERO')">ENE</button>
+  <button class="mes-btn" data-mes="FEBRERO" onclick="setMes('FEBRERO')">FEB</button>
+  <button class="mes-btn" data-mes="MARZO" onclick="setMes('MARZO')">MAR</button>
+  <button class="mes-btn" data-mes="ABRIL" onclick="setMes('ABRIL')">ABR</button>
+  <button class="mes-btn" data-mes="MAYO" onclick="setMes('MAYO')">MAY</button>
+  <button class="mes-btn" data-mes="JUNIO" onclick="setMes('JUNIO')">JUN</button>
+  <span style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+    <button class="mes-btn" onclick="navMes(-1)" title="Mes anterior">◀</button>
+    <span class="period-chip" id="mesActLbl">ENE — JUN 2026</span>
+    <button class="mes-btn" onclick="navMes(1)" title="Mes siguiente">▶</button>
+  </span>
+</div>
+
+<div class="kpi-row" id="kpiRow"></div>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('renov',this)">🏆 Equipo Renovación</button>
+  <button class="tab" onclick="sw('rend',this)">📊 Rendimiento del Equipo</button>
+  <button class="tab" onclick="sw('marc',this)">📞 Marcaciones (quién llama más/menos)</button>
+  <button class="tab" onclick="sw('tipif',this)">🏷️ Tipificación</button>
+  <button class="tab" onclick="sw('ventas',this)">💰 Ventas & RGU</button>
+</div>
+
+
+  <div class="card full">
+    <h2>🏆 Top Performance — Equipo Renovación <span class="period-chip" id="topPeriod" style="font-size:10px">TODOS LOS MESES</span> <span style="font-weight:400;color:#7986cb;font-size:11px">(clic en columna para ordenar)</span></h2>
+    <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
+    <table id="tabRenov"><thead><tr>
+      <th>#</th><th>Agente</th><th class="rt">Llamadas</th><th class="rt">Contactados</th><th class="rt">% Contacto</th>
+      <th class="rt">Ventas</th><th class="rt">RGU</th><th class="rt">MRC $</th><th class="rt">Venta Cruzada</th><th>Progreso</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><h2>📈 Marcaciones por Mes — EQUIPO RENOVACIÓN</h2><div class="chart-box-sm"><canvas id="chMesRenov"></canvas></div></div>
+    <div class="card"><h2>🔢 Llamadas por Agente</h2><div class="chart-box-sm"><canvas id="chAgLlam"></canvas></div></div>
+  </div>
+</div>
+
+<div id="v-marc" class="content">
+  <div class="grid-3" style="margin-bottom:14px">
+    <div class="card"><h2>🔥 Quién llama MÁS (marcaciones)</h2><div class="chart-box-sm"><canvas id="chLlamMas"></canvas></div></div>
+    <div class="card"><h2>🌙 Quién llama MENOS</h2><div class="chart-box-sm"><canvas id="chLlamMenos"></canvas></div></div>
+    <div class="card"><h2>💬 Contactados vs No Contesta</h2><div class="chart-box-sm"><canvas id="chContVsNc"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📞 Ranking de Marcaciones — de quien llama más a quien llama menos <span class="period-chip" id="marcPeriod" style="font-size:10px">TODOS LOS MESES</span></h2>
+    <div style="overflow-x:auto;max-height:560px;overflow-y:auto;">
+    <table id="tabMarc"><thead><tr>
+      <th>#</th><th>Agente</th><th class="rt">Llamadas</th><th class="rt">Contactados</th>
+      <th class="rt">% Contacto</th><th class="rt">No Contesta</th><th class="rt">Números únicos</th>
+      <th class="rt">Intentos/núm</th><th class="rt">Duración prom (s)</th><th>% del total</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="marcNota"></div>
+  </div>
+</div>
+
+<div id="v-rend" class="content">
+  <div class="grid-3" style="margin-bottom:14px">
+    <div class="card"><h2>🥇 Top Vendedores (por ventas + MRC)</h2><div class="chart-box-sm"><canvas id="chTopVen"></canvas></div></div>
+    <div class="card"><h2>📉 Eficiencia — Ventas por Llamada</h2><div class="chart-box-sm"><canvas id="chEfVxL"></canvas></div></div>
+    <div class="card"><h2>🎯 Conversión — Ventas / Llamadas %</h2><div class="chart-box-sm"><canvas id="chEfConv"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📊 Ranking Completo del Equipo (incluye integrantes sin actividad) <span class="period-chip" id="rendPeriod" style="font-size:10px">TODOS LOS MESES</span></h2>
+    <div style="overflow-x:auto;max-height:560px;overflow-y:auto;">
+    <table id="tabRend"><thead><tr>
+      <th>#</th><th>Agente</th><th>Estado</th><th class="rt">Llamadas</th><th class="rt">Ventas</th>
+      <th class="rt">MRC $</th><th class="rt">RGU</th><th class="rt">Ventas/Llamada</th>
+      <th class="rt">% Conversión</th><th class="rt">MRC/Venta $</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="rendNota"></div>
+  </div>
+</div>
+
+<div id="v-tipif" class="content">
+  <div class="grid-3">
+    <div class="card"><h2>Tipificación — Equipo EQUIPO RENOVACIÓN</h2><div class="chart-box-sm"><canvas id="chTipRenov"></canvas></div></div>
+    <div class="card"><h2>Tipificación — Global</h2><div class="chart-box-sm"><canvas id="chTipGlob"></canvas></div></div>
+    <div class="card"><h2>Métricas de Marcación</h2><div class="chart-box-sm"><canvas id="chMarc"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>Detalle de Tipificaciones (Renovación)</h2>
+    <table><thead><tr><th>#</th><th>Tipificación</th><th class="rt">Llamadas</th><th class="rt">% del Total</th><th>Interpretación</th></tr></thead>
+    <tbody id="tabTip"></tbody></table>
+  </div>
+</div>
+
+<div id="v-ventas" class="content">
+  <div class="grid-3">
+    <div class="card"><h2>Ventas por Agente (Móvil + Fijo + Líneas)</h2><div class="chart-box-sm"><canvas id="chVentas"></canvas></div></div>
+    <div class="card"><h2>MRC Generado por Agente</h2><div class="chart-box-sm"><canvas id="chMrc"></canvas></div></div>
+    <div class="card"><h2>RGU por Agente</h2><div class="chart-box-sm"><canvas id="chRgu"></canvas></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><h2>Ventas Móviles por Trámite</h2><div class="chart-box-sm"><canvas id="chTramite"></canvas></div></div>
+    <div class="card"><h2>Líneas Facturadas por Tipo de Venta</h2><div class="chart-box-sm"><canvas id="chTipoventa"></canvas></div></div>
+  </div>
+</div>
+
+
+const D = {"generado": "2026-08-06", "fuente": "Reporte_soho_junio_25 (1).xlsb + extrainfo/HC + bases", "global_vici": {"llamadas": 15796, "no_contesta": 8268, "contactados": 6562, "tasa_contacto": 41.5, "numeros_unicos": 7063, "intentos_prom": 2.24, "duracion_prom_s": 70.0, "por_mes": {"ENERO": 2584, "FEBRERO": 1647, "MARZO": 3182, "ABRIL": 1954, "MAYO": 2437, "JUNIO": 3992}}, "global_por_mes": {"ENERO": {"llamadas": 2584, "no_contesta": 1502, "contactados": 933, "tasa_contacto": 36.1, "numeros_unicos": 1730, "intentos_prom": 1.49, "duracion_prom_s": 71.0, "por_mes": {"ENERO": 2584, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}}, "FEBRERO": {"llamadas": 1647, "no_contesta": 944, "contactados": 625, "tasa_contacto": 37.9, "numeros_unicos": 969, "intentos_prom": 1.7, "duracion_prom_s": 79.0, "por_mes": {"ENERO": 0, "FEBRERO": 1647, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}}, "MARZO": {"llamadas": 3182, "no_contesta": 1626, "contactados": 1330, "tasa_contacto": 41.8, "numeros_unicos": 1629, "intentos_prom": 1.95, "duracion_prom_s": 70.0, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 3182, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}}, "ABRIL": {"llamadas": 1954, "no_contesta": 1021, "contactados": 828, "tasa_contacto": 42.4, "numeros_unicos": 1049, "intentos_prom": 1.86, "duracion_prom_s": 64.0, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 1954, "MAYO": 0, "JUNIO": 0}}, "MAYO": {"llamadas": 2437, "no_contesta": 1192, "contactados": 1081, "tasa_contacto": 44.4, "numeros_unicos": 1346, "intentos_prom": 1.81, "duracion_prom_s": 69.0, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 2437, "JUNIO": 0}}, "JUNIO": {"llamadas": 3992, "no_contesta": 1983, "contactados": 1765, "tasa_contacto": 44.2, "numeros_unicos": 2086, "intentos_prom": 1.91, "duracion_prom_s": 68.0, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 3992}}}, "tipif_global": [["NO CONTESTA", 6775], ["LLAMADA NO CONTESTA", 1493], ["CIERRA LLAMADA", 1435], ["VOLVER A LLAMAR", 1156], ["SE ENVIA PROPUESTA", 975], ["SEGUIMIENTO", 665], ["CONTESTADOR AUTOMATICO", 621], ["NO ACEPTA", 563], ["NO ES EL TITULAR DE LA CUENTA", 480], ["BUZON DE VOZ", 345], ["CLIENTE CUELGA", 295], ["NO ES EL TOMADOR DE DECISION", 132], ["LLAMADA MUDA", 115], ["LEAD BEING CALLED", 106], ["NO APLICA PARA RENOVAR", 77], ["OCUPADO", 72], ["AUTO BUSY", 65], ["NO VOLVER A LLAMAR", 65], ["SOLICITA CONTACTO POSTERIOR", 62], ["CLIENTE CON DEUDA", 52], ["NUMERO EQUIVOCADO", 48], ["CLIENTE CONTACTADO ANTES", 41], ["CLIENTE NO INTERESADO", 27], ["NO TIENE COBERTURA", 27], ["RECHAZA OFERTA", 18], ["YA RENOVO", 17], ["RENOVARA EN TIENDA", 13], ["NO ACEPTA POR AUMENTO DE MRC", 13], ["CALL BACK", 10], ["CLINTE NO CORRESPONDE AL SEGME", 9], ["ACEPTA VENTA", 7], ["POR APROBACION", 6], ["YA TIENE EL SERVICIO COMPLETO", 5], ["PROBLEMAS TECNICOS SIN AUDIO", 3], ["VENTA TRIPLE TV BB FL", 1], ["EQUIPO NO DISPONIBLE", 1], ["CONTACTO DUPLICADO", 1]], "tipif_renovacion": [["NO CONTESTA", 4364], ["LLAMADA NO CONTESTA", 819], ["VOLVER A LLAMAR", 766], ["CIERRA LLAMADA", 646], ["SE ENVIA PROPUESTA", 603], ["SEGUIMIENTO", 315], ["NO ES EL TITULAR DE LA CUENTA", 239], ["BUZON DE VOZ", 189], ["CLIENTE CUELGA", 184], ["NO ACEPTA", 138], ["LLAMADA MUDA", 95], ["NO APLICA PARA RENOVAR", 75], ["NO ES EL TOMADOR DE DECISION", 60], ["SOLICITA CONTACTO POSTERIOR", 59], ["CONTESTADOR AUTOMATICO", 53], ["NUMERO EQUIVOCADO", 40], ["AUTO BUSY", 38], ["LEAD BEING CALLED", 34], ["CLIENTE CONTACTADO ANTES", 30], ["NO VOLVER A LLAMAR", 25], ["RECHAZA OFERTA", 16], ["CLIENTE NO INTERESADO", 15], ["NO ACEPTA POR AUMENTO DE MRC", 10], ["CALL BACK", 9], ["CLINTE NO CORRESPONDE AL SEGME", 6], ["OCUPADO", 5], ["ACEPTA VENTA", 5], ["RENOVARA EN TIENDA", 5], ["YA RENOVO", 4], ["PROBLEMAS TECNICOS SIN AUDIO", 3], ["NO TIENE COBERTURA", 3], ["CLIENTE CON DEUDA", 2], ["YA TIENE EL SERVICIO COMPLETO", 2], ["POR APROBACION", 1]], "tipif_glob_por_mes": {"ENERO": [["NO CONTESTA", 847], ["LLAMADA NO CONTESTA", 655], ["SE ENVIA PROPUESTA", 247], ["VOLVER A LLAMAR", 162], ["BUZON DE VOZ", 149], ["CLIENTE CUELGA", 138], ["NO ES EL TITULAR DE LA CUENTA", 57], ["NO ACEPTA", 54], ["CIERRA LLAMADA", 44], ["NO ES EL TOMADOR DE DECISION", 40], ["SEGUIMIENTO", 35], ["LLAMADA MUDA", 33], ["OCUPADO", 29], ["NUMERO EQUIVOCADO", 21], ["SOLICITA CONTACTO POSTERIOR", 20], ["CLIENTE NO INTERESADO", 15], ["CLINTE NO CORRESPONDE AL SEGME", 8], ["AUTO BUSY", 5], ["RECHAZA OFERTA", 4], ["YA TIENE EL SERVICIO COMPLETO", 4], ["LEAD BEING CALLED", 3], ["ACEPTA VENTA", 3], ["CALL BACK", 2], ["NO TIENE COBERTURA", 2], ["CLIENTE CONTACTADO ANTES", 2], ["RENOVARA EN TIENDA", 1], ["NO ACEPTA POR AUMENTO DE MRC", 1], ["NO APLICA PARA RENOVAR", 1], ["NO VOLVER A LLAMAR", 1], ["CONTACTO DUPLICADO", 1]], "FEBRERO": [["NO CONTESTA", 698], ["LLAMADA NO CONTESTA", 246], ["VOLVER A LLAMAR", 148], ["SE ENVIA PROPUESTA", 115], ["BUZON DE VOZ", 76], ["CLIENTE CUELGA", 62], ["SEGUIMIENTO", 50], ["NO ES EL TITULAR DE LA CUENTA", 42], ["LLAMADA MUDA", 34], ["NO ACEPTA", 32], ["NO ES EL TOMADOR DE DECISION", 27], ["CIERRA LLAMADA", 20], ["AUTO BUSY", 19], ["LEAD BEING CALLED", 15], ["OCUPADO", 13], ["SOLICITA CONTACTO POSTERIOR", 11], ["NUMERO EQUIVOCADO", 11], ["CLIENTE NO INTERESADO", 9], ["NO TIENE COBERTURA", 5], ["CALL BACK", 3], ["CLIENTE CONTACTADO ANTES", 3], ["NO VOLVER A LLAMAR", 2], ["CONTESTADOR AUTOMATICO", 2], ["CLINTE NO CORRESPONDE AL SEGME", 1], ["EQUIPO NO DISPONIBLE", 1], ["YA TIENE EL SERVICIO COMPLETO", 1], ["NO ACEPTA POR AUMENTO DE MRC", 1]], "MARZO": [["NO CONTESTA", 1214], ["LLAMADA NO CONTESTA", 412], ["SE ENVIA PROPUESTA", 301], ["VOLVER A LLAMAR", 261], ["CIERRA LLAMADA", 206], ["CONTESTADOR AUTOMATICO", 136], ["SEGUIMIENTO", 91], ["BUZON DE VOZ", 90], ["NO ACEPTA", 76], ["CLIENTE CUELGA", 68], ["NO APLICA PARA RENOVAR", 56], ["NO ES EL TITULAR DE LA CUENTA", 53], ["NO ES EL TOMADOR DE DECISION", 50], ["LLAMADA MUDA", 30], ["SOLICITA CONTACTO POSTERIOR", 20], ["OCUPADO", 19], ["CLIENTE CONTACTADO ANTES", 18], ["LEAD BEING CALLED", 18], ["NO VOLVER A LLAMAR", 18], ["NUMERO EQUIVOCADO", 11], ["RECHAZA OFERTA", 7], ["NO TIENE COBERTURA", 5], ["AUTO BUSY", 4], ["YA RENOVO", 4], ["PROBLEMAS TECNICOS SIN AUDIO", 3], ["NO ACEPTA POR AUMENTO DE MRC", 3], ["CLIENTE CON DEUDA", 2], ["CLIENTE NO INTERESADO", 2], ["CALL BACK", 2], ["VENTA TRIPLE TV BB FL", 1], ["RENOVARA EN TIENDA", 1]], "ABRIL": [["NO CONTESTA", 910], ["CIERRA LLAMADA", 224], ["VOLVER A LLAMAR", 174], ["LLAMADA NO CONTESTA", 111], ["SE ENVIA PROPUESTA", 102], ["CONTESTADOR AUTOMATICO", 81], ["SEGUIMIENTO", 81], ["NO ACEPTA", 75], ["NO ES EL TITULAR DE LA CUENTA", 56], ["BUZON DE VOZ", 24], ["CLIENTE CUELGA", 21], ["NO APLICA PARA RENOVAR", 17], ["LLAMADA MUDA", 13], ["NO ES EL TOMADOR DE DECISION", 10], ["LEAD BEING CALLED", 10], ["CLIENTE CONTACTADO ANTES", 10], ["SOLICITA CONTACTO POSTERIOR", 10], ["RECHAZA OFERTA", 6], ["AUTO BUSY", 5], ["ACEPTA VENTA", 4], ["NUMERO EQUIVOCADO", 3], ["CALL BACK", 2], ["OCUPADO", 1], ["NO ACEPTA POR AUMENTO DE MRC", 1], ["NO TIENE COBERTURA", 1], ["NO VOLVER A LLAMAR", 1], ["CLIENTE NO INTERESADO", 1]], "MAYO": [["NO CONTESTA", 1136], ["CIERRA LLAMADA", 300], ["SEGUIMIENTO", 175], ["CONTESTADOR AUTOMATICO", 160], ["VOLVER A LLAMAR", 144], ["NO ACEPTA", 120], ["NO ES EL TITULAR DE LA CUENTA", 105], ["SE ENVIA PROPUESTA", 100], ["LLAMADA NO CONTESTA", 56], ["LEAD BEING CALLED", 40], ["CLIENTE CON DEUDA", 30], ["AUTO BUSY", 17], ["NO VOLVER A LLAMAR", 10], ["OCUPADO", 7], ["CLIENTE CONTACTADO ANTES", 6], ["LLAMADA MUDA", 5], ["NO TIENE COBERTURA", 5], ["CLIENTE CUELGA", 5], ["BUZON DE VOZ", 4], ["NO ACEPTA POR AUMENTO DE MRC", 3], ["NO ES EL TOMADOR DE DECISION", 3], ["RENOVARA EN TIENDA", 2], ["SOLICITA CONTACTO POSTERIOR", 1], ["POR APROBACION", 1], ["NUMERO EQUIVOCADO", 1], ["NO APLICA PARA RENOVAR", 1]], "JUNIO": [["NO CONTESTA", 1970], ["CIERRA LLAMADA", 641], ["VOLVER A LLAMAR", 267], ["CONTESTADOR AUTOMATICO", 242], ["SEGUIMIENTO", 233], ["NO ACEPTA", 206], ["NO ES EL TITULAR DE LA CUENTA", 167], ["SE ENVIA PROPUESTA", 110], ["NO VOLVER A LLAMAR", 33], ["LEAD BEING CALLED", 20], ["CLIENTE CON DEUDA", 20], ["AUTO BUSY", 15], ["LLAMADA NO CONTESTA", 13], ["YA RENOVO", 13], ["NO TIENE COBERTURA", 9], ["RENOVARA EN TIENDA", 9], ["POR APROBACION", 5], ["NO ACEPTA POR AUMENTO DE MRC", 4], ["OCUPADO", 3], ["NO ES EL TOMADOR DE DECISION", 2], ["CLIENTE CONTACTADO ANTES", 2], ["BUZON DE VOZ", 2], ["NO APLICA PARA RENOVAR", 2], ["NUMERO EQUIVOCADO", 1], ["CLIENTE CUELGA", 1], ["CALL BACK", 1], ["RECHAZA OFERTA", 1]]}, "tipif_renov_por_mes": {"ENERO": [["NO CONTESTA", 573], ["LLAMADA NO CONTESTA", 212], ["VOLVER A LLAMAR", 142], ["SE ENVIA PROPUESTA", 131], ["CLIENTE CUELGA", 85], ["BUZON DE VOZ", 65], ["LLAMADA MUDA", 28], ["SEGUIMIENTO", 28], ["CIERRA LLAMADA", 22], ["NO ES EL TITULAR DE LA CUENTA", 18], ["SOLICITA CONTACTO POSTERIOR", 17], ["NUMERO EQUIVOCADO", 16], ["NO ACEPTA", 16], ["NO ES EL TOMADOR DE DECISION", 11], ["CLIENTE NO INTERESADO", 5], ["CLINTE NO CORRESPONDE AL SEGME", 5], ["AUTO BUSY", 3], ["LEAD BEING CALLED", 3], ["ACEPTA VENTA", 2], ["CALL BACK", 2], ["RECHAZA OFERTA", 2], ["YA TIENE EL SERVICIO COMPLETO", 2], ["RENOVARA EN TIENDA", 1], ["NO TIENE COBERTURA", 1], ["NO ACEPTA POR AUMENTO DE MRC", 1], ["NO APLICA PARA RENOVAR", 1], ["NO VOLVER A LLAMAR", 1], ["CLIENTE CONTACTADO ANTES", 1]], "FEBRERO": [["NO CONTESTA", 566], ["LLAMADA NO CONTESTA", 158], ["VOLVER A LLAMAR", 127], ["SE ENVIA PROPUESTA", 91], ["BUZON DE VOZ", 50], ["CLIENTE CUELGA", 43], ["SEGUIMIENTO", 43], ["LLAMADA MUDA", 30], ["NO ES EL TITULAR DE LA CUENTA", 26], ["AUTO BUSY", 18], ["NO ACEPTA", 17], ["CIERRA LLAMADA", 16], ["SOLICITA CONTACTO POSTERIOR", 11], ["NUMERO EQUIVOCADO", 9], ["CLIENTE NO INTERESADO", 8], ["NO ES EL TOMADOR DE DECISION", 7], ["LEAD BEING CALLED", 5], ["CALL BACK", 3], ["CLIENTE CONTACTADO ANTES", 3], ["NO TIENE COBERTURA", 2], ["NO VOLVER A LLAMAR", 1], ["CLINTE NO CORRESPONDE AL SEGME", 1], ["OCUPADO", 1], ["CONTESTADOR AUTOMATICO", 1], ["NO ACEPTA POR AUMENTO DE MRC", 1]], "MARZO": [["NO CONTESTA", 1048], ["LLAMADA NO CONTESTA", 269], ["SE ENVIA PROPUESTA", 240], ["VOLVER A LLAMAR", 189], ["CIERRA LLAMADA", 109], ["SEGUIMIENTO", 78], ["NO APLICA PARA RENOVAR", 56], ["NO ES EL TITULAR DE LA CUENTA", 48], ["BUZON DE VOZ", 45], ["NO ACEPTA", 32], ["CLIENTE CUELGA", 29], ["NO ES EL TOMADOR DE DECISION", 27], ["SOLICITA CONTACTO POSTERIOR", 20], ["LLAMADA MUDA", 19], ["NO VOLVER A LLAMAR", 15], ["CLIENTE CONTACTADO ANTES", 14], ["NUMERO EQUIVOCADO", 10], ["LEAD BEING CALLED", 8], ["RECHAZA OFERTA", 7], ["CONTESTADOR AUTOMATICO", 7], ["YA RENOVO", 4], ["PROBLEMAS TECNICOS SIN AUDIO", 3], ["NO ACEPTA POR AUMENTO DE MRC", 3], ["CALL BACK", 2], ["CLIENTE CON DEUDA", 1], ["OCUPADO", 1], ["RENOVARA EN TIENDA", 1], ["CLIENTE NO INTERESADO", 1]], "ABRIL": [["NO CONTESTA", 704], ["CIERRA LLAMADA", 172], ["VOLVER A LLAMAR", 139], ["LLAMADA NO CONTESTA", 111], ["SEGUIMIENTO", 68], ["SE ENVIA PROPUESTA", 52], ["NO ES EL TITULAR DE LA CUENTA", 41], ["NO ACEPTA", 28], ["BUZON DE VOZ", 23], ["CLIENTE CUELGA", 21], ["NO APLICA PARA RENOVAR", 17], ["LLAMADA MUDA", 13], ["NO ES EL TOMADOR DE DECISION", 10], ["SOLICITA CONTACTO POSTERIOR", 10], ["CLIENTE CONTACTADO ANTES", 8], ["RECHAZA OFERTA", 6], ["LEAD BEING CALLED", 3], ["ACEPTA VENTA", 3], ["NUMERO EQUIVOCADO", 3], ["CALL BACK", 2], ["OCUPADO", 1], ["CONTESTADOR AUTOMATICO", 1], ["AUTO BUSY", 1], ["NO VOLVER A LLAMAR", 1], ["CLIENTE NO INTERESADO", 1]], "MAYO": [["NO CONTESTA", 556], ["CIERRA LLAMADA", 151], ["VOLVER A LLAMAR", 68], ["LLAMADA NO CONTESTA", 56], ["SEGUIMIENTO", 56], ["SE ENVIA PROPUESTA", 37], ["NO ES EL TITULAR DE LA CUENTA", 35], ["CONTESTADOR AUTOMATICO", 15], ["LEAD BEING CALLED", 8], ["AUTO BUSY", 6], ["NO ACEPTA", 5], ["LLAMADA MUDA", 5], ["CLIENTE CUELGA", 5], ["BUZON DE VOZ", 4], ["NO ES EL TOMADOR DE DECISION", 3], ["CLIENTE CONTACTADO ANTES", 3], ["NO ACEPTA POR AUMENTO DE MRC", 2], ["NO VOLVER A LLAMAR", 2], ["OCUPADO", 1], ["SOLICITA CONTACTO POSTERIOR", 1], ["POR APROBACION", 1], ["NUMERO EQUIVOCADO", 1], ["NO APLICA PARA RENOVAR", 1]], "JUNIO": [["NO CONTESTA", 917], ["CIERRA LLAMADA", 176], ["VOLVER A LLAMAR", 101], ["NO ES EL TITULAR DE LA CUENTA", 71], ["SE ENVIA PROPUESTA", 52], ["SEGUIMIENTO", 42], ["NO ACEPTA", 40], ["CONTESTADOR AUTOMATICO", 29], ["LLAMADA NO CONTESTA", 13], ["AUTO BUSY", 10], ["LEAD BEING CALLED", 7], ["NO VOLVER A LLAMAR", 5], ["RENOVARA EN TIENDA", 3], ["NO ACEPTA POR AUMENTO DE MRC", 3], ["NO ES EL TOMADOR DE DECISION", 2], ["BUZON DE VOZ", 2], ["CLIENTE CONTACTADO ANTES", 1], ["CLIENTE CON DEUDA", 1], ["NUMERO EQUIVOCADO", 1], ["CLIENTE CUELGA", 1], ["OCUPADO", 1], ["RECHAZA OFERTA", 1]]}, "meses": ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO"], "renov_por_mes": {"ENERO": {"llamadas": 1394, "contactados": 544, "no_contesta": 785, "numeros": 806, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "mrc": 0.0, "rgu": 0.0, "cruzada": 192, "tasa_contacto": 39.0}, "FEBRERO": {"llamadas": 1238, "contactados": 463, "no_contesta": 724, "numeros": 652, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "mrc": 0.0, "rgu": 0.0, "cruzada": 6, "tasa_contacto": 37.4}, "MARZO": {"llamadas": 2286, "contactados": 917, "no_contesta": 1317, "numeros": 1174, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "mrc": 0.0, "rgu": 0.0, "cruzada": 0, "tasa_contacto": 40.1}, "ABRIL": {"llamadas": 1439, "contactados": 600, "no_contesta": 815, "numeros": 710, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "mrc": 0.0, "rgu": 0.0, "cruzada": 0, "tasa_contacto": 41.7}, "MAYO": {"llamadas": 1022, "contactados": 391, "no_contesta": 612, "numeros": 453, "ventas_movil": 0, "ventas_fijo": 4, "lineas_fact": 0, "mrc": 130.41, "rgu": 11.0, "cruzada": 0, "tasa_contacto": 38.3}, "JUNIO": {"llamadas": 1479, "contactados": 518, "no_contesta": 930, "numeros": 620, "ventas_movil": 137, "ventas_fijo": 8, "lineas_fact": 259, "mrc": 14479.56, "rgu": 278.0, "cruzada": 0, "tasa_contacto": 35.0}}, "equipo_renovacion": [{"agente": "LILIAN MILENA MOJICA DE LAS SALAS", "campana": "RENOVACION", "llamadas": 384, "no_contesta": 3, "contactados": 380, "tasa_contacto": 99.0, "numeros": 199, "intentos_prom": 1.93, "duracion_prom_s": 74.0, "ventas_movil": 26, "ventas_fijo": 1, "lineas_fact": 50, "ventas_total": 77, "rgu": 52.0, "mrc": 2774.72, "venta_cruzada": 0, "tramites": {"LINEA NUEVA": 1, "RENOVACION": 23, "PORTABILIDAD INTERNA": 1, "PORTABILIDAD": 1}, "tipoventa": {"RENOVACION": 45, "PROTABILIDAD EXTERNA": 2, "PROTABILIDAD INTERNA": 1, "LINEA NUEVA": 2}, "status_fijo": {"INSTALADA": 1}, "por_mes": {"ENERO": 124, "FEBRERO": 68, "MARZO": 75, "ABRIL": 62, "MAYO": 41, "JUNIO": 14}, "contactados_por_mes": {"ENERO": 123, "FEBRERO": 67, "MARZO": 73, "ABRIL": 62, "MAYO": 41, "JUNIO": 14}, "no_contesta_por_mes": {"ENERO": 1, "FEBRERO": 0, "MARZO": 2, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 80, "FEBRERO": 40, "MARZO": 35, "ABRIL": 38, "MAYO": 17, "JUNIO": 8}, "duracion_por_mes": {"ENERO": 40.0, "FEBRERO": 69.0, "MARZO": 100.0, "ABRIL": 100.0, "MAYO": 105.0, "JUNIO": 52.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 26, "fijo": 1, "lineas": 50, "mrc": 2774.7200000000007, "rgu": 52.0, "tramite": {"LINEA NUEVA": 1, "RENOVACION": 23, "PORTABILIDAD INTERNA": 1, "PORTABILIDAD": 1}, "tipoventa": {"RENOVACION": 45, "PROTABILIDAD EXTERNA": 2, "PROTABILIDAD INTERNA": 1, "LINEA NUEVA": 2}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.201, "ef_conv_pct": 20.05, "ef_mrc_x_venta": 36.04, "en_roster": true, "sin_actividad": false}, {"agente": "DANNA DE LAS SALAS", "campana": "RENOVACION", "llamadas": 1826, "no_contesta": 794, "contactados": 844, "tasa_contacto": 46.2, "numeros": 1199, "intentos_prom": 1.52, "duracion_prom_s": 88.0, "ventas_movil": 24, "ventas_fijo": 4, "lineas_fact": 48, "ventas_total": 76, "rgu": 58.0, "mrc": 2346.38, "venta_cruzada": 0, "tramites": {"RENOVACION": 24}, "tipoventa": {"RENOVACION": 47, "LINEA NUEVA": 1}, "status_fijo": {"INSTALADA": 4}, "por_mes": {"ENERO": 541, "FEBRERO": 369, "MARZO": 577, "ABRIL": 234, "MAYO": 80, "JUNIO": 25}, "contactados_por_mes": {"ENERO": 264, "FEBRERO": 169, "MARZO": 281, "ABRIL": 100, "MAYO": 20, "JUNIO": 10}, "no_contesta_por_mes": {"ENERO": 212, "FEBRERO": 151, "MARZO": 251, "ABRIL": 111, "MAYO": 56, "JUNIO": 13}, "numeros_por_mes": {"ENERO": 461, "FEBRERO": 311, "MARZO": 424, "ABRIL": 160, "MAYO": 62, "JUNIO": 23}, "duracion_por_mes": {"ENERO": 94.0, "FEBRERO": 97.0, "MARZO": 89.0, "ABRIL": 76.0, "MAYO": 44.0, "JUNIO": 74.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 2, "lineas": 0, "mrc": 54.25, "rgu": 5.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 24, "fijo": 2, "lineas": 48, "mrc": 2292.1300000000015, "rgu": 53.0, "tramite": {"RENOVACION": 24}, "tipoventa": {"RENOVACION": 47, "LINEA NUEVA": 1}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.042, "ef_conv_pct": 4.16, "ef_mrc_x_venta": 30.87, "en_roster": true, "sin_actividad": false}, {"agente": "RAFAEL LOPEZ", "campana": "RENOVACION", "llamadas": 0, "no_contesta": 0, "contactados": 0, "tasa_contacto": 0, "numeros": 0, "intentos_prom": 0, "duracion_prom_s": 0, "ventas_movil": 19, "ventas_fijo": 2, "lineas_fact": 51, "ventas_total": 72, "rgu": 56.0, "mrc": 3069.35, "venta_cruzada": 0, "tramites": {"RENOVACION": 15, "LINEA NUEVA": 3, "PORTABILIDAD INTERNA": 1}, "tipoventa": {"RENOVACION": 45, "LINEA NUEVA": 5, "PROTABILIDAD INTERNA": 1}, "status_fijo": {"(S): SUSPENDIDA": 1, "(A). ASIGNADA": 1}, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 0.0, "MARZO": 0.0, "ABRIL": 0.0, "MAYO": 0.0, "JUNIO": 0.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 19, "fijo": 2, "lineas": 51, "mrc": 3069.350000000003, "rgu": 56.0, "tramite": {"RENOVACION": 15, "LINEA NUEVA": 3, "PORTABILIDAD INTERNA": 1}, "tipoventa": {"RENOVACION": 45, "LINEA NUEVA": 5, "PROTABILIDAD INTERNA": 1}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.0, "ef_conv_pct": 0.0, "ef_mrc_x_venta": 42.63, "en_roster": true, "sin_actividad": false}, {"agente": "PURA MORENO", "campana": "RENOVACION", "llamadas": 1003, "no_contesta": 378, "contactados": 621, "tasa_contacto": 61.9, "numeros": 450, "intentos_prom": 2.23, "duracion_prom_s": 43.0, "ventas_movil": 21, "ventas_fijo": 1, "lineas_fact": 32, "ventas_total": 54, "rgu": 35.0, "mrc": 1937.88, "venta_cruzada": 0, "tramites": {"LINEA NUEVA": 1, "RENOVACION": 20}, "tipoventa": {"RENOVACION": 30, "LINEA NUEVA": 2}, "status_fijo": {"(R): RECHAZADA": 1}, "por_mes": {"ENERO": 0, "FEBRERO": 78, "MARZO": 338, "ABRIL": 192, "MAYO": 168, "JUNIO": 227}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 34, "MARZO": 209, "ABRIL": 148, "MAYO": 107, "JUNIO": 123}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 44, "MARZO": 125, "ABRIL": 44, "MAYO": 61, "JUNIO": 104}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 35, "MARZO": 190, "ABRIL": 83, "MAYO": 79, "JUNIO": 89}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 57.0, "MARZO": 62.0, "ABRIL": 19.0, "MAYO": 33.0, "JUNIO": 41.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 21, "fijo": 1, "lineas": 32, "mrc": 1937.8799999999992, "rgu": 35.0, "tramite": {"LINEA NUEVA": 1, "RENOVACION": 20}, "tipoventa": {"RENOVACION": 30, "LINEA NUEVA": 2}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.054, "ef_conv_pct": 5.38, "ef_mrc_x_venta": 35.89, "en_roster": true, "sin_actividad": false}, {"agente": "LIZNETH RUIZ", "campana": "RENOVACION", "llamadas": 2742, "no_contesta": 2330, "contactados": 412, "tasa_contacto": 15.0, "numeros": 674, "intentos_prom": 4.07, "duracion_prom_s": 50.0, "ventas_movil": 20, "ventas_fijo": 2, "lineas_fact": 28, "ventas_total": 50, "rgu": 33.0, "mrc": 1707.16, "venta_cruzada": 0, "tramites": {"RENOVACION": 20}, "tipoventa": {"RENOVACION": 28}, "status_fijo": {"INSTALADA": 1, "(R): RECHAZADA": 1}, "por_mes": {"ENERO": 506, "FEBRERO": 437, "MARZO": 617, "ABRIL": 331, "MAYO": 388, "JUNIO": 463}, "contactados_por_mes": {"ENERO": 92, "FEBRERO": 78, "MARZO": 89, "ABRIL": 45, "MAYO": 57, "JUNIO": 51}, "no_contesta_por_mes": {"ENERO": 414, "FEBRERO": 359, "MARZO": 528, "ABRIL": 286, "MAYO": 331, "JUNIO": 412}, "numeros_por_mes": {"ENERO": 184, "FEBRERO": 134, "MARZO": 173, "ABRIL": 88, "MAYO": 128, "JUNIO": 98}, "duracion_por_mes": {"ENERO": 53.0, "FEBRERO": 56.0, "MARZO": 51.0, "ABRIL": 52.0, "MAYO": 51.0, "JUNIO": 38.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 1, "lineas": 0, "mrc": 39.08, "rgu": 3.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 20, "fijo": 1, "lineas": 28, "mrc": 1668.0800000000006, "rgu": 30.0, "tramite": {"RENOVACION": 20}, "tipoventa": {"RENOVACION": 28}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.018, "ef_conv_pct": 1.82, "ef_mrc_x_venta": 34.14, "en_roster": true, "sin_actividad": false}, {"agente": "MASSIEL TOLEDO", "campana": "RENOVACION", "llamadas": 1504, "no_contesta": 892, "contactados": 612, "tasa_contacto": 40.7, "numeros": 513, "intentos_prom": 2.93, "duracion_prom_s": 109.0, "ventas_movil": 15, "ventas_fijo": 1, "lineas_fact": 24, "ventas_total": 40, "rgu": 27.0, "mrc": 1579.28, "venta_cruzada": 0, "tramites": {"RENOVACION": 15}, "tipoventa": {"RENOVACION": 24}, "status_fijo": {"INSTALADA": 1}, "por_mes": {"ENERO": 222, "FEBRERO": 259, "MARZO": 264, "ABRIL": 173, "MAYO": 208, "JUNIO": 378}, "contactados_por_mes": {"ENERO": 65, "FEBRERO": 102, "MARZO": 113, "ABRIL": 75, "MAYO": 102, "JUNIO": 155}, "no_contesta_por_mes": {"ENERO": 157, "FEBRERO": 157, "MARZO": 151, "ABRIL": 98, "MAYO": 106, "JUNIO": 223}, "numeros_por_mes": {"ENERO": 80, "FEBRERO": 118, "MARZO": 104, "ABRIL": 52, "MAYO": 68, "JUNIO": 150}, "duracion_por_mes": {"ENERO": 90.0, "FEBRERO": 94.0, "MARZO": 119.0, "ABRIL": 130.0, "MAYO": 143.0, "JUNIO": 96.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 1, "lineas": 0, "mrc": 37.08, "rgu": 3.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 15, "fijo": 0, "lineas": 24, "mrc": 1542.2000000000012, "rgu": 24.0, "tramite": {"RENOVACION": 15}, "tipoventa": {"RENOVACION": 24}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.027, "ef_conv_pct": 2.66, "ef_mrc_x_venta": 39.48, "en_roster": true, "sin_actividad": false}, {"agente": "MARINEL MORENO", "campana": "RENOVACION", "llamadas": 884, "no_contesta": 492, "contactados": 357, "tasa_contacto": 40.4, "numeros": 445, "intentos_prom": 1.99, "duracion_prom_s": 54.0, "ventas_movil": 5, "ventas_fijo": 0, "lineas_fact": 16, "ventas_total": 21, "rgu": 16.0, "mrc": 848.0, "venta_cruzada": 178, "tramites": {"RENOVACION": 4, "PORTABILIDAD": 1}, "tipoventa": {"RENOVACION": 14, "PROTABILIDAD EXTERNA": 2}, "status_fijo": {}, "por_mes": {"ENERO": 0, "FEBRERO": 19, "MARZO": 316, "ABRIL": 327, "MAYO": 51, "JUNIO": 171}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 11, "MARZO": 104, "ABRIL": 116, "MAYO": 30, "JUNIO": 96}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 7, "MARZO": 212, "ABRIL": 211, "MAYO": 11, "JUNIO": 51}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 10, "MARZO": 162, "ABRIL": 178, "MAYO": 27, "JUNIO": 96}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 66.0, "MARZO": 52.0, "ABRIL": 52.0, "MAYO": 44.0, "JUNIO": 62.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 5, "fijo": 0, "lineas": 16, "mrc": 848.0000000000003, "rgu": 16.0, "tramite": {"RENOVACION": 4, "PORTABILIDAD": 1}, "tipoventa": {"RENOVACION": 14, "PROTABILIDAD EXTERNA": 2}}}, "cruzada_por_mes": {"ENERO": 95, "FEBRERO": 3, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.024, "ef_conv_pct": 2.38, "ef_mrc_x_venta": 40.38, "en_roster": true, "sin_actividad": false}, {"agente": "LIZETH MILENA GONZALEZ RODRIGUEZ", "campana": "RENOVACION", "llamadas": 515, "no_contesta": 294, "contactados": 207, "tasa_contacto": 40.2, "numeros": 394, "intentos_prom": 1.31, "duracion_prom_s": 78.0, "ventas_movil": 7, "ventas_fijo": 1, "lineas_fact": 10, "ventas_total": 18, "rgu": 12.0, "mrc": 347.2, "venta_cruzada": 281, "tramites": {"PORTABILIDAD INTERNA": 4, "RENOVACION": 3}, "tipoventa": {"PROTABILIDAD INTERNA": 4, "RENOVACION": 6}, "status_fijo": {"(A). ASIGNADA": 1}, "por_mes": {"ENERO": 1, "FEBRERO": 8, "MARZO": 99, "ABRIL": 120, "MAYO": 86, "JUNIO": 201}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 2, "MARZO": 48, "ABRIL": 54, "MAYO": 34, "JUNIO": 69}, "no_contesta_por_mes": {"ENERO": 1, "FEBRERO": 6, "MARZO": 48, "ABRIL": 65, "MAYO": 47, "JUNIO": 127}, "numeros_por_mes": {"ENERO": 1, "FEBRERO": 4, "MARZO": 86, "ABRIL": 111, "MAYO": 72, "JUNIO": 156}, "duracion_por_mes": {"ENERO": 30.0, "FEBRERO": 69.0, "MARZO": 62.0, "ABRIL": 71.0, "MAYO": 89.0, "JUNIO": 85.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 7, "fijo": 1, "lineas": 10, "mrc": 347.2000000000001, "rgu": 12.0, "tramite": {"PORTABILIDAD INTERNA": 4, "RENOVACION": 3}, "tipoventa": {"PROTABILIDAD INTERNA": 4, "RENOVACION": 6}}}, "cruzada_por_mes": {"ENERO": 97, "FEBRERO": 3, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.035, "ef_conv_pct": 3.5, "ef_mrc_x_venta": 19.29, "en_roster": true, "sin_actividad": false}], "renov_sin_actividad": [{"agente": "ALISON BARRIOS", "campana": "RENOVACION", "llamadas": 0, "no_contesta": 0, "contactados": 0, "tasa_contacto": 0.0, "numeros": 0, "intentos_prom": 0.0, "duracion_prom_s": 0.0, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "ventas_total": 0, "rgu": 0.0, "mrc": 0.0, "venta_cruzada": 0, "tramites": {}, "tipoventa": {}, "status_fijo": {}, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 0.0, "MARZO": 0.0, "ABRIL": 0.0, "MAYO": 0.0, "JUNIO": 0.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.0, "ef_conv_pct": 0.0, "ef_mrc_x_venta": 0.0, "en_roster": true, "sin_actividad": true}, {"agente": "JOSE CERRUD", "campana": "RENOVACION", "llamadas": 0, "no_contesta": 0, "contactados": 0, "tasa_contacto": 0.0, "numeros": 0, "intentos_prom": 0.0, "duracion_prom_s": 0.0, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "ventas_total": 0, "rgu": 0.0, "mrc": 0.0, "venta_cruzada": 0, "tramites": {}, "tipoventa": {}, "status_fijo": {}, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 0.0, "MARZO": 0.0, "ABRIL": 0.0, "MAYO": 0.0, "JUNIO": 0.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.0, "ef_conv_pct": 0.0, "ef_mrc_x_venta": 0.0, "en_roster": true, "sin_actividad": true}, {"agente": "MIGUEL AVILA", "campana": "RENOVACION", "llamadas": 0, "no_contesta": 0, "contactados": 0, "tasa_contacto": 0.0, "numeros": 0, "intentos_prom": 0.0, "duracion_prom_s": 0.0, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "ventas_total": 0, "rgu": 0.0, "mrc": 0.0, "venta_cruzada": 0, "tramites": {}, "tipoventa": {}, "status_fijo": {}, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 0.0, "MARZO": 0.0, "ABRIL": 0.0, "MAYO": 0.0, "JUNIO": 0.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.0, "ef_conv_pct": 0.0, "ef_mrc_x_venta": 0.0, "en_roster": true, "sin_actividad": true}, {"agente": "QUESIAH ROMERO", "campana": "RENOVACION", "llamadas": 0, "no_contesta": 0, "contactados": 0, "tasa_contacto": 0.0, "numeros": 0, "intentos_prom": 0.0, "duracion_prom_s": 0.0, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "ventas_total": 0, "rgu": 0.0, "mrc": 0.0, "venta_cruzada": 0, "tramites": {}, "tipoventa": {}, "status_fijo": {}, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 0.0, "MARZO": 0.0, "ABRIL": 0.0, "MAYO": 0.0, "JUNIO": 0.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.0, "ef_conv_pct": 0.0, "ef_mrc_x_venta": 0.0, "en_roster": true, "sin_actividad": true}, {"agente": "SULLY PENALBA", "campana": "RENOVACION", "llamadas": 0, "no_contesta": 0, "contactados": 0, "tasa_contacto": 0.0, "numeros": 0, "intentos_prom": 0.0, "duracion_prom_s": 0.0, "ventas_movil": 0, "ventas_fijo": 0, "lineas_fact": 0, "ventas_total": 0, "rgu": 0.0, "mrc": 0.0, "venta_cruzada": 0, "tramites": {}, "tipoventa": {}, "status_fijo": {}, "por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "contactados_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "no_contesta_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "numeros_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "duracion_por_mes": {"ENERO": 0.0, "FEBRERO": 0.0, "MARZO": 0.0, "ABRIL": 0.0, "MAYO": 0.0, "JUNIO": 0.0}, "ventas_por_mes": {"ENERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "FEBRERO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MARZO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "ABRIL": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "MAYO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}, "JUNIO": {"movil": 0, "fijo": 0, "lineas": 0, "mrc": 0.0, "rgu": 0.0, "tramite": {}, "tipoventa": {}}}, "cruzada_por_mes": {"ENERO": 0, "FEBRERO": 0, "MARZO": 0, "ABRIL": 0, "MAYO": 0, "JUNIO": 0}, "ef_ventas_x_llamada": 0.0, "ef_conv_pct": 0.0, "ef_mrc_x_venta": 0.0, "en_roster": true, "sin_actividad": true}], "totales_ventas": {"moviles": 188, "fijo": 45, "lineas": 487, "cross_sell": 2201}};
+const fmt$ = v => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const COLORS = ['#ab47bc','#42a5f5','#66bb6a','#ffa726','#ef5350','#26a69a','#ec407a','#5c6bc0','#ffca28','#8d6e63'];
+const MESES = D.meses;
+const charts = {};
+
+document.getElementById('fechaGen').textContent = D.generado;
+
+function fmtCtx(c){
+  const el = document.getElementById(c);
+  return el ? el.getContext('2d') : null;
+}
+
+function nuevoChart(id, cfg){
+  const c = fmtCtx(id); if(!c) return;
+  if(charts[id]) charts[id].destroy();
+  charts[id] = new Chart(c, cfg);
+}
+
+let mesAct = 'TODOS';
+function campData(){
+  return {con: D.equipo_renovacion||[], sin: D.renov_sin_actividad||[]};
+}
+
+// --- Filtrado por mes ---
+function agFiltrado(a){
+  if(mesAct === 'TODOS'){
+    return Object.assign({}, a);
+  }
+  const m = mesAct;
+  const pm = a.por_mes[m]||0, cm = a.contactados_por_mes[m]||0;
+  const nm = a.no_contesta_por_mes[m]||0, num = a.numeros_por_mes[m]||0;
+  const vp = a.ventas_por_mes[m]||{};
+  const mov = vp.movil||0, fij = vp.fijo||0, lin = vp.lineas||0;
+  const vt = mov+fij+lin, mrc = vp.mrc||0, rgu = vp.rgu||0;
+  return {
+    agente: a.agente, campana: a.campana,
+    llamadas: pm, contactados: cm, no_contesta: nm, numeros: num,
+    tasa_contacto: pm ? +(cm/pm*100).toFixed(1) : 0,
+    ventas_movil: mov, ventas_fijo: fij, lineas_fact: lin,
+    ventas_total: vt, mrc: mrc, rgu: rgu,
+    venta_cruzada: a.cruzada_por_mes[m]||0,
+    tramites: vp.tramite||{}, tipoventa: vp.tipoventa||{},
+    ef_ventas_x_llamada: pm ? +(vt/pm).toFixed(3) : 0,
+    ef_conv_pct: pm ? +(vt/pm*100).toFixed(2) : 0,
+    ef_mrc_x_venta: vt ? +(mrc/vt).toFixed(2) : 0,
+    intentos_prom: num ? +(pm/num).toFixed(2) : 0,
+    duracion_prom_s: (a.duracion_por_mes&&a.duracion_por_mes[m]) ? a.duracion_por_mes[m] : 0,
+    en_roster: !!a.en_roster, sin_actividad: !!a.sin_actividad
+  };
+}
+function agentesActuales(){
+  return campData().con.map(agFiltrado);
+}
+// Roster completo: con datos + los del HC sin actividad (ceros)
+function rosterActual(){
+  const conDatos = agentesActuales();
+  const sinAct = campData().sin.map(agFiltrado);
+  return conDatos.concat(sinAct);
+}
+function tipifRenovActual(){
+  return mesAct==='TODOS' ? (D.tipif_renovacion||[]) : ((D.tipif_renov_por_mes||{})[mesAct]||[]);
+}
+function tipifGlobActual(){
+  return mesAct==='TODOS' ? D.tipif_global : (D.tipif_glob_por_mes[mesAct]||[]);
+}
+function mesLabel(){
+  return mesAct==='TODOS' ? 'ENE — JUN 2026' : mesAct;
+}
+
+function setMes(m){
+  mesAct = m;
+  document.querySelectorAll('.mes-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('data-mes')===m));
+  renderAll();
+}
+function navMes(d){
+  if(mesAct === 'TODOS'){
+    setMes(d>0 ? MESES[0] : MESES[MESES.length-1]);
+    return;
+  }
+  const i = MESES.indexOf(mesAct);
+  const n = (i + d + MESES.length) % MESES.length;
+  setMes(MESES[n]);
+}
+
+function kpis(){
+  const g = mesAct==='TODOS' ? D.global_vici : D.global_por_mes[mesAct];
+  const r = agentesActuales();
+  const sum = f => r.reduce((a,x)=>a+f(x),0);
+  const llamR = sum(x=>x.llamadas), contR = sum(x=>x.contactados);
+  const ventasR = sum(x=>x.ventas_total), mrcR = sum(x=>x.mrc);
+  const rguR = sum(x=>x.rgu), xcR = sum(x=>x.venta_cruzada);
+  const lbl = 'RENOVACIÓN';
+  const vsub = mesAct==='TODOS'
+    ? D.totales_ventas.moviles+' móv. · '+D.totales_ventas.fijo+' fijo · '+D.totales_ventas.lineas+' líneas'
+    : sum(x=>x.ventas_movil)+' móv. · '+sum(x=>x.ventas_fijo)+' fijo · '+sum(x=>x.lineas_fact)+' líneas';
+  const arr = [
+    ['Llamadas '+lbl, llamR.toLocaleString(), g.llamadas? (llamR/g.llamadas*100).toFixed(1)+'% del global ('+g.llamadas.toLocaleString()+')':'', 'purple'],
+    ['Contactados', contR.toLocaleString(), llamR? (contR/llamR*100).toFixed(1)+'% tasa contacto':'-', 'green'],
+    ['Ventas Subidas', ventasR, vsub, 'blue'],
+    ['MRC Generado', fmt$(mrcR), 'móvil + fijo + líneas', 'orange'],
+    ['RGU Total', rguR.toLocaleString(), 'servicios vendidos', 'teal'],
+    ['Venta Cruzada', xcR, 'gestiones cross-sell', 'red'],
+  ];
+  document.getElementById('kpiRow').innerHTML = arr.map(a=>
+    `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`
+  ).join('');
+  document.getElementById('totCall').innerHTML = `<strong>${g.llamadas.toLocaleString()}</strong> llamadas ${lbl.toLowerCase()} · ${g.numeros_unicos.toLocaleString()} números únicos`;
+  document.getElementById('mesActLbl').textContent = mesLabel();
+  document.getElementById('topPeriod').textContent = mesAct==='TODOS' ? 'TODOS LOS MESES' : mesAct;
+}
+
+function sw(id, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('v-'+id).classList.add('active');
+}
+
+// ---------- RENOVACION ----------
+let sortKey = 'llamadas', sortDir = -1;
+function renderRenov(){
+  const rows = agentesActuales();
+  rows.sort((a,b)=> (sortKey==='agente' ? String(a[sortKey]).localeCompare(String(b[sortKey])) : a[sortKey]-b[sortKey])*sortDir);
+  const maxL = Math.max(...rows.map(r=>r.llamadas),1);
+  document.getElementById('tabRenov').querySelector('tbody').innerHTML = rows.map((r,i)=>{
+    const pct = (r.llamadas/maxL*100).toFixed(0);
+    return `<tr>
+      <td><span class="pos pos-${i+1}">${i+1}</span></td>
+      <td><strong>${r.agente}</strong></td>
+      <td class="rt">${r.llamadas.toLocaleString()}</td>
+      <td class="rt">${r.contactados.toLocaleString()}</td>
+      <td class="rt">${r.tasa_contacto}%</td>
+      <td class="rt"><strong>${r.ventas_total}</strong></td>
+      <td class="rt">${r.rgu.toLocaleString()}</td>
+      <td class="rt">${fmt$(r.mrc)}</td>
+      <td class="rt">${r.venta_cruzada}</td>
+      <td style="min-width:140px"><div class="bar" style="width:${pct}%"></div><span style="font-size:10px;color:#7986cb">${pct}% de máx</span></td>
+    </tr>`;
+  }).join('');
+}
+document.querySelector('#tabRenov thead').addEventListener('click', e=>{
+  const th = e.target.closest('th'); if(!th) return;
+  const map = {0:'agente',1:'agente',2:'llamadas',3:'contactados',4:'tasa_contacto',5:'ventas_total',6:'rgu',7:'mrc',8:'venta_cruzada'};
+  const idx = Array.from(th.parentNode.children).indexOf(th);
+  const k = map[idx]; if(!k) return;
+  if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir = (k==='agente')?1:-1;}
+  renderRenov();
+});
+
+function renderMesRenov(){
+  const data = MESES.map(m=> (D.renov_por_mes[m]||{}).llamadas||0);
+  const bg = MESES.map(m=> (mesAct==='TODOS'||mesAct===m) ? '#ab47bc' : 'rgba(171,71,188,.25)');
+  nuevoChart('chMesRenov',{type:'bar',data:{labels:MESES,datasets:[{label:'Llamadas',data,backgroundColor:bg,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}});
+}
+function renderAgLlam(){
+  const top = agentesActuales().sort((a,b)=>b.llamadas-a.llamadas).slice(0,10);
+  nuevoChart('chAgLlam',{type:'bar',data:{labels:top.map(r=>r.agente),datasets:[{label:'Llamadas',data:top.map(r=>r.llamadas),backgroundColor:COLORS,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:10}}}}}});
+}
+
+// ---------- TIPIFICACION ----------
+function renderTipif(){
+  const tRen = tipifRenovActual();
+  const c1 = fmtCtx('chTipRenov'); if(c1){
+    const t = tRen.slice(0,10);
+    const otros = tRen.slice(10).reduce((s,x)=>s+x[1],0);
+    const labs = t.map(x=>x[0]), vals = t.map(x=>x[1]);
+    if(otros>0){labs.push('Otros');vals.push(otros);}
+    nuevoChart('chTipRenov',{type:'doughnut',data:{labels:labs,datasets:[{data:vals,backgroundColor:COLORS,borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:10}}}}}});
+  }
+  const c2 = fmtCtx('chTipGlob'); if(c2){
+    const tGlob = tipifGlobActual();
+    const t = tGlob.slice(0,10);
+    const otros = tGlob.slice(10).reduce((s,x)=>s+x[1],0);
+    const labs = t.map(x=>x[0]), vals = t.map(x=>x[1]);
+    if(otros>0){labs.push('Otros');vals.push(otros);}
+    nuevoChart('chTipGlob',{type:'bar',data:{labels:labs.map(l=>l.length>18?l.slice(0,18)+'…':l),datasets:[{label:'Llamadas',data:vals,backgroundColor:'#42a5f5',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  const c3 = fmtCtx('chMarc'); if(c3){
+    const r = agentesActuales();
+    nuevoChart('chMarc',{type:'bar',data:{labels:['Llamadas','Contactados','No Contesta','Números Únicos'],
+      datasets:[{label:'',data:[r.reduce((a,x)=>a+x.llamadas,0),r.reduce((a,x)=>a+x.contactados,0),r.reduce((a,x)=>a+x.no_contesta,0),r.reduce((a,x)=>a+x.numeros,0)],backgroundColor:['#ab47bc','#66bb6a','#ef5350','#42a5f5'],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}});
+  }
+  const total = tRen.reduce((s,x)=>s+x[1],0) || 1;
+  const interp = s=>{
+    if(/NO CONTESTA|LLAMADA NO CONTESTA/.test(s)) return 'Cliente no respondió la llamada';
+    if(/BUZON|CONTESTADOR/.test(s)) return 'Contestador / buzón de voz';
+    if(/SEGUIMIENTO|VOLVER A LLAMAR|CALL BACK/.test(s)) return 'Requiere seguimiento / rellamada';
+    if(/PROPUESTA/.test(s)) return 'Se envió propuesta al cliente';
+    if(/NO ACEPTA|RECHAZA|NO INTERESADO/.test(s)) return 'Cliente rechazó la oferta';
+    if(/VENTA|RENOVO|APROBACION/.test(s)) return 'Resultado positivo / venta';
+    if(/TITULAR|TOMADOR/.test(s)) return 'No es la persona responsable';
+    if(/CUELGA/.test(s)) return 'Cliente colgó';
+    if(/DEUDA/.test(s)) return 'Cliente con deuda pendiente';
+    if(/OCUPADO|BUSY|MUDA|LEAD|OUTBOUND/.test(s)) return 'Sin contacto efectivo';
+    return 'Gestión completada';
+  };
+  document.getElementById('tabTip').innerHTML = tRen.map((x,i)=>{
+    const p = (x[1]/total*100).toFixed(1);
+    return `<tr><td>${i+1}</td><td><strong>${x[0]}</strong></td><td class="rt">${x[1].toLocaleString()}</td><td class="rt">${p}%</td><td style="font-size:11px;color:#9fa8da">${interp(x[0])}</td></tr>`;
+  }).join('');
+}
+
+// ---------- VENTAS ----------
+function renderVentas(){
+  const r = agentesActuales().sort((a,b)=>b.ventas_total-a.ventas_total).slice(0,10);
+  const c1 = fmtCtx('chVentas'); if(c1){
+    nuevoChart('chVentas',{
+      type:'bar',
+      data:{
+        labels: r.map(x=>x.agente),
+        datasets:[
+          {label:'Móvil', data:r.map(x=>x.ventas_movil), backgroundColor:'#42a5f5', borderRadius:3},
+          {label:'Fijo', data:r.map(x=>x.ventas_fijo), backgroundColor:'#66bb6a', borderRadius:3},
+          {label:'Líneas', data:r.map(x=>x.lineas_fact), backgroundColor:'#ffa726', borderRadius:3}
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{legend:{position:'top', labels:{color:'#9fa8da', boxWidth:10}}},
+        scales:{
+          y:{beginAtZero:true, stacked:true, grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#9fa8da'}},
+          x:{stacked:true, ticks:{color:'#9fa8da', font:{size:9}}}
+        }
+      }
+    });
+  }
+  const c2 = fmtCtx('chMrc'); if(c2){
+    nuevoChart('chMrc',{type:'bar',data:{labels:r.map(x=>x.agente),datasets:[{label:'MRC $',data:r.map(x=>x.mrc),backgroundColor:'#ab47bc',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  const c3 = fmtCtx('chRgu'); if(c3){
+    nuevoChart('chRgu',{type:'bar',data:{labels:r.map(x=>x.agente),datasets:[{label:'RGU',data:r.map(x=>x.rgu),backgroundColor:'#26a69a',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  const c4 = fmtCtx('chTramite'); if(c4){
+    const agg = {};
+    agentesActuales().forEach(x=>{Object.entries(x.tramites||{}).forEach(([k,v])=>agg[k]=(agg[k]||0)+v);});
+    const e = Object.entries(agg).sort((a,b)=>b[1]-a[1]);
+    nuevoChart('chTramite',{type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:COLORS,borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:10}}}}}});
+  }
+  const c5 = fmtCtx('chTipoventa'); if(c5){
+    const agg = {};
+    agentesActuales().forEach(x=>{Object.entries(x.tipoventa||{}).forEach(([k,v])=>agg[k]=(agg[k]||0)+v);});
+    const e = Object.entries(agg).sort((a,b)=>b[1]-a[1]);
+    nuevoChart('chTipoventa',{type:'doughnut',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:COLORS,borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#9fa8da',boxWidth:10,font:{size:10}}}}}});
+  }
+}
+
+// ---------- RENDIMIENTO ----------
+function renderRend(){
+  const roster = rosterActual();
+  // Ranking: por ventas+MRC, luego llamadas
+  const ranked = roster.slice().sort((a,b)=> (b.ventas_total + b.mrc/1000) - (a.ventas_total + a.mrc/1000) || b.llamadas - a.llamadas);
+  // Top 3 vendedores
+  const top3 = ranked.filter(x=>x.ventas_total>0).slice(0,3).map(x=>x.agente);
+  // Grafico 1: Top vendedores
+  const c1 = fmtCtx('chTopVen'); if(c1){
+    const t = ranked.filter(x=>x.ventas_total>0).slice(0,8);
+    if(!t.length){ nuevoChart('chTopVen',{type:'bar',data:{labels:['Sin ventas en este período'],datasets:[{data:[0],backgroundColor:'#ef5350'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}}); }
+    else
+    nuevoChart('chTopVen',{type:'bar',data:{labels:t.map(x=>x.agente.length>16?x.agente.slice(0,16)+'…':x.agente),
+      datasets:[{label:'Ventas',data:t.map(x=>x.ventas_total),backgroundColor:COLORS,borderRadius:4},
+                {label:'MRC $',data:t.map(x=>x.mrc),backgroundColor:'#42a5f5',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#9fa8da',boxWidth:10,font:{size:9}}}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  // Grafico 2: eficiencia ventas/llamada
+  const c2 = fmtCtx('chEfVxL'); if(c2){
+    const t = ranked.filter(x=>x.llamadas>0).slice(0,8);
+    if(!t.length){ nuevoChart('chEfVxL',{type:'bar',data:{labels:['Sin llamadas en este período'],datasets:[{data:[0],backgroundColor:'#ef5350'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}}); }
+    else
+    nuevoChart('chEfVxL',{type:'bar',data:{labels:t.map(x=>x.agente.length>16?x.agente.slice(0,16)+'…':x.agente),
+      datasets:[{label:'Ventas por llamada',data:t.map(x=>x.ef_ventas_x_llamada),backgroundColor:'#26a69a',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  // Grafico 3: conversion %
+  const c3 = fmtCtx('chEfConv'); if(c3){
+    const t = ranked.filter(x=>x.llamadas>0).slice(0,8);
+    if(!t.length){ nuevoChart('chEfConv',{type:'bar',data:{labels:['Sin llamadas en este período'],datasets:[{data:[0],backgroundColor:'#ef5350'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}}); }
+    else
+    nuevoChart('chEfConv',{type:'bar',data:{labels:t.map(x=>x.agente.length>16?x.agente.slice(0,16)+'…':x.agente),
+      datasets:[{label:'% Conversión',data:t.map(x=>x.ef_conv_pct),backgroundColor:'#66bb6a',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  // Tabla ranking completo
+  const maxV = Math.max(...ranked.map(x=>x.ventas_total),1);
+  document.getElementById('tabRend').querySelector('tbody').innerHTML = ranked.map((r,i)=>{
+    let est, cls = '', badge;
+    if(r.ventas_total === 0 && r.llamadas === 0){
+      est = 'Sin actividad'; cls = 'tr-low'; badge = '<span class="st-badge st-low">⚠ SIN ACTIVIDAD</span>';
+    } else if(top3.includes(r.agente)){
+      est = 'Top vendedor'; cls = 'tr-top'; badge = '<span class="st-badge st-top">🥇 TOP '+(top3.indexOf(r.agente)+1)+'</span>';
+    } else if(r.ef_conv_pct >= 2){
+      est = 'Activo'; badge = '<span class="st-badge st-act">✓ ACTIVO</span>';
+    } else {
+      est = 'Bajo rendimiento'; badge = '<span class="st-badge st-warn">⚠ BAJO</span>';
+    }
+    const pct = (r.ventas_total/maxV*100).toFixed(0);
+    return `<tr class="${cls}">
+      <td><span class="pos">${i+1}</span></td>
+      <td><strong>${r.agente}</strong></td>
+      <td>${badge}</td>
+      <td class="rt">${r.llamadas.toLocaleString()}</td>
+      <td class="rt"><strong>${r.ventas_total}</strong></td>
+      <td class="rt">${fmt$(r.mrc)}</td>
+      <td class="rt">${r.rgu.toLocaleString()}</td>
+      <td class="rt">${r.ef_ventas_x_llamada? r.ef_ventas_x_llamada.toFixed(3) : '—'}</td>
+      <td class="rt">${r.ef_conv_pct? r.ef_conv_pct.toFixed(2)+'%' : '—'}</td>
+      <td class="rt">${r.ef_mrc_x_venta? fmt$(r.ef_mrc_x_venta) : '—'}</td>
+    </tr>`;
+  }).join('');
+  const activos = ranked.filter(x=>x.ventas_total>0||x.llamadas>0).length;
+  const sinAct = ranked.length - activos;
+  document.getElementById('rendNota').textContent =
+    `${ranked.length} integrantes en total · ${activos} con actividad · ${sinAct} sin actividad · Los TOP son los 3 con más ventas+MRC · 'Sin actividad' = integrantes del HC sin llamadas ni ventas en el período.`;
+  document.getElementById('rendPeriod').textContent = mesAct==='TODOS' ? 'TODOS LOS MESES' : mesAct;
+}
+
+// ---------- MARCACIONES (quien llama mas / menos) ----------
+function renderMarc(){
+  const roster = rosterActual();
+  const activos = roster.filter(x=>x.llamadas>0).sort((a,b)=>b.llamadas-a.llamadas);
+  const totalLlam = activos.reduce((s,x)=>s+x.llamadas,0) || 1;
+  // Grafico 1: quien llama mas (top 8)
+  const c1 = fmtCtx('chLlamMas'); if(c1){
+    const t = activos.slice(0,8);
+    if(!t.length){ nuevoChart('chLlamMas',{type:'bar',data:{labels:['Sin llamadas'],datasets:[{data:[0],backgroundColor:'#ef5350'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}}); }
+    else
+    nuevoChart('chLlamMas',{type:'bar',data:{labels:t.map(x=>x.agente.length>15?x.agente.slice(0,15)+'…':x.agente),
+      datasets:[{label:'Llamadas',data:t.map(x=>x.llamadas),backgroundColor:'#42a5f5',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  // Grafico 2: quien llama menos (bottom 8 con actividad)
+  const c2 = fmtCtx('chLlamMenos'); if(c2){
+    const t = activos.slice(-8).reverse();
+    if(!t.length){ nuevoChart('chLlamMenos',{type:'bar',data:{labels:['Sin llamadas'],datasets:[{data:[0],backgroundColor:'#ef5350'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da'}}}}}); }
+    else
+    nuevoChart('chLlamMenos',{type:'bar',data:{labels:t.map(x=>x.agente.length>15?x.agente.slice(0,15)+'…':x.agente),
+      datasets:[{label:'Llamadas',data:t.map(x=>x.llamadas),backgroundColor:'#ffa726',borderRadius:4}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  // Grafico 3: contactados vs no contesta
+  const c3 = fmtCtx('chContVsNc'); if(c3){
+    const t = activos.slice(0,8);
+    if(!t.length){ nuevoChart('chContVsNc',{type:'bar',data:{labels:['Sin datos'],datasets:[{data:[0]},{data:[0]}]},options:{responsive:true,maintainAspectRatio:false}}); }
+    else
+    nuevoChart('chContVsNc',{type:'bar',data:{labels:t.map(x=>x.agente.length>15?x.agente.slice(0,15)+'…':x.agente),
+      datasets:[
+        {label:'Contactados',data:t.map(x=>x.contactados),backgroundColor:'#66bb6a',borderRadius:3},
+        {label:'No contesta',data:t.map(x=>x.no_contesta),backgroundColor:'#ef5350',borderRadius:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#9fa8da',boxWidth:10,font:{size:9}}}},
+        scales:{y:{beginAtZero:true,stacked:false,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},x:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  }
+  // Tabla ranking completo (incluye sin actividad al final)
+  const todos = roster.slice().sort((a,b)=>b.llamadas-a.llamadas);
+  document.getElementById('tabMarc').querySelector('tbody').innerHTML = todos.map((r,i)=>{
+    const pctT = (r.llamadas/totalLlam*100).toFixed(1);
+    const sinAct = r.llamadas===0 && r.ventas_total===0;
+    const cls = sinAct ? 'tr-low' : '';
+    const badge = sinAct ? '<span class="st-badge st-low">⚠ SIN ACTIVIDAD</span>' : '';
+    return `<tr class="${cls}">
+      <td><span class="pos">${i+1}</span></td>
+      <td><strong>${r.agente}</strong> ${badge}</td>
+      <td class="rt"><strong>${r.llamadas.toLocaleString()}</strong></td>
+      <td class="rt">${r.contactados.toLocaleString()}</td>
+      <td class="rt">${r.tasa_contacto}%</td>
+      <td class="rt">${r.no_contesta.toLocaleString()}</td>
+      <td class="rt">${r.numeros.toLocaleString()}</td>
+      <td class="rt">${r.intentos_prom? r.intentos_prom.toFixed(2) : '—'}</td>
+      <td class="rt">${r.duracion_prom_s? Math.round(r.duracion_prom_s)+' s' : '—'}</td>
+      <td style="min-width:120px"><div class="bar" style="width:${Math.min(pctT*3,100)}%"></div><span style="font-size:10px;color:#7986cb">${pctT}%</span></td>
+    </tr>`;
+  }).join('');
+  const sinActivos = todos.filter(x=>x.llamadas===0).length;
+  document.getElementById('marcNota').textContent =
+    `${activos.length} agentes con marcaciones · ${totalLlam.toLocaleString()} llamadas en total · ${sinActivos} integrantes sin ninguna llamada · Ordenado de quien más llama a quien menos.`;
+  document.getElementById('marcPeriod').textContent = mesAct==='TODOS' ? 'TODOS LOS MESES' : mesAct;
+}
+
+function renderAll(){
+  kpis();
+  renderRenov(); renderMesRenov(); renderAgLlam();
+  renderRend();
+  renderMarc();
+  renderTipif();
+  renderVentas();
+}
+
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,409 @@
+========================================================================
+  FORMULAS DEL PROYECTO AMIR - SOHO / NEXTPHONE
+========================================================================
+  Gerente:    Amir Josue Rodriguez Chavarria
+  Reporte:    Reporte_soho_junio_25 (1).xlsb (7 hojas)
+  Bases:
+    - Base de datos Nextphone 14072026    (24 cols, BD clientes)
+    - Base Móvil sin fijo 02072026        (23 cols, clientes móvil)
+    - Base campaña cross-sell movil Nextphone (26-28 cols)
+    - Winback SOHO 2026 Julio             (10 cols, retención)
+  Sistema:    Vici Dialer (llamadas) + Excel (reportes)
+========================================================================
+
+
+ÍNDICE
+========================================================================
+  1.  ESTRUCTURA DEL REPORTE SOHO (7 hojas)
+  2.  CRUCE DE BASES (JOIN lógico)
+  3.  TOTAL POR CLIENTE
+  4.  MRC - MONTHLY RECURRING CHARGE
+  5.  VENTAS POR EJECUTIVA
+  6.  TASA DE CONVERSIÓN DE LLAMADAS (Vici)
+  7.  SEGMENTACIÓN DE CLIENTES
+  8.  CLASIFICACIÓN CLIENTE SOHO vs CORPORATIVO
+  9.  BASES DE DATOS - DIAGRAMA DE COLUMNAS
+  10. BASES DE DATOS - CROSS-SELL MOVIL NEXTPHONE
+  11. BASE DE DATOS - WINBACK SOHO
+  12. FLUJO DE TRABAJO DEL REPORTE
+
+
+================================================================================
+  1. ESTRUCTURA DEL REPORTE SOHO (7 hojas)
+================================================================================
+
+  Archivo:   Reporte_soho_junio_25 (1).xlsb
+  Formato:   XLSB (Excel Binary Workbook - más rápido que XLSX)
+
+  HOJA 1: Resumen (Dashboard)
+    - Filtros: campaign_id, mes
+    - KPIs: total ventas, MRC, llamadas, conversión
+    - Gráficos de resumen
+
+  HOJA 2: llamadas (24 columnas)
+    - Datos: Día, métricas de llamadas del Vici
+    - Filtros: Campaña, Mes, campaign_id
+
+  HOJA 3: Tabla historica (18 columnas)
+    - Evolución mensual
+    - Filtros: MES GESTION, NO EFECTIVO, No Cierre Asesor,
+               No Cumple Condiciones
+
+  HOJA 4: Vici (57 columnas)
+    - Detalle completo de llamadas del sistema Vici/Asterisk
+    - Columnas: RPC, WPC, NPC, EFECTIVO, No Cierre Asesor,
+                No Cumple Condiciones, Contact, Tipo, Call Day,
+                Intentos, Contar, Contacto, call_date,
+                phone_number_dialed, status, user, full_name,
+                campaign_id, vendor_lead_code, source_id, list_id,
+                first_name, last_name, address, city, province,
+                gender, date_of_birth, email, alt_phone,
+                length_in_sec, status_name, Mes,
+                Llamadas Efectivas, Llamadas no efectivas,
+                Intentos por numeros
+
+  HOJA 5: Ventas Moviles (32 columnas)
+    - Formulario de ventas móviles (llenado manual)
+    - Columnas: Marca temporal, Cliente, Cedula, Dirección,
+                Correo, Teléfono, Cuenta, Agentes, Bonos,
+                Descuento, Trámite (Renovación/Portabilidad),
+                Línea 1-10, Equipo, Plan Vendido (código),
+                MRC Anterior, MRC Actual, Comentarios, etc.
+
+  HOJA 6: Ventas Fijo (22 columnas)
+    - Ventas de fijo/internet
+    - Columnas: Mes Reg, Dia Reg, Mes Fact, Dia Fact,
+                F.Registro, Canal ("SOHO-CALL CENTER"),
+                Identifica Client, Cliente, Tel Fijo, Movil,
+                Vendedor, Supervisor, Coordinador, Orden, Rgu,
+                Cuenta Cliente, Status Final, Empresa,
+                Fecha Instalacion, Mrc, Fecha Subida, User
+
+  HOJA 7: lineas facturadas (32 columnas)
+    - Líneas facturadas del mes
+    - Columnas: Documento, No, Cuenta, Venta convergente,
+                Venta digital, No Recibo, No Factura, Sucursal,
+                Tipoventa, Segmento, Fecha, Vendedor, Canal,
+                Coordinador, Gerente, Cliente, Usuario, Plan,
+                Producto, Codigo, IMEI, ICCID, MIN,
+                Cantidad lineas, Valor plan, Valor recibo,
+                Valor factura, Ventas x base, Fecha fact
+
+
+================================================================================
+  2. CRUCE DE BASES (JOIN lógico entre las 4 fuentes)
+================================================================================
+
+  Las 4 bases Excel se cruzan por CUENTA / CUST_NO:
+
+  ┌──────────────────────────────────────────────────────────┐
+  │                  REPORTE SOHO (.xlsb)                     │
+  ├──────────────────────────────────────────────────────────┤
+  │                                                          │
+  │  BASE 1 (Nextphone 14072026)                             │
+  │    CUENTA/CUST_NO ─────► Ventas Fijo / lineas facturadas │
+  │                                                          │
+  │  BASE 2 (Móvil sin fijo 02072026)                        │
+  │    CUENTA/CUST_NO ─────► Ventas Fijo / lineas facturadas │
+  │                                                          │
+  │  BASE 3 (Cross-sell movil)                               │
+  │    CUENTA/CUST_NO ─────► Ventas Moviles                  │
+  │                                                          │
+  │  BASE 4 (Winback SOHO)                                   │
+  │    CLIENTE ────────────► Ventas Moviles / Ventas Fijo    │
+  │                                                          │
+  └──────────────────────────────────────────────────────────┘
+
+  SELECT lógico (equivalente SQL):
+  ---------------------------------------------------------------
+  SELECT *
+  FROM reporte_soho r
+  LEFT JOIN base_nextphone b1 ON r.cuenta = b1.CUENTA
+  LEFT JOIN base_movil b2 ON r.cuenta = b2.CUENTA
+  LEFT JOIN base_crosssell b3 ON r.cuenta = b3.CUENTA
+  LEFT JOIN base_winback b4 ON r.cliente = b4.CLIENTE
+  WHERE r.mes = 'jun-25';
+
+
+================================================================================
+  3. TOTAL POR CLIENTE
+================================================================================
+
+  Base:   Nextphone 14072026 / Móvil sin fijo 02072026
+
+  TOTAL = MONTO - DESCUENTO
+
+  Donde:
+    MONTO    = Valor base del plan/servicio (ej: 15, 18)
+    DESCUENTO = Descuento aplicado (ej: 0, 5, 10)
+    TOTAL    = Monto final facturado al cliente
+
+  Ejemplo:
+    MONTO = 15, DESCUENTO = 0 → TOTAL = 15
+    MONTO = 18, DESCUENTO = 3 → TOTAL = 15
+
+
+================================================================================
+  4. MRC - MONTHLY RECURRING CHARGE
+================================================================================
+
+  Hoja:   Ventas Moviles / Ventas Fijo / lineas facturadas
+
+  MRC (Monthly Recurring Charge) = Valor del plan
+
+  El plan se identifica por código numérico (ej: 20 = $20/mes).
+
+  MRC_Actual = Valor del plan vendido (según código)
+  MRC_Anterior = Valor del plan anterior del cliente
+  Incremento_MRC = MRC_Actual - MRC_Anterior
+
+  Para ventas convergentes (Fijo + Móvil + Internet):
+    MRC_Total = MRC_Fijo + MRC_Movil + MRC_Internet
+
+  Para Winback (clientes recuperados):
+    MRC_Winback = MRC_Acum (del cliente antes de irse)
+    Se busca recuperar al cliente ofreciendo plan similar o mejor
+
+
+================================================================================
+  5. VENTAS POR EJECUTIVA
+================================================================================
+
+  Conteo de ventas por ejecutiva/agente:
+
+  En Excel:
+    = COUNTIF(rango_ejecutivas, nombre_ejecutiva)
+
+  En Python (equivalente):
+    ---------------------------------------------------------------
+    from collections import Counter
+    ventas_por_ejecutiva = Counter()
+    for row in datos:
+        ventas_por_ejecutiva[row['Ejecutiva']] += 1
+
+  Ranking de ejecutivas:
+    ---------------------------------------------------------------
+    sorted(ventas_por_ejecutiva.items(),
+           key=lambda x: x[1], reverse=True)
+
+
+================================================================================
+  6. TASA DE CONVERSIÓN DE LLAMADAS (Vici)
+================================================================================
+
+  Hoja:   Vici (Datos del sistema Vici Dialer/Asterisk)
+
+  a) Llamadas Efectivas = COUNTIF(Status, "EFECTIVO")
+  b) Llamadas No Efectivas = COUNTIF(Status, "No Cierre Asesor")
+                           + COUNTIF(Status, "No Cumple Condiciones")
+                           + COUNTIF(Status, "NPC")
+  c) Total Llamadas = COUNT(rango_fechas)
+
+  d) Tasa de Conversión = (Efectivas / Totales) × 100
+
+     Ejemplo:
+       50 efectivas de 200 totales
+       → (50/200) × 100 = 25% de conversión
+
+  e) Intentos por número = COUNTIF(phone_number_dialed, número)
+     (Cuantas veces se marcó cada teléfono)
+
+  f) Duración promedio de llamada:
+     = AVERAGE(length_in_sec) / 60  → minutos
+
+
+================================================================================
+  7. SEGMENTACIÓN DE CLIENTES
+================================================================================
+
+  En base a los servicios del cliente (de SERVICIOS_TELCO):
+
+  ┌─────────────────────────────────────────────────────┐
+  │ Si tiene Fijo + Móvil + Internet → CONVERGENTE      │
+  │ Si solo Móvil                    → SOLO MÓVIL       │
+  │ Si solo Fijo                     → SOLO FIJO        │
+  │ Si Móvil + Internet              → MÓVIL + INTERNET │
+  │ Si solo Internet                 → SOLO INTERNET    │
+  └─────────────────────────────────────────────────────┘
+
+  La columna TIPO_CLIENTE indica:
+  - "M" = Persona natural (M)
+  - "J" = Persona jurídica (empresa)
+
+
+================================================================================
+  8. CLASIFICACIÓN CLIENTE SOHO vs CORPORATIVO
+================================================================================
+
+  Para segmentar el tipo de cliente empresarial:
+
+  Cliente SOHO:
+    = IF(CANTIDAD_LINEAS <= 20, "SOHO", "CORPORATIVO")
+
+    DONDE:
+      SOHO = Small Office / Home Office (<= 20 líneas)
+      CORPORATIVO = Empresa grande (> 20 líneas)
+
+  Segmentos en lineas facturadas:
+    - SOHO CORPORATIVO
+    - RESIDENCIAL
+    - EMPRESARIAL
+
+
+================================================================================
+  9. BASES DE DATOS - DIAGRAMA DE COLUMNAS
+================================================================================
+
+  BASE 1: Base de datos Nextphone 14072026 (24 columnas)
+
+  Columnas inferidas:
+  ┌─────┬─────────────────────┬────────┬──────────────────────┐
+  │  #  │ Columna             │ Tipo   │ Ejemplo              │
+  ├─────┼─────────────────────┼────────┼──────────────────────┤
+  │  0  │ EJECUTIVA           │ Texto  │ Solanye Acuña        │
+  │  1  │ TIPO_SERVICIO       │ Texto  │ Movil                │
+  │  2  │ SUB_TIPO            │ Texto  │ sin fijo             │
+  │  3  │ CUST_NO             │ Número │ 35538297             │
+  │  4  │ CUENTA              │ Número │ 355382970000         │
+  │  5  │ NOMBRE_CLIENTE      │ Texto  │ EDIL GOMEZ ARCE      │
+  │  6  │ TELEFONO_1          │ Texto  │ 4-858-71             │
+  │  7  │ CONTACTO_FIJO       │ Texto  │ "no tiene" / 3054876 │
+  │  8  │ NOMBRE_REF          │ Texto  │ MEYVIS CALVO         │
+  │  9  │ CLIENTE_NOMBRE      │ Texto  │ EDIL GOMEZ ARCE      │
+  │ 10  │ CELULAR             │ Número │ 68879413             │
+  │ 11  │ ESTADO              │ Texto  │ W                    │
+  │ 12  │ FECHA_ALTA          │ Fecha  │ 2025-12-27           │
+  │ 13  │ CANAL               │ Texto  │ TIENDA CALL CENTER   │
+  │ 14  │ SUPERVISOR          │ Texto  │ Leonardo Wizemberg   │
+  │ 15  │ LINEA_NEGOCIO       │ Texto  │ Nuevos Negocios      │
+  │ 16  │ TIPO_CLIENTE        │ Texto  │ M                    │
+  │ 17  │ CODIGO              │ Texto  │ Y / V / T / B        │
+  │ 18  │ CANTIDAD            │ Número │ 1                    │
+  │ 19  │ MONTO               │ Número │ 15                   │
+  │ 20  │ DESCUENTO           │ Número │ 0                    │
+  │ 21  │ TOTAL               │ Número │ 15                   │
+  │ 22  │ NOMBRE_KEY          │ Texto  │ EDILGOMEZARCE        │
+  │ 23  │ MARCA               │ Texto  │ Nextphone            │
+  └─────┴─────────────────────┴────────┴──────────────────────┘
+
+  BASE 2: Base Móvil sin fijo 02072026 (23 columnas)
+  - Misma estructura que Base 1, sin columna EJECUTIVA
+  - CÓDIGO: G / A / C / F / I
+
+
+================================================================================
+  10. BASES DE DATOS - CROSS-SELL MOVIL NEXTPHONE
+================================================================================
+
+  3 hojas con 26-28 columnas:
+
+  HOJA 1: Sin contactos telefónicos (26 cols)
+    FECHA, CUENTA, CUST_NO, ALIAS, NOMBRE_CIS,
+    ESTADO_CUENTA, TIPO_CLIENTE, SERVICIOS_TELCO, TIPO,
+    PROVINCIA, RUC, PERSONA_AUT_1/2/3, Nombre_contacto,
+    contact_mobile, Mix_contacto, contact_phone, bill_email,
+    contact_email, SERV_NO, DIRECCION, PROVEEDOR,
+    FECHA_INICIO, Agentes, COMENTARIOS
+
+  HOJA 2: Base para gestionar CC (25 cols)
+    Mismas que arriba, más Ejecutivo, y con
+    Mix_contacto = "Movil-Fijo-Correo"
+
+  HOJA 3: Con contactos telefónicos (28 cols)
+    Mismas que Hoja 2, más Estatus y COMENTARIOS
+
+  Fórmulas de segmentación para cross-sell:
+  ---------------------------------------------------------------
+  - Cliente sin móvil (contact_mobile = #N/A):
+        OFRECER línea móvil Nextphone
+  - Cliente con móvil pero sin fijo:
+        OFRECER línea fija + internet
+  - Cliente con fijo pero sin internet:
+        OFRECER internet (FLBBTV)
+  - Cliente converge (todo):
+        OFRECER upgrades / más líneas
+
+
+================================================================================
+  11. BASE DE DATOS - WINBACK SOHO
+================================================================================
+
+  10 columnas:
+
+  ┌─────┬─────────────────────┬────────┬──────────────────────┐
+  │  #  │ Columna             │ Tipo   │ Ejemplo              │
+  ├─────┼─────────────────────┼────────┼──────────────────────┤
+  │  0  │ Ejecutivas          │ Texto  │ Michelle Zambrano    │
+  │  1  │ CLIENTE             │ Texto  │ COIMSA               │
+  │  2  │ DESCRIPCION_PLAN    │ Texto  │ MG DCM B2B LDI SL   │
+  │  3  │ RAZON_SALIDA        │ Texto  │ Solicitado por Cl.   │
+  │  4  │ RGU                 │ Número │ 3                    │
+  │  5  │ MRC_Acum            │ Número │ 95                   │
+  │  6  │ Persona_contacto    │ Texto  │ Jorge Villarreal     │
+  │  7  │ Correo              │ Texto  │ gerencia@coimsa.com  │
+  │  8  │ Contacto_1          │ Número │ 66776809             │
+  │  9  │ Contacto_2          │ Número │ 2602749              │
+  └─────┴─────────────────────┴────────┴──────────────────────┘
+
+  Estrategia de Winback:
+  ---------------------------------------------------------------
+  SI Razon_Salida = "Precio" → OFRECER descuento
+  SI Razon_Salida = "Servicio" → OFRECER mejora
+  SI MRC_Acum > 50 → PRIORIDAD ALTA (cliente valioso)
+  SI RGU > 3 → PRIORIDAD ALTA (muchos servicios)
+
+
+================================================================================
+  12. FLUJO DE TRABAJO DEL REPORTE
+================================================================================
+
+  ┌────────────────────────────────────────────────────────┐
+  │  1. EXTRAER datos de las 4 bases (.xlsx)               │
+  │     - Base Nextphone 14072026                          │
+  │     - Base Móvil sin fijo 02072026                     │
+  │     - Base Cross-sell movil                            │
+  │     - Winback SOHO                                     │
+  └────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+  ┌────────────────────────────────────────────────────────┐
+  │  2. CRUZAR por CUENTA / CUST_NO                        │
+  │     - JOIN entre bases para unificar datos             │
+  │     - Unir información de contacto y servicios          │
+  └────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+  ┌────────────────────────────────────────────────────────┐
+  │  3. LLENAR el reporte (.xlsb)                          │
+  │     - Ventas Moviles: registrar cada venta móvil       │
+  │     - Ventas Fijo: registrar cada instalación           │
+  │     - lineas facturadas: datos de facturación           │
+  │     - Vici: importar desde sistema de llamadas          │
+  └────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+  ┌────────────────────────────────────────────────────────┐
+  │  4. ACTUALIZAR Dashboard (Hoja Resumen)                │
+  │     - KPIs: llamadas, ventas, MRC, conversión          │
+  │     - Filtros: campaña, mes, ejecutivo                 │
+  └────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  NOTAS ADICIONALES
+================================================================================
+
+  1. El reporte SOHO se actualiza MANUALMENTE cada mes.
+  2. Los datos se extraen de 4 fuentes distintas.
+  3. El sistema Vici genera datos de llamadas automáticamente.
+  4. Las ventas se registran a mano en el formulario.
+  5. Las bases vienen de SharePoint / sistemas corporativos.
+  6. Supervisor principal: Leonardo Wizemberg.
+  7. Coordinador/Gerente: Amir Josue Rodriguez Chavarria.
+  8. El canal principal es "SOHO-CALL CENTER".
+  9. Las ventas pueden ser convergentes o digitales.
+  10. Formato del archivo: .xlsb (binario, más rápido que .xlsx).
+
+========================================================================
+  FIN DE DOCUMENTACIÓN - AMIR / SOHO
+========================================================================

@@ -1,0 +1,253 @@
+================================================================================
+  INSTRUCCIONES: Armar Reporte Winback SOHO en Excel
+  Gerente: Amir Josue Rodriguez Chavarria
+  Base: Winback SOHO 2026 Julio-Iniciativa Nextphone 17 julio 2026.xlsx
+  Archivo de salida: Reporte_Winback_SOHO_Julio2026.xlsx
+================================================================================
+
+PASO 1: ABRIR LA BASE WINBACK
+================================================================================
+  Archivo: bases\Winback SOHO 2026 Julio-Iniciativa Nextphone 17 julio 2026.xlsx
+  Hoja: BASE 1.3 (10 columnas, 210 registros + 1 fila de encabezados)
+
+  Columnas originales:
+    A: Ejecutivas
+    B: CLIENTE
+    C: DESCRIPCION DE PLAN
+    D: RAZON DE SALIDA
+    E: RGU
+    F: MRC Acum
+    G: Persona de contacto
+    H: Correo
+    I: Contacto 1
+    J: Contacto 2
+
+
+PASO 2: LIMPIEZA DE DATOS (Power Query)
+================================================================================
+  1. Seleccionar los datos > Data > From Table/Range (Power Query)
+  2. Columnas a limpiar:
+     - CLIENTE: Reemplazar valores en blanco por "SIN NOMBRE"
+     - RAZON DE SALIDA: Reemplazar "(en blanco)" por "Solicitado por el Cliente"
+     - RGU: Reemplazar valores nulos por 0
+     - MRC Acum: Reemplazar valores nulos por 0
+  3. Cerrar y cargar en una nueva hoja llamada "Datos_Limpios"
+
+
+PASO 3: CREAR COLUMNAS CALCULADAS (en Datos_Limpios)
+================================================================================
+  Columna K - "PRIORIDAD":
+    =IF(OR(F2>50, E2>3), "ALTA", IF(OR(F2>20, E2>1), "MEDIA", "BAJA"))
+
+  Columna L - "TIENE_TELEFONO":
+    =IF(OR(I2<>"", J2<>""), "SI", "NO")
+
+  Columna M - "TIENE_CORREO":
+    =IF(H2<>"", "SI", "NO")
+
+  Columna N - "TIENE_CONTACTO":
+    =IF(G2<>"", "SI", "NO")
+
+  Columna O - "MRC_POR_RGU":
+    =IF(E2>0, F2/E2, F2)
+
+  Columna P - "CATEGORIA_MRC":
+    =IF(F2>=100, "VIP", IF(F2>=50, "PREMIUM", IF(F2>=20, "ESTANDAR", "BASICO")))
+
+  Columna Q - "TIPO_CLIENTE":
+    =IF(B2="SIN NOMBRE", "SIN IDENTIFICAR", "IDENTIFICADO")
+
+
+PASO 4: TABLA DINAMICA - RESUMEN POR EJECUTIVA
+================================================================================
+  Insertar > Tabla Dinamica (en hoja nueva: "Resumen_Ejecutivas")
+
+  Filas:            Ejecutivas
+  Valores:
+    - CLIENTE:        Contar (Clientes gestionados)
+    - MRC Acum:       Suma (MRC total recuperable)
+    - RGU:            Suma (RGU total)
+    - PRIORIDAD ALTA: Contar (solo si columna K="ALTA")
+    - MRC Acum:       Promedio (MRC promedio por cliente)
+
+  Formato de celdas:
+    - MRC: $#,##0.00
+    - RGU: #,##0
+
+
+PASO 5: TABLA DINAMICA - ANALISIS POR PRIORIDAD
+================================================================================
+  Insertar > Tabla Dinamica (en hoja nueva: "Resumen_Prioridad")
+
+  Filas:            PRIORIDAD
+  Valores:
+    - CLIENTE:        Contar
+    - MRC Acum:       Suma
+    - RGU:            Suma
+    - MRC Acum:       Promedio
+
+  Orden de prioridad: ALTA > MEDIA > BAJA
+
+
+PASO 6: TABLA DINAMICA - RAZONES DE SALIDA
+================================================================================
+  Insertar > Tabla Dinamica (en hoja nueva: "Razones_Salida")
+
+  Filas:            RAZON DE SALIDA
+  Valores:
+    - CLIENTE:        Contar
+    - MRC Acum:       Suma
+    - RGU:            Suma
+
+  Agregar grafico de barras para visualizar las razones principales.
+
+
+PASO 7: TABLA DINAMICA - CATEGORIA MRC
+================================================================================
+  Insertar > Tabla Dinamica (en hoja nueva: "Categoria_MRC")
+
+  Filas:            CATEGORIA_MRC
+  Valores:
+    - CLIENTE:        Contar
+    - MRC Acum:       Suma
+    - MRC Acum:       Promedio
+
+  Grafico de pastel para mostrar distribucion de clientes por categoria.
+
+
+PASO 8: TABLA DINAMICA - DISTRIBUCION RGU
+================================================================================
+  Insertar > Tabla Dinamica (en hoja nueva: "Distribucion_RGU")
+
+  Filas:            RGU
+  Valores:
+    - CLIENTE:        Contar
+    - MRC Acum:       Suma
+    - MRC Acum:       Promedio
+
+
+PASO 9: TABLA DINAMICA - PLANES MAS FRECUENTES
+================================================================================
+  Insertar > Tabla Dinamica (en hoja nueva: "Analisis_Planes")
+
+  Filas:            DESCRIPCION DE PLAN
+  Valores:
+    - CLIENTE:        Contar
+    - MRC Acum:       Suma
+    - MRC Acum:       Promedio
+    - RGU:            Suma
+
+  Ordenar por Contar de mayor a menor.
+  Agregar grafico de barras horizontales.
+
+
+PASO 10: DASHBOARD (Hoja: "DASHBOARD")
+================================================================================
+  Crear un resumen visual con:
+
+  TARJETAS (KPI superiores):
+    A1: Total Clientes (210)
+    B1: MRC Total ($8,242.40)
+    C1: RGU Total (382)
+    D1: MRC Promedio ($39.25)
+
+  GRAFICO 1: Clientes por Ejecutiva (barras)
+    - Datos de la tabla dinamica "Resumen_Ejecutivas"
+    - Filtrar las 4 ejecutivas
+
+  GRAFICO 2: MRC por Prioridad (barras apiladas)
+    - Datos de "Resumen_Prioridad"
+
+  GRAFICO 3: Distribucion de Categorias MRC (pastel)
+    - Datos de "Categoria_MRC"
+
+  GRAFICO 4: Top 10 Planes (barras horizontales)
+    - Datos de "Analisis_Planes" (top 10)
+
+  TABLA: Top 10 Clientes por MRC
+    - Usar =LARGE() o filtro manual
+    - Mostrar: CLIENTE, EJECUTIVA, PLAN, MRC, RGU, PRIORIDAD
+
+  FILTROS:
+    - Segmentacion de datos por Ejecutiva
+    - Segmentacion de datos por Prioridad
+    - Segmentacion de datos por Categoria MRC
+
+  FORMULAS para DASHBOARD:
+    =CONTAR(Datos_Limpios[CLIENTE])           -> Total clientes
+    =SUMA(Datos_Limpios[MRC Acum])            -> MRC total
+    =SUMA(Datos_Limpios[RGU])                  -> RGU total
+    =PROMEDIO(Datos_Limpios[MRC Acum])         -> MRC promedio
+    =CONTAR.SI(Datos_Limpios[PRIORIDAD];"ALTA")  -> Clientes prioridad alta
+    =SUMAR.SI(Datos_Limpios[PRIORIDAD];"ALTA";Datos_Limpios[MRC Acum]) -> MRC prioridad alta
+    =CONTAR.SI(Datos_Limpios[TIENE_TELEFONO];"NO")  -> Clientes sin telefono
+    =CONTAR.SI(Datos_Limpios[TIENE_CORREO];"NO")    -> Clientes sin correo
+
+
+PASO 11: HOJA "CLIENTES_PRIORIDAD_ALTA" - LISTA PARA GESTION
+================================================================================
+  Filtrar Datos_Limpios por PRIORIDAD = "ALTA"
+  Columnas a mostrar (orden sugerido):
+    A: CLIENTE
+    B: EJECUTIVA
+    C: MRC Acum
+    D: RGU
+    E: DESCRIPCION DE PLAN
+    F: Persona de contacto
+    G: Contacto 1
+    H: Contacto 2
+    I: Correo
+    J: RAZON DE SALIDA
+
+  Formato condicional:
+    - Resaltar en ROJO clientes sin telefono ni correo
+    - Resaltar en VERDE clientes con MRC > $100
+
+
+PASO 12: HOJA "CLIENTES_SIN_CONTACTO" - URGENTES
+================================================================================
+  Filtrar Datos_Limpios donde:
+    TIENE_TELEFONO = "NO" y TIENE_CORREO = "NO" y TIENE_CONTACTO = "NO"
+
+  Estos son los clientes sin datos de contacto.
+  Imprimir y asignar a ejecutivas para localizar.
+
+
+PASO 13: FORMATEO FINAL
+================================================================================
+  1. Aplicar tema profesional (Page Layout > Themes)
+  2. Ajustar columnas al contenido
+  3. Congelar paneles (Freeze Panes) en todas las hojas
+  4. Agregar filtros a las tablas
+  5. Proteger las hojas de calculo (Review > Protect Sheet)
+  6. Guardar como: Reporte_Winback_SOHO_Julio2026.xlsx
+
+
+================================================================================
+  ESTRUCTURA FINAL DEL ARCHIVO (12 hojas)
+================================================================================
+  1. DASHBOARD                - Resumen visual con KPIs y graficos
+  2. Datos_Limpios            - Datos limpios con columnas calculadas
+  3. Resumen_Ejecutivas       - Tabla dinamica por ejecutiva
+  4. Resumen_Prioridad        - Tabla dinamica por nivel de prioridad
+  5. Razones_Salida           - Tabla dinamica de razones de salida
+  6. Categoria_MRC            - Tabla dinamica por categoria de MRC
+  7. Distribucion_RGU         - Tabla dinamica por cantidad de RGU
+  8. Analisis_Planes          - Tabla dinamica de planes
+  9. Clientes_Prioridad_Alta  - Lista filtrada para gestion inmediata
+  10. Clientes_Sin_Contacto   - Lista de clientes sin datos de contacto
+  11. Top_10_Clientes         - Top 10 clientes por MRC
+  12. Base_Original           - Copia de la base original sin modificar
+
+
+================================================================================
+NOTAS IMPORTANTES
+===============================================================================
+   1. Actualizar las tablas dinamicas con: Data > Refresh All
+   2. La base Winback se actualiza mensualmente; repetir desde Paso 1
+   3. Las bases se recorren via Vici Dialer (~15,796 llamadas totales,
+      2.24 intentos promedio por numero, 41.5% tasa de contacto)
+  3. Coordinador: Amir Josue Rodriguez Chavarria
+  4. Supervisor: Leonardo Wizemberg
+  5. Campaña: Nextphone - Iniciativa Winback SOHO Julio 2026
+  6. Datos de contacto: (507) XXX-XXXX

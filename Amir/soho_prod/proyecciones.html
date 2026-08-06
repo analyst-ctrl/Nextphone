@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proyecciones SOHO - Escenarios</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;padding:16px}
+.header{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.header h1{font-size:20px}
+.header span{font-size:12px;opacity:.8}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.kpi-card{background:#fff;padding:12px 14px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:4px solid #1a1a2e}
+.kpi-card .lbl{font-size:10px;text-transform:uppercase;color:#666;letter-spacing:.5px}
+.kpi-card .val{font-size:22px;font-weight:700;margin-top:2px}
+.kpi-card .sub{font-size:11px;color:#888;margin-top:1px}
+.kpi-card.success{border-left-color:#27ae60}
+.kpi-card.warning{border-left-color:#f39c12}
+.kpi-card.info{border-left-color:#3498db}
+.kpi-card.purple{border-left-color:#9b59b6}
+.kpi-card.danger{border-left-color:#e74c3c}
+.kpi-card.teal{border-left-color:#1abc9c}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:14px}
+.card h2{font-size:13px;margin-bottom:8px;color:#1a1a2e;border-bottom:2px solid #eee;padding-bottom:5px}
+.card.full{grid-column:1/-1}
+.inic{border-top:3px solid #1a1a2e;border-radius:8px;padding:10px}
+.inic h3{font-size:14px;margin-bottom:2px}
+.inic .base{font-size:11px;color:#666;margin-bottom:8px}
+.ctrl{display:flex;flex-direction:column;gap:7px}
+.ctrl label{font-size:11px;font-weight:600;color:#555;display:flex;justify-content:space-between}
+.ctrl .row{display:flex;align-items:center;gap:8px}
+.ctrl input[type=range]{flex:1}
+.ctrl input[type=number]{width:64px;padding:3px 6px;border:1px solid #ddd;border-radius:4px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:6px 8px;background:#f8f9fa;color:#555;font-weight:600;border-bottom:2px solid #dee2e6}
+td{padding:5px 8px;border-bottom:1px solid #eee}
+tr:hover td{background:#f0f4ff}
+.rt{text-align:right}.ct{text-align:center}
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.chart-box{position:relative;height:280px}
+.chart-box-sm{position:relative;height:220px}
+.note{font-size:11px;color:#888;margin-top:6px}
+@media(max-width:900px){.grid-2,.grid-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Proyecciones SOHO — Escenarios What-If</h1>
+    <span>Basado en el cruce por CUENTA/CUST_NO · Ajusta tasas y ve el impacto en vivo · Gerente: Amir Josue Rodriguez Chavarria</span>
+  </div>
+  <div style="text-align:right;font-size:12px;">
+    <div id="totalF" style="opacity:.7;"></div>
+  </div>
+</div>
+
+<div class="kpi-row" id="kpiRow"></div>
+
+<div class="grid-4">
+  <div class="card"><h2>📱 Cross-sell Móvil</h2><div class="inic" id="boxM1"></div></div>
+  <div class="card"><h2>📡 Cross-sell FLBBTV</h2><div class="inic" id="boxM2"></div></div>
+  <div class="card"><h2>🔙 Winback</h2><div class="inic" id="boxM3"></div></div>
+  <div class="card"><h2>🚀 Upgrade Convergente</h2><div class="inic" id="boxM4"></div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card"><h2>Upside por Iniciativa (MRC $/mes)</h2><div class="chart-box"><canvas id="chUpside"></canvas></div></div>
+  <div class="card"><h2>Composición del Nuevo MRC</h2><div class="chart-box"><canvas id="chComp"></canvas></div></div>
+</div>
+
+<div class="card full">
+  <h2>Detalle de Escenario</h2>
+  <table><thead><tr>
+    <th>Iniciativa</th><th class="rt">Base (clientes)</th><th class="rt">Tasa %</th><th class="rt">MRC unitario $</th><th class="rt">Clientes proyectados</th><th class="rt">Nuevo MRC $/mes</th><th class="rt">% del upside</th>
+  </tr></thead>
+  <tbody id="tabBody"></tbody></table>
+  <div class="note">Proyección consultiva: los resultados dependen de los supuestos ajustables. No incluye costos de ejecución, ni tiempo de implementación. Fuente: cruce.html (julio 2026).</div>
+</div>
+
+<script>
+const P = {"seg": {"movil": 3872, "convergente": 1012, "sin_serv": 53, "fijo_internet": 2, "winback": 140}, "mrc": {"actual": 166262.89, "np_total": 99724.17, "np_n": 2001, "wb_riesgo": 7919.15, "wb_solo": 140}};
+const fmt$ = v => '$' + Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const S = {
+  m1: {conv: 15, mrc: +(P.mrc.np_total/P.mrc.np_n).toFixed(2), cMax:40, mMax:120},
+  m2: {conv: 3, mrc: 25, cMax:20, mMax:80},
+  m3: {rec: 15, mrc: +(P.mrc.wb_riesgo/P.mrc.wb_solo).toFixed(2), cMax:50, mMax:120},
+  m4: {take: 10, inc: 5, cMax:50, mMax:30}
+};
+const INI = [
+  {id:'m1', n:'Cross-sell Móvil', c:'#3498db', base: P.seg.sin_serv + P.seg.fijo_internet, rate:'conv', unit:'mrc', rateLabel:'Tasa conversión', unitLabel:'MRC línea móvil'},
+  {id:'m2', n:'Cross-sell FLBBTV', c:'#27ae60', base: P.seg.movil, rate:'conv', unit:'mrc', rateLabel:'Tasa conversión', unitLabel:'MRC FLBBTV'},
+  {id:'m3', n:'Winback', c:'#e74c3c', base: P.mrc.wb_solo, rate:'rec', unit:'mrc', rateLabel:'Tasa recuperación', unitLabel:'MRC recuperado'},
+  {id:'m4', n:'Upgrade Convergente', c:'#9b59b6', base: P.seg.convergente, rate:'take', unit:'inc', rateLabel:'Take rate', unitLabel:'Incremento MRC'}
+];
+let chU = null, chC = null;
+
+function boxInit(i){
+  const s = S[i.id];
+  document.getElementById('box'+i.id.toUpperCase()).innerHTML = `
+    <div class="base">Base: <strong>${i.base.toLocaleString()}</strong> clientes</div>
+    <div class="ctrl">
+      <div class="row"><label>${i.rateLabel} <span id="vR_${i.id}" style="color:#1a1a2e;">${s[i.rate]}%</span></label></div>
+      <div class="row"><input type="range" id="r_${i.id}" min="0" max="${s.cMax}" step="0.5" value="${s[i.rate]}" oninput="upd('${i.id}','rate')"><input type="number" id="n_${i.id}" value="${s[i.rate]}" min="0" max="${s.cMax}" step="0.5" onchange="updN('${i.id}','rate')"></div>
+      <div class="row"><label>${i.unitLabel} <span id="vU_${i.id}" style="color:#1a1a2e;">${fmt$(s[i.unit])}</span></label></div>
+      <div class="row"><input type="range" id="m_${i.id}" min="0" max="${s.mMax}" step="1" value="${s[i.unit]}" oninput="upd('${i.id}','unit')"><input type="number" id="u_${i.id}" value="${s[i.unit]}" min="0" max="${s.mMax}" step="1" onchange="updN('${i.id}','unit')"></div>
+    </div>`;
+}
+
+function upd(id, k){
+  const s = S[id];
+  const sl = document.getElementById('r_'+id), num = document.getElementById('n_'+id);
+  const ms = document.getElementById('m_'+id), un = document.getElementById('u_'+id);
+  if(k==='rate'){
+    s.conv = s.rec = s.take = +sl.value;
+    num.value = sl.value;
+    document.getElementById('vR_'+id).textContent = sl.value + '%';
+  } else {
+    s.mrc = s.inc = +ms.value;
+    un.value = ms.value;
+    document.getElementById('vU_'+id).textContent = fmt$(s.mrc);
+  }
+  calc();
+}
+function updN(id, k){
+  const s = S[id], n = document.getElementById('n_'+id);
+  s[k==='rate'?'conv':'mrc'] = +n.value;
+  document.getElementById(k==='rate'?'r_'+id:'m_'+id).value = n.value;
+  document.getElementById(k==='rate'?'vR_'+id:'vU_'+id).textContent = (k==='rate'? n.value+'%' : fmt$(+n.value));
+  calc();
+}
+
+function calc(){
+  const p = INI.map(i => {
+    const s = S[i.id];
+    const rate = s[i.rate], unit = s[i.unit];
+    return {id:i.id, n:i.n, c:i.c, base:i.base, rate, unit, clients: Math.round(i.base*rate/100), mrcM: i.base*rate/100*unit};
+  });
+  const nuevo = p.reduce((a,x)=>a+x.mrcM,0);
+  const clientes = p.reduce((a,x)=>a+x.clients,0);
+  const proy = P.mrc.actual + nuevo;
+  const growth = (nuevo/P.mrc.actual*100).toFixed(2);
+  const wb = p.find(x=>x.id==='m3');
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card success"><div class="lbl">Nuevo MRC / mes</div><div class="val">${fmt$(nuevo)}</div><div class="sub">upside total por iniciativas</div></div>
+    <div class="kpi-card info"><div class="lbl">Clientes nuevos / mes</div><div class="val">${clientes.toLocaleString()}</div><div class="sub">proyectados entre las 4 iniciativas</div></div>
+    <div class="kpi-card"><div class="lbl">MRC Proyectado Total</div><div class="val">${fmt$(proy)}</div><div class="sub">actual ${fmt$(P.mrc.actual)} + upside</div></div>
+    <div class="kpi-card purple"><div class="lbl">Crecimiento</div><div class="val">+${growth}%</div><div class="sub">sobre MRC actual</div></div>
+    <div class="kpi-card warning"><div class="lbl">Upside Anualizado</div><div class="val">${fmt$(nuevo*12)}</div><div class="sub">nuevo MRC × 12 meses</div></div>
+    <div class="kpi-card danger"><div class="lbl">Winback</div><div class="val">${wb.clients} clientes</div><div class="sub">${fmt$(wb.mrcM)}/mes recuperado · ${fmt$(P.mrc.wb_riesgo)} en riesgo</div></div>
+  `;
+  document.getElementById('totalF').textContent = 'MRC actual ' + fmt$(P.mrc.actual) + ' · nuevo ' + fmt$(nuevo) + '/mes';
+
+  if(chU){ chU.destroy(); chC.destroy(); }
+  chU = new Chart(document.getElementById('chUpside'), {type:'bar', data:{labels:p.map(x=>x.n), datasets:[{label:'MRC $/mes', data:p.map(x=>+x.mrcM.toFixed(2)), backgroundColor:p.map(x=>x.c), borderRadius:4}]}, options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmt$(ctx.raw)+'/mes'}}}, scales:{x:{beginAtZero:true,grid:{color:'#eee'}}}}});
+  chC = new Chart(document.getElementById('chComp'), {type:'doughnut', data:{labels:p.map(x=>x.n), datasets:[{data:p.map(x=>+x.mrcM.toFixed(2)), backgroundColor:p.map(x=>x.c), borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{boxWidth:10}}}}});
+
+  document.getElementById('tabBody').innerHTML = p.map(x=>`
+    <tr>
+      <td><span class="dot" style="background:${x.c}"></span><strong>${x.n}</strong></td>
+      <td class="rt">${x.base.toLocaleString()}</td>
+      <td class="rt">${x.rate}%</td>
+      <td class="rt">${fmt$(x.unit)}</td>
+      <td class="rt"><strong>${x.clients.toLocaleString()}</strong></td>
+      <td class="rt"><strong>${fmt$(x.mrcM)}</strong></td>
+      <td class="rt">${nuevo>0?(x.mrcM/nuevo*100).toFixed(1):'0.0'}%</td>
+    </tr>`).join('');
+}
+
+INI.forEach(boxInit);
+calc();
+</script>
+</body>
+</html>

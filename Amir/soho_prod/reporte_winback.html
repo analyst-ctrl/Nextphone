@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winback SOHO - Reporte Dinámico Julio 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;color:#1a1a2e;padding:20px}
+.header{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:25px 30px;border-radius:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.header h1{font-size:22px}
+.header span{font-size:13px;opacity:.8}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.kpi-card{background:#fff;padding:14px 16px;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid #1a1a2e}
+.kpi-card .lbl{font-size:11px;text-transform:uppercase;color:#666;letter-spacing:.5px}
+.kpi-card .val{font-size:24px;font-weight:700;margin-top:2px}
+.kpi-card .sub{font-size:12px;color:#888;margin-top:1px}
+.kpi-card.danger{border-left-color:#e74c3c}
+.kpi-card.success{border-left-color:#27ae60}
+.kpi-card.warning{border-left-color:#f39c12}
+.kpi-card.info{border-left-color:#3498db}
+.kpi-card.purple{border-left-color:#9b59b6}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:16px}
+.card h2{font-size:14px;margin-bottom:10px;color:#1a1a2e;border-bottom:2px solid #eee;padding-bottom:6px}
+.card.full{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;padding:7px 8px;background:#f8f9fa;color:#555;font-weight:600;border-bottom:2px solid #dee2e6}
+td{padding:6px 8px;border-bottom:1px solid #eee}
+tr:hover td{background:#f0f4ff}
+.rt{text-align:right}
+.ct{text-align:center}
+.badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10.5px;font-weight:600}
+.badge-alta{background:#ffe0e0;color:#c0392b}
+.badge-media{background:#fff3cd;color:#856404}
+.badge-baja{background:#d4edda;color:#155724}
+.badge-si{background:#d4edda;color:#155724}
+.badge-no{background:#ffe0e0;color:#c0392b}
+.filter-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;background:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.filter-bar label{font-size:12px;font-weight:600;color:#555}
+.filter-bar select{padding:5px 10px;border:1px solid #ddd;border-radius:5px;font-size:12px;background:#fff;cursor:pointer}
+.filter-bar .total-badge{font-size:12px;color:#666;margin-left:auto}
+.chart-box{position:relative;height:260px}
+.chart-box-sm{position:relative;height:200px}
+.highlight{background:#fff8e1}
+.sin-contacto{background:#fff5f5}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.btn{padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600}
+.btn-primary{background:#1a1a2e;color:#fff}
+.btn-primary:hover{background:#16213e}
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:7px 16px;border-radius:6px 6px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#e0e0e0;color:#555;border:none}
+.tab.active{background:#1a1a2e;color:#fff}
+.tab:hover:not(.active){background:#d0d0d0}
+.tab-content{display:none}
+.tab-content.active{display:block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Winback SOHO — Reporte Dinámico Julio 2026</h1>
+    <span>Iniciativa Nextphone · Gerente: Amir Josue Rodriguez Chavarria</span>
+  </div>
+  <div style="text-align:right;font-size:12px;">
+    <div>Base: Winback SOHO 2026 Julio</div>
+    <div id="totalRegistros" style="opacity:.7;">210 registros</div>
+  </div>
+</div>
+
+<div class="kpi-row" id="kpiRow"></div>
+
+<div class="filter-bar">
+  <label>Ejecutiva:</label>
+  <select id="fEjec" onchange="refresh()"><option value="">Todas</option></select>
+  <label>Prioridad:</label>
+  <select id="fPrioridad" onchange="refresh()"><option value="">Todas</option><option value="ALTA">ALTA</option><option value="MEDIA">MEDIA</option><option value="BAJA">BAJA</option></select>
+  <label>Categoría MRC:</label>
+  <select id="fCat" onchange="refresh()"><option value="">Todas</option><option value="VIP">VIP (>= $100)</option><option value="PREMIUM">Premium ($50-99)</option><option value="ESTANDAR">Estándar ($20-49)</option><option value="BASICO">Básico (< $20)</option></select>
+  <label>Razón Salida:</label>
+  <select id="fRazon" onchange="refresh()"><option value="">Todas</option></select>
+  <span class="total-badge" id="totalBadge">Mostrando 210 clientes</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard',this)">Dashboard</button>
+  <button class="tab" onclick="switchTab('top',this)">Top Clientes</button>
+  <button class="tab" onclick="switchTab('planes',this)">Planes</button>
+  <button class="tab" onclick="switchTab('sincontacto',this)">Sin Contacto</button>
+</div>
+
+<div id="tab-dashboard" class="tab-content active">
+  <div class="grid-2">
+    <div class="card"><h2>Clientes por Ejecutiva</h2><div class="chart-box"><canvas id="chEjec"></canvas></div></div>
+    <div class="card"><h2>Distribución por Prioridad</h2><div class="chart-box"><canvas id="chPri"></canvas></div></div>
+  </div>
+  <div class="grid-3">
+    <div class="card"><h2>Categoría MRC</h2><div class="chart-box-sm"><canvas id="chCat"></canvas></div></div>
+    <div class="card"><h2>Distribución RGU</h2><div class="chart-box-sm"><canvas id="chRGU"></canvas></div></div>
+    <div class="card"><h2>Razones de Salida</h2><div class="chart-box-sm"><canvas id="chRaz"></canvas></div></div>
+  </div>
+</div>
+
+<div id="tab-top" class="tab-content">
+  <div class="card full">
+    <h2>Top Clientes por MRC</h2>
+    <div style="overflow-x:auto;max-height:500px;overflow-y:auto">
+      <table><thead><tr>
+        <th>#</th><th>Cliente</th><th>Ejecutiva</th><th>Plan</th>
+        <th class="rt">MRC</th><th class="ct">RGU</th><th class="ct">Prioridad</th>
+        <th class="ct">Tel</th><th class="ct">Correo</th>
+      </tr></thead>
+      <tbody id="topBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="tab-planes" class="tab-content">
+  <div class="card full">
+    <h2>Top Planes</h2>
+    <div class="chart-box" style="height:340px"><canvas id="chPlan"></canvas></div>
+  </div>
+  <div class="card full" style="margin-top:14px;">
+    <h2>Tabla de Planes</h2>
+    <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+      <table><thead><tr>
+        <th>#</th><th>Plan</th><th class="ct">Clientes</th><th class="rt">MRC Total</th><th class="rt">MRC Promedio</th>
+      </tr></thead>
+      <tbody id="planesBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div id="tab-sincontacto" class="tab-content">
+  <div class="card full sin-contacto">
+    <h2>Clientes sin Datos de Contacto (URGENTE)</h2>
+    <p style="font-size:13px;color:#c0392b;margin-bottom:10px;" id="sinContactoMsg">No tienen teléfono, correo ni persona de contacto. MRC en riesgo: $0</p>
+    <div style="overflow-x:auto;max-height:450px;overflow-y:auto">
+      <table><thead><tr>
+        <th>#</th><th>Cliente</th><th>Ejecutiva</th><th class="rt">MRC</th><th class="ct">RGU</th>
+      </tr></thead>
+      <tbody id="scBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+const RAW = [["Michelle Zambrano", "COIMSA", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 3, 95, "Jorge Villarreal ced 8-299-399", "gerencia.coimsa@gmail.com", 66776809, 2602749], ["Solanye Acuña", "GRAPHIC SOLUTIONS/ CARMEN R. WILLIAMS 2", "SMB DCM ECO Sin Limites VWF", "Solicitado por el Cliente", 1, 12, "Angelica Gallego E-8-79314", "", 3140588, ""], ["Maria Fernanda Rivas", "ALEXIS ALEXANDER GOMEZ MENDIETA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "ALEXIS ALEXANDER GOMEZ MENDIETA", "", 67472064, ""], ["Nailyn Martinez Johnson", "PH COUNTRY CLUB -", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 8, 166, "MICHAEL HAMOUI", "", 69144044, ""], ["Michelle Zambrano", "SIN NOMBRE", "AIO DCM Staff 300-3GB VWF", "Solicitado por el Cliente", 1, 20.75, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 1, 40.5, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 1, 31, "", "", "", ""], ["Nailyn Martinez Johnson", "IDEALO", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 2, 41.5, "IDEALO", "", 68800852, ""], ["Michelle Zambrano", "INFINITY LOGISTICS  INFINITY LOGISTICS AGENCY, CORP", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 3, 60, "ARCELIS ASPRILLA", "", 4304648, ""], ["Solanye Acuña", "SIN NOMBRE", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 2, 50, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "DCM VIP Gold LDI Sin Limite", "Solicitado por el Cliente", 1, 50, "", "", "", ""], ["Nailyn Martinez Johnson", "SIN NOMBRE", "GX DCM SMB LDI 1300 DSL", "Solicitado por el Cliente", 1, 17, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 5, 170, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "MG LTE GPRS DCM USB - 100GB", "Solicitado por el Cliente", 1, 35, "", "", "", ""], ["Maria Fernanda Rivas", "RC SOLUTION, S.A -", "AIO DCM Staff 300-3GB VWF", "Solicitado por el Cliente", 2, 41.5, "RC SOLUTION, S.A -", "", 62608877, ""], ["Nailyn Martinez Johnson", "SIN NOMBRE", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 4, 113.5, "", "", "", ""], ["Michelle Zambrano", "Servicios Logitisticos Imperial S.A", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 2, 30, "Servicios Logisticos Imperial S.A.", "comercial.panama@petentrega.com", 65146298, ""], ["Solanye Acuña", "CLINICA TU SALUD Y BELLEZA -", "AIO DCM Staff 300-3GB VWF", "Solicitado por el Cliente", 1, 16.25, "Soy Yoli calu  N-20-930", "", 65081722, ""], ["Maria Fernanda Rivas", "SERVIEDUCA S,A. -", "Control SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20, "SERVIEDUCA S,A. - GABRIELA ALEJANDRA,", "", 2366783, ""], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 1, 25, "", "", "", ""], ["Michelle Zambrano", "PANAMA JOURNEYS S,A -", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 1, 31, "PANAMA JOURNEYS S,A -", "", 63134216, ""], ["Solanye Acuña", "AGRO JP / NILKA ATENCIO", "AIO DCM LDI Sin Limites A1", "Solicitado por el Cliente", 2, 65, "AGRO JP / NILKA ATENCIO", "ni.lka@hotmail.com", 65767586, 65767586], ["Maria Fernanda Rivas", "SIN NOMBRE", "B2B LDI 500 DATA Sin Limite", "Solicitado por el Cliente", 1, 31, "", "", "", ""], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 1, 40.5, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "DCM VIP Gold LDI Sin Limite", "Solicitado por el Cliente", 1, 66.5, "", "", "", ""], ["Solanye Acuña", "UPPER EAST TOWER\t\t\t\t\t", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 4, 124, "UPPER EAST TOWER\t\t\t\t\t", "", 2027194, ""], ["Maria Fernanda Rivas", "FLIX CINEVISION PANAMA, S. DE R.L. -", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 1, 81, "FLIX CINEVISION PANAMA, S. DE R.L. -", "", 64993246, ""], ["Nailyn Martinez Johnson", "AVAPSA\t\t\t\t", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 1, 40.5, "AVAPSA\t\t\t\t", "magt.67vetequi@gmail.com", 62605786, 66150700], ["Michelle Zambrano", "DRAG COLORS", "B2C DCM LDI 2150 DSL VWF", "Solicitado por el Cliente", 1, 22, "Salvador Orantes", "Chambascar27@gmail.com", 69207844, 69207844], ["Solanye Acuña", "SIN NOMBRE", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 6, 150, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "DCM XS SMB LDI 1100 DATA 13GB", "Solicitado por el Cliente", 3, 21, "", "", "", ""], ["Nailyn Martinez Johnson", "Anagan", "AIO DCM LDI Sin Limites A1", "Solicitado por el Cliente", 1, 42, "LUIS MARTINEZ 7-83-25 // Amarilis Cristóbal 8-841-1249", "anagan1@cwpanama.net", 3140633, 3140633], ["Michelle Zambrano", "SIN NOMBRE", "GX DCM LDI SL VWF A1", "Solicitado por el Cliente", 1, 44, "", "", "", ""], ["Solanye Acuña", "Carmen Valdivia Valdes", "Mas Control VYD LDI 2250 DSL", "Solicitado por el Cliente", 1, 21, "", "", 66773196, ""], ["Maria Fernanda Rivas", "Gixel Guevara Almanza", "Control ALLNet 100-5GB", "Solicitado por el Cliente", 1, 16, "", "", 69822979, ""], ["Nailyn Martinez Johnson", "Jaime Arroyo Atencio", "Mas Control VYD LDI 2250 DSL", "Solicitado por el Cliente", 1, 21.75, "", "", 2287216, ""], ["Michelle Zambrano", "Shirley y Asociados", "AIO DCM LDI Sin Limites VWF", "Solicitado por el Cliente", 1, 45.5, "Luis Antonio Shirley Campbell", "administracion@shirleylaw.com", 66752321, 66752321], ["Solanye Acuña", "M. Contratista", "AIO DCM LDI Sin Limites A1", "MIGRACION POST-PRE", 1, 42, "Ricardo Raul Mezquita", "", 2790469, ""], ["Maria Fernanda Rivas", "Solidus Secur", "All in One DCM 100-5GB VoWiFi", "Solicitado por el Cliente", 1, 15.99, "HEINER SPEICH", "karoll.arguelles@sardona-capital.com", 69826252, 69826252], ["Nailyn Martinez Johnson", "Bold Impresiones", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 5, 75, "Alexander Romero Martinez", "", 2702607, ""], ["Michelle Zambrano", "SIN NOMBRE", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 1, 40, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "PSB 7026", "Solicitado por el Cliente", 1, 5.5, "", "", "", ""], ["Maria Fernanda Rivas", "Full Drop Sa", "Control LDI TAN 200-2GB", "Solicitado por el Cliente", 1, 21.74, "EDGAR  NORIEL CHANG HERNANDEZ   6-701-17", "", 9101722, ""], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 1, 24, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "Mas Control VYD LDI 2250 DSL", "Solicitado por el Cliente", 2, 44, "", "", "", ""], ["Solanye Acuña", "Varela Carden", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 1, 40, "Carlos Varela  8-259-337", "", 2655785, ""], ["Maria Fernanda Rivas", "Jestski Panamarin", "AIO LDI Sin Limites VWF A1", "Solicitado por el Cliente", 1, 42, "Rene Marin", "bbrosi1023@hotmail.com", 65112891, 65112891], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM B2C LDI 2250 DATA SL", "Solicitado por el Cliente", 3, 80.25, "", "", "", ""], ["Michelle Zambrano", "DVA GLASS SERVICES SA", "AIO VIP LDI Sin Limites VWF", "Solicitado por el Cliente", 2, 72, "SANDRA ECHEVERRIA", "", 69835010, ""], ["Solanye Acuña", "SIN NOMBRE", "B2B LDI 500 DATA Sin Limite", "Solicitado por el Cliente", 1, 26.75, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "FB-B2C DCM LDI 2250 DSL VWF", "Solicitado por el Cliente", 1, 28.75, "", "", "", ""], ["Nailyn Martinez Johnson", "Annett Miranda", "GX DCM B2C LDI 2250 DSL VWF", "(en blanco)", 1, 28.75, "Nila Espinoza", "", 2644225, ""], ["Michelle Zambrano", "FONSECA, S.A.", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "YARIBETH HOU JIANG", "surtimaxpanama@hotmail.com", 62529492, 62529492], ["Solanye Acuña", "SIN NOMBRE", "Control XS SMB LDI 1100-13GB", "Solicitado por el Cliente", 2, 24, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "GX DCM LDI 2450 DSL VWF", "Solicitado por el Cliente", 3, 117.75, "", "", "", ""], ["Nailyn Martinez Johnson", "SIN NOMBRE", "GX LDI SL VWF A1", "Solicitado por el Cliente", 1, 44.5, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "PSB 8030", "Solicitado por el Cliente", 4, 43.96, "", "", "", ""], ["Solanye Acuña", "Agencia De Ad", "DCM LDI 2450 DATA Sin Limites", "Solicitado por el Cliente", 1, 37.5, "MARCOS VIDES", "", 67753993, ""], ["Maria Fernanda Rivas", "Grupo Camberfot, S.A", "AIO DCM LDI Sin Limites A1", "Solicitado por el Cliente", 1, 42, "Annia Pons Hernandez", "recepcion@grupoc.cc", 66765590, 66765590], ["Nailyn Martinez Johnson", "SIN NOMBRE", "AIO DCM LDI Sin Limites VWF", "Solicitado por el Cliente", 1, 45.5, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "", "", "", ""], ["Solanye Acuña", "Zarina  Saliba", "DCM LDI 2450 DATA Sin Limites", "Solicitado por el Cliente", 1, 37.5, "", "", 2107400, ""], ["Maria Fernanda Rivas", "Vanessa Mo", "All in One DCM 100-5GB VoWiFi", "Solicitado por el Cliente", 1, 13.99, "FRANCISCO LOO CHEN", "", 61123735, ""], ["Nailyn Martinez Johnson", "Nilka Atencio", "AIO DCM LDI Sin Limites VWF", "MIGRACION POST-PRE", 1, 45.5, "Maria Carmelina Ramos Salazar", "", 8464310, ""], ["Michelle Zambrano", "SIN NOMBRE", "DCM B2B LDI 500 DATA SL", "MIGRACION POST-PRE", 1, 36, "", "", "", ""], ["Solanye Acuña", "Inversiones y", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "ASLEIGH MAYLIN ESQUIVEL", "Asleigh819@gmail.com", 69996889, 69996889], ["Maria Fernanda Rivas", "Ph Lumiere", "AIO DCM LDI Sin Limites A1", "Solicitado por el Cliente", 2, 83, "ANN MIKUSKI", "", 64482987, ""], ["Nailyn Martinez Johnson", "Alcides Ivan", "Control LDI Sin Limites", "Solicitado por el Cliente", 1, 42.5, "Alcides Ivan Olaya Gomez", "", 62927024, ""], ["Michelle Zambrano", "Mini Centro Abdiel", "Control SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "Abdiel Iv¿n D¿az Batista", "abdieldiazbatista@gmail.com", 66524832, 66524832], ["Solanye Acuña", "Maria De Los Reyes H ernandez De Moran", "Control SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "Maria De Los Reyes Hernandez De Moran", "", 69581636, ""], ["Maria Fernanda Rivas", "Ph Maui", "AIO DCM Staff 300-3GB VWF", "Solicitado por el Cliente", 1, 22.74, "Dania Iveth Barahona Almengor 8-731-2274", "phmaui.adm@gmail.com", 61309833, 61309833], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM B2B LDI 500 DATA SL", "Solicitado por el Cliente", 1, 36, "", "", "", ""], ["Michelle Zambrano", "Impresiones y Copias I.G", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 31.25, "Jose Angel Casas Barria 6-703-1837", "ventas0101@gmail.com", 65585221, 64830239], ["Solanye Acuña", "SIN NOMBRE", "FB-B2C DCM LDI 2250 DSL VWF", "Solicitado por el Cliente", 1, 28.75, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "PSB 7026", "Solicitado por el Cliente", 1, 5.5, "", "", "", ""], ["Nailyn Martinez Johnson", "Ilmarys Virginia Riv era Lezcano de Serrano", "Control XS SMB LDI 1100-13GB", "Solicitado por el Cliente", 1, 12, "Ilmarys Virginia Rivera Lezcano de Serra", "maryrivera52427@gmail.com", 66023646, 66023646], ["Michelle Zambrano", "Gaspar Arsenio Reyes Agudo", "DCM XS SMB LDI 1100 DATA 13GB", "Solicitado por el Cliente", 3, 30, "Gaspar Arsenio Reyes Agudo", "gaspar.reyesagudo@gmail.com", 67242628, 67242628], ["Solanye Acuña", "Sergio  Garzon", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 1, 38, "", "", 2297173, ""], ["Maria Fernanda Rivas", "PH Marquis Tower", "GX DCM SMB LDI 1300 DSL", "Solicitado por el Cliente", 1, 20.75, "", "administracion@phmarquistower.com", 67969384, 67969384], ["Nailyn Martinez Johnson", "INVERSIONES CASCANTE, SA", "Control GX SMB LDI 1300 DSL", "Solicitado por el Cliente", 3, 54.75, "GRISELDA CASCANTE", "gcascanteph@gmail.com", 67475603, 67475603], ["Michelle Zambrano", "SIN NOMBRE", "DCM B2B LDI 500 DATA SL", "Solicitado por el Cliente", 1, 36, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 2, 55.5, "", "", "", ""], ["Maria Fernanda Rivas", "SAQUELLA SA", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 20.75, "Yilda Selidet Bultron Vergara // Elida Guerra de Shishportish", "gruposaquella@gmail.com", 60303765, ""], ["Nailyn Martinez Johnson", "Irving A rceniao Mirones Barsallo", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 1, 27.75, "Irving Arceniao Mirones Barsallo", "", 69813438, ""], ["Michelle Zambrano", "SIN NOMBRE", "GX DCM VIP LDI SL VWF", "Solicitado por el Cliente", 1, 38, "", "", "", ""], ["Solanye Acuña", "Kadir Hinds", "GX DCM SMB LDI 1300 DSL", "Solicitado por el Cliente", 1, 22.75, "", "KADIRHIND@GMAIL.COM", 62178735, 62178735], ["Maria Fernanda Rivas", "Luis Alberto  Singh Casta?edas", "Mas Control PORTA XO1 2025 DSL", "Solicitado por el Cliente", 1, 15, "", "", 62749604, ""], ["Nailyn Martinez Johnson", "Hbo Sa", "AIO DCM Staff 300-3GB VWF", "Solicitado por el Cliente", 2, 45.48, "Ida Osorio Zarraonandia", "", 62228321, 62405623], ["Michelle Zambrano", "SIN NOMBRE", "DCM B2C LDI 2250 DATA SL", "Solicitado por el Cliente", 1, 27.75, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 1, 27.75, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "GX DCM B2C LDI 2250 DSL VWF", "Solicitado por el Cliente", 2, 57.5, "", "", "", ""], ["Nailyn Martinez Johnson", "Alba Lassonde Ortiz", "FB-Mas Control ECO Sin Limites", "Solicitado por el Cliente", 1, 12, "Alba Lassonde Ortiz", "", 66430667, ""], ["Michelle Zambrano", "Jorge Alberto Plata Mc Nulty", "Control XS SMB LDI 1100-13GB", "Solicitado por el Cliente", 3, 30, "Jorge Alberto Plata Mc Nulty", "platalaw@gmail.com", 66135709, 66135709], ["Solanye Acuña", "Luismanuelchungyip", "Control XS SMB LDI 1100-13GB", "Solicitado por el Cliente", 1, 12, "Luis Manuel Chung Yip", "", 68731188, ""], ["Maria Fernanda Rivas", "Ruth Joyce De La Cruz Diaz", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 1, 25.75, "Ruth Joyce De La Cruz Diaz", "", 69491672, ""], ["Nailyn Martinez Johnson", "KALINSON CORP, S.A.", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 6, 90, "RL ROBERTO ENRIQUE GARCIA DAPENA", "compras@kalinsoncorp.com", 60901995, 60901995], ["Michelle Zambrano", "SIN NOMBRE", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 2, 80, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "MG DCM B2B LDI SL VWF", "Solicitado por el Cliente", 1, 40, "", "", "", ""], ["Maria Fernanda Rivas", "Alba Lassonde Ortiz", "FB-Mas Control ECO Sin Limites", "Solicitado por el Cliente", 1, 12, "Alba Lassonde Ortiz", "", 66430667, ""], ["Nailyn Martinez Johnson", "Deporvida Sports Club S,A", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "MIGUEL EDGARDO LANDA BARSALLO", "eframirez72@gmail.com", 68300260, 68300260], ["Michelle Zambrano", "SIN NOMBRE", "GX DCM SMB LDI 1300 DSL", "Solicitado por el Cliente", 5, 91.25, "", "", "", ""], ["Solanye Acuña", "Deporvida Sports Club S,A Linea 1", "GX DCM SMB LDI 1300 DSL", "Solicitado por el Cliente", 1, 18.25, "", "", "", ""], ["Maria Fernanda Rivas", "Super Mallas S A", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 3, 45, "", "gerencia@supermallas.com.pa", 61148759, 61148759], ["Nailyn Martinez Johnson", "SIN NOMBRE", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 2, 54, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "GX DCM SMB LDI 1300 DSL", "Solicitado por el Cliente", 12, 204, "", "", "", ""], ["Solanye Acuña", "SIN NOMBRE", "GX DCM VIP LDI SL VWF", "Solicitado por el Cliente", 1, 37, "", "", "", ""], ["Maria Fernanda Rivas", "SUMINISTROS ASAP, SA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 32.5, "", "carlos.garcia@zusset.com", 61407164, 61407164], ["Nailyn Martinez Johnson", "iNDO ASIAN REALTY S A", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 32.5, "Divya Gidwani", "gitu.gk1907@gmail.com", 66131190, ""], ["Michelle Zambrano", "Vidaljaviersantamria", "Control GX SMB LDI 1300 DSL", "Solicitado por el Cliente", 1, 18.25, "Vidal Javier Santamria", "vidalsantamaria@gmail.com", 65773091, ""], ["Solanye Acuña", "Multiservicio automotrices Ej", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 1, 27.75, "RL LYANNE SEGISMOND  8-857-1151", "Riverareynold@gmail.com", 63490205, 63490205], ["Maria Fernanda Rivas", "TECNO COOL S A", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 11, 165, "Santos Gonzalez", "tecnocoolfacturacion@gmail.com", 61231490, 62322794], ["Nailyn Martinez Johnson", "SIN NOMBRE", "AIO LDI 2450 DATA Sin Limite", "Solicitado por el Cliente", 1, 36.5, "", "", "", ""], ["Michelle Zambrano", "SIN NOMBRE", "GX VIP LDI SL VWF", "Solicitado por el Cliente", 3, 111, "", "", "", ""], ["Solanye Acuña", "Abymelech 1 Cordoba", "Control S Econo ONNet 50-1.5GB", "Solicitado por el Cliente", 1, 8, "", "", 8300572, ""], ["Maria Fernanda Rivas", "Susana Kong", "Control SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 32.5, "Susana Kong", "", 66987050, ""], ["Nailyn Martinez Johnson", "GAM IMEXPORT INTERNATIONAL SOLUTION SA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "rep. legal Cornelio Gondola", "gamimexport@gmail.com", 61316720, 61256698], ["Michelle Zambrano", "Ph Marguis Tower  .", "DCM XS SMB LDI 1100 DATA 13GB", "Solicitado por el Cliente", 1, 12, "", "administracion@phmarquistower.com", 62287530, 62287530], ["Solanye Acuña", "SHANTIN PANAMA", "DCM B2B LDI 2500 DSL", "MIGRACION POST-PRE", 1, 25, "LAUREN S  GRIMALDO DEL BSUTO", "laurengrimaldo@gmail.com", 67268505, ""], ["Maria Fernanda Rivas", "Yessica Vallecillo Rodriguez", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "YESSICA VALLECILLO", "yessicamvr@gmail.com", 66110048, 66110048], ["Nailyn Martinez Johnson", "Gloden Motors S.A.", "AIO DCM LDI Sin Limites VWF", "Solicitado por el Cliente", 1, 36, "sr. Mahnadikbal Hafesji", "ambhiku@hotmail.com", 60909030, 60909030], ["Michelle Zambrano", "SIN NOMBRE", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 4, 65, "", "", "", ""], ["Solanye Acuña", "CESAR AUGUSTO MUÑOZ MORENO", "DCM B2B LDI 2500 DSL", "MIGRACION POST-PRE", 1, 15, "CESAR AUGUSTO MUÑOZ 7-705-2254", "CESARMUNOZM@GMAIL.COM", 63339840, 63339840], ["Maria Fernanda Rivas", "POERBE & CIA, S. EP", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 6, 97.5, "ERIC BERENGUER - JANETH POLET BERENGUER", "erenbeca@gmail.com", 66121718, 67532956], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM XS SMB LDI 1025 DATA 20GB", "Solicitado por el Cliente", 1, 10, "", "", "", ""], ["Michelle Zambrano", "EVARISTO SANGUILLEN", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 32.5, "EVARISTO  AYARZA SANGUILLEN", "info@fumigadoraolsan.com", 60354435, ""], ["Solanye Acuña", "Samuel Eduardo Barrios", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "", "barrioscrownysamuel@gmail.com", 63745590, 63745590], ["Maria Fernanda Rivas", "JULIO FERREIRA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 41.5, "JULIO IGNACIO FERREIRA 171998722", "julioignacioferreira15@gmail.com", 63142197, 63142197], ["Nailyn Martinez Johnson", "SIN NOMBRE", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 2, 81, "", "", "", ""], ["Michelle Zambrano", "Grupo Cesco SA", "AIO DCM LDI Sin Limites A1", "MIGRACION POST-PRE", 1, 41.5, "Emir Dario Hall Escobar", "ihernandez@grupocescosa.com", 62508488, 62508488], ["Solanye Acuña", "CRISTOFERH MARTIN CHU ZENG", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "CRISTOFERH CHU", "cris.chu01@gmail.com", 60798767, 60798767], ["Maria Fernanda Rivas", "DIAMOND STORE", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "MARICHELL VIÑUELA", "vmarichelljuneth@gmail.com", 62652798, 62652798], ["Nailyn Martinez Johnson", "Megan Junca Perez", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 2, 40, "", "meganjp011@gmail.com", 69281575, ""], ["Michelle Zambrano", "ALUMAD", "FB-Mas Control ECO Sin Limites", "Solicitado por el Cliente", 1, 12, "", "alexandermontiver@gmail.com", 61405188, 61405188], ["Solanye Acuña", "Benigna Emerita Escobar", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "Benigna  Escobar", "armandesco09@gmail.com", 62150859, ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "GX DCM B2B LDI 500 DSL VWF", "Solicitado por el Cliente", 2, 55.5, "", "", "", ""], ["Nailyn Martinez Johnson", "Dora Chung Chen", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 40, "DORA CHUNG CHEN 8-809-652", "dchungche@gmail.com", 69195399, 69195399], ["Michelle Zambrano", "JIQUAN LUO", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 19.25, "JIQUAN LUO E-8-87501", "luisluo1888@gmail.com", 68781888, 68781888], ["Solanye Acuña", "Cortes Servicios", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 4, 60, "Jairo Cortes", "jairosetroc@gmail.com", 66567510, ""], ["Maria Fernanda Rivas", "Heidi Fonseca", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "Heidi Fonseca", "heidifonsecaupam@gmail.com", 61341873, 61341873], ["Nailyn Martinez Johnson", "Fernando Antonio You", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 3, 62.25, "Fernando Antonio  You", "slam_you68@hotmail.com", 64999913, ""], ["Michelle Zambrano", "SIN NOMBRE", "DCM XS SMB LDI 1025 DATA 20GB", "Solicitado por el Cliente", 1, 10, "", "", "", ""], ["Solanye Acuña", "Atenea Shop", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 5, 131.25, "Stephanny  Vega Tatis", "statis22@gmail.com", 61035941, ""], ["Maria Fernanda Rivas", "CRISTINE NICOLE DOMINGUEZ BONAGA", "AIO DCM SMB LDI 1300 DATA SL", "Cliente incumple Pago", 1, 15, "CRISTINE NICOLE DOMINGUEZ 8-959-1522", "crisnicole251477@gmail.com", 60020958, 60020958], ["Nailyn Martinez Johnson", "Repuestos Comerciales", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20, "RL FRANCISCO LOO", "repcom6@cwpanama.net", 63167775, 63167775], ["Michelle Zambrano", "Ruben Quinzada", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "Ruben  Quinzada Espino", "rubenquinzada28@gmail.com", 61304615, ""], ["Solanye Acuña", "Nathalie Pinzon", "SMB DCM ECO Sin Limites VWF", "MIGRACION POST-PRE", 1, 10, "NATHALIE PINZON", "nathalieity.nt@gmail.com", 65585943, 65585943], ["Maria Fernanda Rivas", "DAVID MAIKEL PINTO", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "DAVID  PINTO", "davix1012@hotmail.com", 65876097, ""], ["Nailyn Martinez Johnson", "Elizabeth España", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 3, 48.75, "Elizabeth  España Winter", "juanmol68@hotmail.com", 69485097, 69485097], ["Michelle Zambrano", "LUIGGI ANTHWAN GUEVARA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "LUIGGI ANTHWAN GUEVARA", "Luiggiguevara58@gmail.com", 60749689, 60749689], ["Solanye Acuña", "SIN NOMBRE", "DCM XS SMB LDI 1025 DATA 20GB", "Solicitado por el Cliente", 5, 50, "", "", "", ""], ["Maria Fernanda Rivas", "SIN NOMBRE", "DCM XS SMB LDI 1100 DATA 13GB", "Solicitado por el Cliente", 1, 12, "", "", "", ""], ["Nailyn Martinez Johnson", "CLAUDIA MANYOMA RAMIREZ", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "CLAUDIA MANYOMA RAMIREZ E-8-212446", "claudiamanyoma01@gmail.com", 68666500, 68666500], ["Michelle Zambrano", "FUNDACION R Y PANAMA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 4, 69.5, "Roberto Gutierrez", "rsgutierrez2013@gmail.com", 64252415, ""], ["Solanye Acuña", "Alejandra Mavel  Smith Ceballos", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "", "castilloshamill0@gmail.com", 2007000, ""], ["Maria Fernanda Rivas", "DAVID MAIKEL PINTO", "Mas Control PORTA XO1 2025 DSL", "Solicitado por el Cliente", 1, 15, "David Maikel  Pinto", "david@zayercom.com", 60808034, ""], ["Nailyn Martinez Johnson", "BRAZAS PTY", "Mas Control PORTA XO1 2025 DSL", "Solicitado por el Cliente", 6, 90, "ANGEL SANCHEZ", "Josesnchz8@gmail.com", 62557147, 62557147], ["Michelle Zambrano", "Edilsa Yaneth Marciaga", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 20.75, "", "ANAVPN27@GMAIL.COM", 67746700, 67746700], ["Solanye Acuña", "Aquarela Express", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 1, 26.25, "Clara Isabel De Leon Aizprua", "aquarelaexpresspma@gmail.com", 64304355, ""], ["Maria Fernanda Rivas", "FRANKLIN ABREGO", "GX DCM B2C LDI 2250 DSL VWF", "Solicitado por el Cliente", 1, 26.75, "", "lic.franklinabrego@gmail.com", 64917772, 64917772], ["Nailyn Martinez Johnson", "Edwin Antonio Melgar Toribio", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 37, "Edwin Melgar", "emelgar02@gmail.com", 62386563, 62386563], ["Michelle Zambrano", "SIN NOMBRE", "SMB DCM ECO Sin Limites VWF", "Solicitado por el Cliente", 1, 12, "", "", "", ""], ["Solanye Acuña", "Kaytlin Eileen Espinoza", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 16.25, "", "keyt.09miniuns@gmail.com", 64161802, 64161802], ["Maria Fernanda Rivas", "Serafin Samaniego Moreno", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 15, "SERAFIN SAMANIEGO MORENO", "samaniegoserafin@gmail.com", 69644842, 69644842], ["Nailyn Martinez Johnson", "FUCHUN CHEN", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 4, 100, "FUCHUN CHEN E-8-91255", "Chenfuchun24@gmail.com", 69111119, 69111119], ["Michelle Zambrano", "Sonia Ivette Pimentel Sandez", "DCM B2B LDI Sin Limites", "Solicitado por el Cliente", 1, 40, "SONIA IVETTE PIMENTEL SANDEZ", "sonivette@hotmail.com", 66850180, 66850180], ["Solanye Acuña", "BGT INTEGRADOS PANAMA,S.A.(DHARMA)", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 3, 45, "LUIS ISAAC MARTINEZ RIVERA", "admin@dharma.com.pa", 69514646, 69514646], ["Maria Fernanda Rivas", "SIN NOMBRE", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 2, 40, "", "", "", ""], ["Nailyn Martinez Johnson", "Cesar Lee", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Cesar  Lee", "cesar_lee_25@hotmail.com", 60605158, ""], ["Michelle Zambrano", "GALHERNA, SA", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 4, 60, "JUAN RICARDO GALAN 4-275-122", "galhera507@outlook.com", 68008619, 69008619], ["Solanye Acuña", "PMA POSTAL OFFICE SA", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 20, "ALEJANDRO  GARCIA", "info@ppspanama.com", 66556532, ""], ["Maria Fernanda Rivas", "Leydis Roque", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 15, "Leydis  Roque Mendieta", "leydisroquemendieta@gmail.com", 65458826, ""], ["Nailyn Martinez Johnson", "Stephanie Zambrano", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 30, "Stephanie Zambrano", "jd6312712@gmail.com", 63766686, ""], ["Michelle Zambrano", "Gabriel Moises Jimenez Potes", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "GABRIEL MOISES JIMENEZ POTES", "gabrieljimenez0112@gmail.com", 63198455, 63198455], ["Solanye Acuña", "Edilberto  Pineda", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 30, "Edilberto  Pineda", "bustamante1117152730@icloud.com", 62415332, 62415332], ["Maria Fernanda Rivas", "CHIRAGBHAI PATEL", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "CHIRAGBHA PATEL", "chiragpatel30387@gmail.com", 67977766, ""], ["Nailyn Martinez Johnson", "Maria Allen", "DCM B2B LDI 2500 DSL", "MIGRACION POST-PRE", 1, 15, "María Eugenia  Allen", "alenmariaeugenia@icloud.com", 68119078, ""], ["Michelle Zambrano", "Construcciones JP", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 3, 45, "Joseph Abraham Perez", "constru.remodelaciones.jp@gmail.com", 60155231, 60155231], ["Solanye Acuña", "MAYURI RIOS", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Mayuri Rios", "riosmayuri79@gmail.com", 69143911, 69143911], ["Maria Fernanda Rivas", "Ligia Saavedra", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Ligia Saavedra", "Saavedraliyi2023@gmail.com", 64440245, ""], ["Nailyn Martinez Johnson", "RUBEN RIVERA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Ruben Rivera", "rubenrivera241980@gmail.com", 62492473, 62492472], ["Michelle Zambrano", "TIANBIN ZHONG", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "TIANBIN ZHONG E-8-92145", "cellfeng@hotmail.com", 67778822, 67778822], ["Solanye Acuña", "Noemi Garibaldi", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Noemi Garibaldi", "noemigaribaldi3113@gmail.com", 63972854, ""], ["Maria Fernanda Rivas", "Karina Xiu Mei Luo Zhang", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 2, 30, "KARINA XIU MEI LUO ZHANG", "grupohhsa2023@gmail.com", 67898888, 67898888], ["Nailyn Martinez Johnson", "AMOLMA, SA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 12, 180, "ARMANDO OLMEDO VILLARREAL 8-491-874", "amadahy0107@gmail.com", 62011816, 62011816], ["Michelle Zambrano", "GLORIA DEL CARMEN VEGA CRUZ", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 15, "GLORIA DEL CARMEN VEGA 9-201-40", "vehicular92@gmail.com", 65880287, 65880287], ["Solanye Acuña", "Stephanie Zambrano", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Stephanie Zambrano", "jd6312712@gmail.com", 63766686, ""], ["Maria Fernanda Rivas", "PAOLA GUEVARA", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "PAOLA  GUEVARA", "paug2610@gmail.com", 63137485, ""], ["Nailyn Martinez Johnson", "BARBERs Club", "XS SMB LDI 1100 DATA 13GB", "Solicitado por el Cliente", 1, 12, "Jeniffer Maria Reynoso Vega", "jeniffer_015@hotmail.com", 65329391, ""], ["Michelle Zambrano", "Diego Garcia", "AIO DCM SMB LDI 1300 DATA SL", "(en blanco)", 1, 15, "Diego  Garcia", "diegogarcia19871985@gmail.com", 69491936, ""], ["Solanye Acuña", "Juan Jaramillo", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 18, "Juan Alberto   Jaramillo", "Juanjaramillo0815@gmail.com", 65630370, 65630370], ["Maria Fernanda Rivas", "ANDRES SCLOPIS", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 1, 20, "ANDRES  SCLOPIS", "arsclopys17@gmail.com", 66459873, ""], ["Nailyn Martinez Johnson", "Andrea Estefania Olmos Espinosa", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 2, 30, "Kristhel Castillo", "aestefania0717@gmail.com", 67720399, 67720399], ["Michelle Zambrano", "LUIS MANUEL CHUNG YIP", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 1, 25, "", "luis_chung10@hotmail.com", 64692148, 64692148], ["Solanye Acuña", "INOCENTE RIOS", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "INOCENTE RIOS", "maryaterr@hotmail.com", 67705897, 67705897], ["Maria Fernanda Rivas", "Nitzia Del Cid", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 15, "Nitzia Maria Del Cid", "ntz06@gmail.com", 67422773, ""], ["Nailyn Martinez Johnson", "CONSTRUCTORA MURILLO Y VILLALOBOS, S.A", "DCM B2B LDI 2500 DSL", "Cliente incumple Pago", 1, 25, "", "Constructoramurivilla@hotmail.com", 68395367, 68395367], ["Michelle Zambrano", "INVERSIONES VALMAR, S,A", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 6, 150, "", "materialesbaru@hotmail.com", 66743229, 66743229], ["Solanye Acuña", "SIN NOMBRE", "DCM VIP Gold LDI Sin Limite", "Solicitado por el Cliente", 2, 150, "", "", "", ""], ["Maria Fernanda Rivas", "Stephanie Zambrano", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Stephanie Zambrano", "jd6312712@gmail.com", 63225268, ""], ["Nailyn Martinez Johnson", "Michell Qiu Hou", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "MICHELL QIU HOU", "michellqiu10@gmail.com", 66068086, 66068086], ["Michelle Zambrano", "GUADALUPE DEL CARMEN QUINTERO GOMEZ", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "GUADALUPE DEL CARMEN QUINTERO 4-156-704", "guadalupegomez1771@gmail.com", 64747547, 64747547], ["Solanye Acuña", "Hui Chen", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Hui Ying Chen", "chenalicia80@gmail.com", 68719668, ""], ["Maria Fernanda Rivas", "Maylin Valdes", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Maylin del Carmen Valdes Avila", "valdesmaylin4@gmail.com", 61661366, ""], ["Nailyn Martinez Johnson", "MAS Q PISCINAS", "DCM B2B LDI 2500 DSL", "Solicitado por el Cliente", 4, 60, "MAXIMINO GUERRERO RICORD", "maxqpiscinas@gmail.com", 64559676, ""], ["Michelle Zambrano", "Ronald Alejandro Machado González", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "", "ronaldnore15@gmail.com", 65608343, 65608343], ["Solanye Acuña", "MANUEL ALEJANDRO PINILLA GONZALEZ", "AIO DCM SMB LDI 1300 DATA SL", "MIGRACION POST-PRE", 1, 30, "MANUEL ALEJANDRO PINILLA 2-729-2271", "manuel1992pinilla@gmail.com", 64405666, 64405666], ["Maria Fernanda Rivas", "Ana Saldaña", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Ana Mercedes Saldaña", "mercedesana1706@gmail.com", 66482949, ""], ["Nailyn Martinez Johnson", "Antonio Barrios", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 1, 15, "Antonio  Barrios Valderrama", "joelff940@gmail.com", 68448739, ""], ["Michelle Zambrano", "ROLANDO BARRIA FERNANDEZ", "AIO DCM SMB LDI 1300 DATA SL", "Solicitado por el Cliente", 3, 45, "ROLANDO BARRIA 8-804-1351", "constructorayyro@gmail.com", 61304519, ""], ["Solanye Acuña", "LUIS ANGEL FERNANDEZ LEDEZMA", "DCM XS SMB LDI 1100 DATA 13GB", "MIGRACION POST-PRE", 2, 24, "LUIS ANGEL FERNANDEZ 8-408-864", "luisfernandezledezma29@gmail.com", 68259543, 68259543]];
+
+function filt(r) {
+  const fe = document.getElementById('fEjec').value;
+  const fp = document.getElementById('fPrioridad').value;
+  const fc = document.getElementById('fCat').value;
+  const fr = document.getElementById('fRazon').value;
+  return r.filter(d => {
+    if (fe && d[0] !== fe) return false;
+    if (fr && d[3] !== fr) return false;
+    const mrc = d[5], rgu = d[4];
+    let pri = 'BAJA';
+    if (mrc > 50 || rgu > 3) pri = 'ALTA';
+    else if (mrc > 20 || rgu > 1) pri = 'MEDIA';
+    if (fp && pri !== fp) return false;
+    let cat = 'BASICO';
+    if (mrc >= 100) cat = 'VIP';
+    else if (mrc >= 50) cat = 'PREMIUM';
+    else if (mrc >= 20) cat = 'ESTANDAR';
+    if (fc && cat !== fc) return false;
+    return true;
+  });
+}
+
+function agg(data) {
+  const total = data.length;
+  const mrcT = data.reduce((s,d)=>s+d[5],0);
+  const rguT = data.reduce((s,d)=>s+d[4],0);
+  const sinNom = data.filter(d=>d[1]==='SIN NOMBRE').length;
+  const sinTel = data.filter(d=>!d[8]&&!d[9]).length;
+  const sinCor = data.filter(d=>!d[7]).length;
+  const sinCon = data.filter(d=>!d[8]&&!d[9]&&!d[7]&&!d[6]).length;
+  const alta = data.filter(d=>d[5]>50||d[4]>3).length;
+  const mrcAlta = data.filter(d=>d[5]>50||d[4]>3).reduce((s,d)=>s+d[5],0);
+
+  const ej = {};
+  data.forEach(d => { const e=d[0]; if(!ej[e]) ej[e]={c:0,m:0,r:0}; ej[e].c++; ej[e].m+=d[5]; ej[e].r+=d[4]; });
+
+  const pri = {ALTA:0,MEDIA:0,BAJA:0};
+  data.forEach(d => {
+    if (d[5]>50||d[4]>3) pri.ALTA++;
+    else if (d[5]>20||d[4]>1) pri.MEDIA++;
+    else pri.BAJA++;
+  });
+
+  const cat = {VIP:0,PREMIUM:0,ESTANDAR:0,BASICO:0};
+  data.forEach(d => {
+    if (d[5]>=100) cat.VIP++;
+    else if (d[5]>=50) cat.PREMIUM++;
+    else if (d[5]>=20) cat.ESTANDAR++;
+    else cat.BASICO++;
+  });
+
+  const rguD = {};
+  data.forEach(d => { const k=d[4]; rguD[k]=(rguD[k]||0)+1; });
+
+  return { total, mrcT, rguT, sinNom, sinTel, sinCor, sinCon, alta, mrcAlta, ej, pri, cat, rguD };
+}
+
+let charts = {};
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if(c) { c.destroy(); } });
+  charts = {};
+}
+
+function fmt$(v) { return '$' + v.toFixed(2); }
+
+function renderKPIs(a) {
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card info"><div class="lbl">Clientes</div><div class="val">${a.total}</div><div class="sub">filtrados</div></div>
+    <div class="kpi-card success"><div class="lbl">MRC Total</div><div class="val">${fmt$(a.mrcT)}</div><div class="sub">${a.rguT} RGU totales</div></div>
+    <div class="kpi-card"><div class="lbl">MRC Promedio</div><div class="val">${fmt$(a.mrcT/(a.total||1))}</div><div class="sub">por cliente</div></div>
+    <div class="kpi-card warning"><div class="lbl">Prioridad ALTA</div><div class="val">${a.alta}</div><div class="sub">${fmt$(a.mrcAlta)} MRC</div></div>
+    <div class="kpi-card danger"><div class="lbl">Sin Contacto</div><div class="val">${a.sinCon}</div><div class="sub">${((a.sinCon/(a.total||1))*100).toFixed(1)}% del total</div></div>
+    <div class="kpi-card purple"><div class="lbl">Sin Nombre</div><div class="val">${a.sinNom}</div><div class="sub">${((a.sinNom/(a.total||1))*100).toFixed(1)}% sin identificar</div></div>
+  `;
+  document.getElementById('totalBadge').textContent = `Mostrando ${a.total} clientes`;
+}
+
+function renderEjec(data) {
+  const labels = Object.keys(data);
+  const cli = labels.map(e=>data[e].c);
+  const mrc = labels.map(e=>data[e].m);
+  const ctx = document.getElementById('chEjec').getContext('2d');
+  charts.ejec = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'Clientes', data:cli, backgroundColor:'#3498db', borderRadius:4 },
+      { label:'MRC $', data:mrc, backgroundColor:'#1a1a2e', borderRadius:4, yAxisID:'y1' }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ boxWidth:12, padding:8 } } },
+      scales:{
+        y:{ beginAtZero:true, grid:{ color:'#eee' } },
+        y1:{ beginAtZero:true, position:'right', grid:{ display:false } }
+      }
+    }
+  });
+}
+
+function renderPri(data) {
+  const labels = ['ALTA','MEDIA','BAJA'];
+  const vals = [data.ALTA,data.MEDIA,data.BAJA];
+  const ctx = document.getElementById('chPri').getContext('2d');
+  charts.pri = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels: labels.map((l,i)=>`${l} (${vals[i]})`),
+      datasets:[{ data:vals, backgroundColor:['#e74c3c','#f39c12','#27ae60'], borderWidth:0 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12 } } }
+    }
+  });
+}
+
+function renderCat(data) {
+  const labels = ['VIP','Premium','Estándar','Básico'];
+  const vals = [data.VIP,data.PREMIUM,data.ESTANDAR,data.BASICO];
+  const ctx = document.getElementById('chCat').getContext('2d');
+  charts.cat = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Clientes', data:vals, backgroundColor:['#9b59b6','#3498db','#f39c12','#95a5a6'], borderRadius:4 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, grid:{ color:'#eee' } } }
+    }
+  });
+}
+
+function renderRGU(data) {
+  const keys = Object.keys(data).map(Number).sort((a,b)=>a-b);
+  const labels = keys.map(k=>'RGU '+k);
+  const vals = keys.map(k=>data[k]);
+  const ctx = document.getElementById('chRGU').getContext('2d');
+  charts.rgu = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Clientes', data:vals, backgroundColor:'#1abc9c', borderRadius:4 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, grid:{ color:'#eee' } } }
+    }
+  });
+}
+
+function renderRaz(data) {
+  const raz = {};
+  data.forEach(d => { const r=d[3]; if(!raz[r]) raz[r]={c:0,m:0}; raz[r].c++; raz[r].m+=d[5]; });
+  const labels = Object.keys(raz);
+  const vals = labels.map(l=>raz[l].c);
+  const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'];
+  const ctx = document.getElementById('chRaz').getContext('2d');
+  charts.raz = new Chart(ctx, {
+    type:'polarArea',
+    data:{ labels, datasets:[{ data:vals, backgroundColor:colors.slice(0,labels.length), borderWidth:0 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } }
+    }
+  });
+}
+
+function renderPlanes(data) {
+  const pl = {};
+  data.forEach(d => { const p=d[2]; if(!pl[p]) pl[p]={c:0,m:0}; pl[p].c++; pl[p].m+=d[5]; });
+  const sorted = Object.entries(pl).sort((a,b)=>b[1].c-a[1].c).slice(0,10);
+  const labels = sorted.map(([p])=>p.length>30?p.slice(0,30)+'...':p);
+  const cli = sorted.map(([,v])=>v.c);
+  const mrc = sorted.map(([,v])=>v.m);
+  const ctx = document.getElementById('chPlan').getContext('2d');
+  charts.plan = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        { label:'Clientes', data:cli, backgroundColor:'#3498db', borderRadius:4 },
+        { label:'MRC $', data:mrc, backgroundColor:'#1a1a2e', borderRadius:4, yAxisID:'y1' }
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ boxWidth:12 } } },
+      scales:{
+        x:{ beginAtZero:true, grid:{ color:'#eee' } },
+        x1:{ beginAtZero:true, position:'top', grid:{ display:false } }
+      }
+    }
+  });
+
+  // Table
+  const all = Object.entries(pl).sort((a,b)=>b[1].c-a[1].c);
+  document.getElementById('planesBody').innerHTML = all.map(([p,v],i) =>
+    `<tr><td>${i+1}</td><td>${p}</td><td class="ct">${v.c}</td><td class="rt">${fmt$(v.m)}</td><td class="rt">${fmt$(v.m/v.c)}</td></tr>`
+  ).join('');
+}
+
+function renderTop(data) {
+  const sorted = [...data].sort((a,b)=>b[5]-a[5]);
+  document.getElementById('topBody').innerHTML = sorted.map((d,i) => {
+    const p = d[5]>50||d[4]>3?'ALTA':(d[5]>20||d[4]>1?'MEDIA':'BAJA');
+    const cl = d[1]==='SIN NOMBRE'?'highlight':'';
+    return `<tr class="${cl}"><td>${i+1}</td><td><strong>${d[1]}</strong></td><td>${d[0]}</td><td>${d[2]}</td>
+      <td class="rt"><strong>${fmt$(d[5])}</strong></td><td class="ct">${d[4]}</td>
+      <td class="ct"><span class="badge badge-${p.toLowerCase()}">${p}</span></td>
+      <td class="ct"><span class="badge ${d[8]||d[9]?'badge-si':'badge-no'}">${d[8]||d[9]?'SI':'NO'}</span></td>
+      <td class="ct"><span class="badge ${d[7]?'badge-si':'badge-no'}">${d[7]?'SI':'NO'}</span></td></tr>`;
+  }).join('');
+}
+
+function renderSinContacto(data) {
+  const sc = data.filter(d => !d[8] && !d[9] && !d[7] && !d[6]);
+  const mrcRiesgo = sc.reduce((s,d)=>s+d[5],0);
+  document.getElementById('sinContactoMsg').textContent = `No tienen teléfono, correo ni persona de contacto. MRC en riesgo: ${fmt$(mrcRiesgo)}`;
+  document.getElementById('scBody').innerHTML = sc.map((d,i) =>
+    `<tr><td>${i+1}</td><td><strong>${d[1]}</strong></td><td>${d[0]}</td><td class="rt">${fmt$(d[5])}</td><td class="ct">${d[4]}</td></tr>`
+  ).join('') + `<tr style="background:#fff5f5;font-weight:700;"><td colspan="3">Total MRC en riesgo</td><td class="rt">${fmt$(mrcRiesgo)}</td><td class="ct">${sc.reduce((s,d)=>s+d[4],0)}</td></tr>`;
+}
+
+function refresh() {
+  const data = filt(RAW);
+  const a = agg(data);
+  renderKPIs(a);
+  destroyCharts();
+  renderEjec(a.ej);
+  renderPri(a.pri);
+  renderCat(a.cat);
+  renderRGU(a.rguD);
+  renderRaz(data);
+  renderPlanes(data);
+  renderTop(data);
+  renderSinContacto(data);
+}
+
+function switchTab(id,btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// Fill filters
+const ejecs = [...new Set(RAW.map(d=>d[0]))].sort();
+const razs = [...new Set(RAW.map(d=>d[3]))].sort();
+const fEjec = document.getElementById('fEjec');
+ejecs.forEach(e => { const o=document.createElement('option'); o.value=e; o.textContent=e; fEjec.appendChild(o); });
+const fRazon = document.getElementById('fRazon');
+razs.forEach(r => { const o=document.createElement('option'); o.value=r; o.textContent=r; fRazon.appendChild(o); });
+
+refresh();
+</script>
+</body>
+</html>
