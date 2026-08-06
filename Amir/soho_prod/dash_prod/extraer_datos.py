@@ -1635,6 +1635,9 @@ function sw(id, btn){
   btn.classList.add('active');
   const el = document.getElementById('v-'+id);
   if(el) el.classList.add('active');
+  // Re-render al cambiar de pestana: los charts creados con el div oculto
+  // quedan en 0x0; al re-renderizar se dibujan con el tamano correcto.
+  renderAll();
 }
 
 // ---------- RENOVACION ----------
@@ -2137,7 +2140,7 @@ function renderResumen(){
       <td class="rt">${x.mrc}</td><td class="rt">${x.rgu}</td><td class="rt">${x.mp}</td>
     </tr>`).join('');
   const elN = document.getElementById('resNota');
-  if(elN) elN.textContent = 'Renovación: contactos/marcaciones del recorrido de base (reporte ene-jun). Winback/Cross: bases de julio 2026. MRC Prom = MRC ÷ RGU.';
+  if(elN) elN.textContent = 'Renovación: contactos/marcaciones del recorrido de base (reporte ene-jun). Winback/Cross: bases de julio 2026. MRC Prom aquí = MRC total ÷ RGU total; el MRC Promedio de la pestana Cartera MRC usa solo renovación (MRC actual ÷ RGU renovación).';
   // recorrido por campana
   const RC = D.recorrido_campanas||{};
   const filasRC = [['WINBACK', RC.WINBACK], ['CROSS_SELL', RC.CROSS_SELL]].map(([k,v])=>{
@@ -2197,6 +2200,8 @@ function metasCargadas(){
   try { return JSON.parse(localStorage.getItem('soho_metas')||'{}'); } catch(e){ return {}; }
 }
 function renderMetas(){
+  const elV = document.getElementById('v-metas');
+  if(elV && !elV.classList.contains('active')) return; // solo al estar visible
   const M = metasCargadas();
   const R = D.resumen_campanas||{};
   const def = [['RENOVACION','Renovación (Marinel Moreno)','MARINEL MORENO', R.RENOVACION||{}],

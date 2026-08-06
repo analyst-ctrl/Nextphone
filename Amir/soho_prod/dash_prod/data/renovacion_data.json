@@ -6721,12 +6721,6 @@
   },
   "por_agente": [
    {
-    "agente": "LILIAN MILENA MOJICA DE LAS SALAS",
-    "telefonos": 5,
-    "llamadas": 12,
-    "contactados": 5
-   },
-   {
     "agente": "DANNA DE LAS SALAS",
     "telefonos": 66,
     "llamadas": 81,
@@ -6739,10 +6733,16 @@
     "contactados": 8
    },
    {
-    "agente": "PURA MORENO",
-    "telefonos": 18,
-    "llamadas": 41,
-    "contactados": 15
+    "agente": "LILIAN MILENA MOJICA DE LAS SALAS",
+    "telefonos": 5,
+    "llamadas": 12,
+    "contactados": 5
+   },
+   {
+    "agente": "MASSIEL TOLEDO",
+    "telefonos": 13,
+    "llamadas": 26,
+    "contactados": 9
    },
    {
     "agente": "LIZNETH RUIZ",
@@ -6751,10 +6751,10 @@
     "contactados": 7
    },
    {
-    "agente": "MASSIEL TOLEDO",
-    "telefonos": 13,
-    "llamadas": 26,
-    "contactados": 9
+    "agente": "PURA MORENO",
+    "telefonos": 18,
+    "llamadas": 41,
+    "contactados": 15
    }
   ],
   "detalle": [
