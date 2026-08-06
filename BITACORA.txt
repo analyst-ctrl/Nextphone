@@ -54,6 +54,15 @@
        venta cruzada (lineas nuevas, portabilidad), recorrido de la base,
        top de ejecutivos y tipificaciones.
 
+  4) RESPALDO DEL DASHBOARD DE RENOVACION (version final, NO modificar)
+     - El usuario confirmo que el dashboard de renovaciones ya esta finalizado.
+     - Se creo un respaldo inmutable en:
+         Amir/soho_prod/Respaldo_Renovacion_2026-08-06/
+       Copia exacta de Amir/soho_prod/dash_prod/ (index.html, chart.umd.min.js,
+       extraer_datos.py, data/renovacion_data.json) con su README interno.
+     - REGLA: el folder original dash_prod/ podra modificarse para cumplir
+       los requisitos de la reunion, pero el respaldo NO se toca.
+
 --------------------------------------------------------------------------------
   PROXIMAS ENTRADAS (agregar aqui abajo con la fecha)
 --------------------------------------------------------------------------------
