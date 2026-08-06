@@ -17,6 +17,24 @@
   El dashboard queda enfocado EXCLUSIVAMENTE en el equipo RENOVACION
   (Marinel Moreno), igual que la version original.
 
+  FIX POST-REVERT (6 de agosto 2026) - pestanas reparadas:
+    - Se restauro el <div id="v-renov" class="content active"> que se habia
+      perdido durante el revert. Sin el, el contenido de la primera pestana
+      quedaba suelto y siempre visible, y sw('renov') lanzaba TypeError
+      (getElementById('v-renov') = null). Por eso parecia que las pestanas
+      no funcionaban.
+    - sw() ahora es defensiva: usa if(el) antes de agregar/quitar la clase
+      'active', para que un div inexistente nunca rompa el cambio de pestana.
+    - Chart.js se copio a local (chart.umd.min.js) y el <script> apunta a la
+      copia local. El dashboard ya NO depende de internet/CDN para los
+      graficos (antes cargaba desde cdn.jsdelivr.net; sin conexion los
+      graficos fallaban y mataban el resto del render).
+    - renderAll() quedó resiliente: cada funcion se ejecuta en try/catch
+      (safe()), un fallo en un grafico no impide las demas pestanas.
+    - Validado: balance de divs 0, las 5 pestanas cambian y todas las tablas
+      se llenan (Equipo 8 filas, Rendimiento 13, Marcaciones 13,
+      Tipificacion 34).
+
 ------------------------------------------------------------------------------
   1. OBJETIVO
 ------------------------------------------------------------------------------
@@ -180,12 +198,15 @@
   dash_prod/
     extraer_datos.py        -> pipeline: lee HC + xlsb + bases y genera todo
     index.html              -> dashboard auto-contenido (abrir en navegador)
+    chart.umd.min.js        -> Chart.js copia local (no requiere internet)
     data/renovacion_data.json -> datos extraídos (para actualizaciones)
 
   COMO ACTUALIZAR CON DATOS NUEVOS:
     1. Reemplazar el .xlsb y las bases en Amir/soho_prod/
-    2. python dash_prod/extraer_datos.py
+    2. python dash_prod/extraer_datos.py   (regenera json + index.html)
     3. Abrir dash_prod/index.html en el navegador
+    4. Si el navegador muestra una version vieja: Ctrl+Shift+R (recarga
+       forzada) para limpiar la cache.
 
 ------------------------------------------------------------------------------
   8.  HALLAZGOS INICIALES DEL ANALISIS (enero - junio 2026)
@@ -231,7 +252,8 @@
       * MILENA MOJICA / LILIAN MILENA MOJICA DE LAS SALAS -> RENOVACION
         (coordinador en 'lineas facturadas' = AMIR JOSE RODRIGUEZ)
       * LIZETH GONZALEZ / LIZETH MILENA GONZALEZ RODRIGUEZ -> RENOVACION
-      * KEISY VARGAS -> SOHO (coordinador JULIO CESAR ARAUZ)
+      (NOTA: el override de KEISY VARGAS -> SOHO se ELIMINO en el revert;
+       en modo solo-RENOVACION ya no se asigna a nadie fuera del equipo)
   - El match de overrides exige el PRIMER token (nombre de pila) + >=2 tokens
     comunes, igual que el roster, para no absorber a otros agentes
     (ej: 'DANNA DE LAS SALAS' NO cae en 'LILIAN MILENA MOJICA DE LAS SALAS').
