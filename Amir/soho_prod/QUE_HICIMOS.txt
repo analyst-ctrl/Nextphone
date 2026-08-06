@@ -1,0 +1,122 @@
+====================================================================
+QUE HICIMOS - RESUMEN DE LA SESION (6 de agosto de 2026)
+====================================================================
+
+CONTEXTO
+--------------------------------------------------------------------
+Partimos de una grabacion de la reunion del equipo (audio MP3 que
+grabaste en Camtasia, en tu carpeta de Documentos). Ese audio NO se
+toco: solo se leyo para transcribirlo. La transcripcion se convirtio
+en el documento de requisitos: Amir/soho_prod/requisitos_reunion_2026-08-06.txt
+
+De la reunion se identificaron estos pedidos:
+  1. MRC promedio (suma MRC / RGU) por ejecutivo y equipo  -> HECHO
+  2. Resumen por campana (contactos, marcaciones, ventas,
+     MRC ant/act/cruzada, fijo/movil, MRC promedio)         -> HECHO
+  3. Metas y % de cumplimiento por supervisor/campana       -> HECHO
+     (falta SOLO escribir las metas oficiales que Julio envia por correo)
+  4. Recorrido de base por campana                          -> HECHO
+  5. Top Performance del equipo de Julio                    -> HECHO
+  6. HC del equipo de Julio                                 -> HECHO (leido)
+     (el HC Formato solicitado (2).xlsx ya se integra al pipeline)
+
+--------------------------------------------------------------------
+EL DASHBOARD (UNA SOLA PAGINA CON PESTANAS)
+--------------------------------------------------------------------
+Archivo: Amir/soho_prod/dash_prod/index.html
+Generado automaticamente por el pipeline: Amir/soho_prod/dash_prod/extraer_datos.py
+(El pipeline lee los Excel de bases/ y extrainfo/ y produce el HTML
+con todos los datos embebidos + el JSON en data/renovacion_data.json)
+
+Estructura: barra de CAMPANAS arriba, y dentro de cada campana sus
+propias pestañas. Cada campana muestra su SUPERVISOR en el encabezado.
+
+  1) RENOVACION (Supervisor: Marinel Moreno)  [aprobada antes, NO se toco]
+     - Equipo Renovacion: KPIs + Top Performance (ahora con columna
+       "MRC Prom $" nueva) + Cartera MRC (ahora con KPI "MRC Promedio")
+     - Rendimiento del Equipo
+     - Marcaciones (quien llama mas/menos)
+     - Tipificacion
+     - Ventas & RGU
+     - Recorrido de la Base
+
+  2) WINBACK (Supervisor: Julio Cesar Arauz)  [NUEVA]
+     - Base: 210 clientes a recuperar | 382 RGU | $8,242 MRC acumulado
+       | 4 razones de salida, con graficos por razon y por ejecutiva
+     - Marcaciones, Tipificacion, Recorrido (de las llamadas sobre la base)
+     - Tabla completa con filtros (buscar, por ejecutiva, por razon)
+
+  3) CROSS-SELLING (Supervisor: Julio Cesar Arauz)  [NUEVA]
+     - Base: 2,209 gestiones | 92% con telefono | 14 ejecutivas
+     - Marcaciones, Tipificacion, Recorrido
+     - Ventas: del reporte SOHO -> 36 movil / 21 fijo (equipo de Julio)
+     - Tabla con filtros (buscar, por ejecutiva, por estado)
+
+  4) GLOBAL
+     - Resumen de Campanas: comparativa RENOVACION / SOHO (Julio) /
+       WINBACK / CROSS-SELL (contactos base, marcaciones, % recorrido,
+       ventas fijo/movil, MRC, RGU, MRC promedio)
+     - Recorrido de las bases: Cross-selling 49.1% marcado (975 telefonos),
+       Winback 0.6% (bases de julio vs reporte ene-jun - normal)
+     - Equipo Julio (SOHO): 12 asesores (8 con actividad), KPIs + tabla
+     - Metas y Cumplimiento: metas de RGU/MRC editables por campana
+       (se guardan en el navegador) con % de cumplimiento automatico
+
+DATOS CLAVE DE RENOVACION (sin cambios)
+--------------------------------------------------------------------
+- Llamadas 15,796 | contactados 6,562 (41.5%)
+- Ventas 408 | MRC anterior $6,601.50 -> actual $7,097.00
+- RGU renovacion 239 | cruzada 14 | MRC cruzada $221.00
+
+--------------------------------------------------------------------
+RESPALDO (IMPORTANTE)
+--------------------------------------------------------------------
+La version final de RENOVACION (aprobada antes de las campanas nuevas)
+esta respaldada en: Amir/soho_prod/Respaldo_Renovacion_2026-08-06/
+Ese respaldo NO se modifico. Se comparo con el dashboard actual
+clave por clave y la unica diferencia son los campos NUEVOS que se
+pidieron (mrc_prom por agente y el KPI mrc_promedio). Ningun dato
+existente de renovacion cambio.
+
+--------------------------------------------------------------------
+ACTUALIZACION AUTOMATICA
+--------------------------------------------------------------------
+Doble clic en: Amir/soho_prod/actualizar_dashboard.bat
+Regenera el dashboard con los datos nuevos de las bases/ y extrainfo/
+(requisito "que se actualice solita").
+
+--------------------------------------------------------------------
+GITHUB
+--------------------------------------------------------------------
+Todo esta subido al repositorio: https://github.com/analyst-ctrl/Nextphone
+El dashboard publicado (GitHub Pages):
+https://analyst-ctrl.github.io/Nextphone/Amir/soho_prod/dash_prod/index.html
+(la CDN tarda unos minutos en publicar la version nueva)
+
+Commits de la sesion (principales):
+- Pestanas Winback y Cross-selling (v1)
+- Dashboards de la reunion: equipo Julio, resumen de campanas,
+  MRC promedio, metas editables, actualizacion automatica
+- Fix: re-render al cambiar de pestana (graficos 0x0) y metas
+- Campanas completas: cada campana con sus pestanas y supervisor
+- Regeneracion del dashboard (solo reordena lista por_agente)
+
+--------------------------------------------------------------------
+VALIDACIONES
+--------------------------------------------------------------------
+- Pipeline Python sin errores
+- JavaScript valido (node --check)
+- Divs HTML balanceados
+- Todos los elementos que usa el JS existen en el HTML (0 rotos)
+- Datos de renovacion comparados contra el respaldo: identicos
+- El audio original (MP3) no fue modificado
+
+--------------------------------------------------------------------
+PENDIENTE (depende de datos que envian por correo)
+--------------------------------------------------------------------
+1. Metas oficiales de RGU/MRC (las comparte Julio) -> escribirlas en
+   la pestana Metas (ya esta lista para recibirlas)
+2. Bases y reporte del MISMO periodo para Winback/Cross -> el
+   recorrido Winback subira solo (hoy cruza poco porque la base es
+   de julio y el reporte es de enero-junio)
+====================================================================
