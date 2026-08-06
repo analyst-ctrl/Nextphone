@@ -92,6 +92,30 @@
      - PENDIENTE (segun reunion): HC y metas (RGU/MRC) del equipo de Julio
        para agregar metas por supervisor y recorrido de base por campana.
 
+  7) OTROS DASHBOARDS BASADOS EN LA TRANSCRIPCION (2026-08-06)
+     - Requisitos extraidos de la reunion al documento:
+         Amir/soho_prod/requisitos_reunion_2026-08-06.txt
+     - Construido en dash_prod/ (el respaldo Respaldo_Renovacion NO se toca):
+       * EQUIPO DE JULIO (pestana 'Equipo Julio (SOHO)'): se agrego la
+         campana SOHO al pipeline (EQUIPOS_RAW ahora lee tambien
+         'HC Formato solicitado (2).xlsx', supervisor JULIO CESAR ARAUZ).
+         12 integrantes, 8 con actividad. KPIs, top performance, marcaciones,
+         MRC y MRC promedio.
+       * RESUMEN DE CAMPANAS (pestana): comparativa RENOVACION/SOHO/WINBACK/
+         CROSS_SELL + recorrido de las bases contra llamadas SOHO:
+         Cross-selling 975 tel, 479 marcados (49.1%); Winback 159 tel, 0.6%
+         (bases de julio vs reporte ene-jun).
+       * MRC PROMEDIO (R1.5): por agente (columna 'MRC Prom') y por equipo
+         (KPI en Cartera MRC).
+       * METAS Y CUMPLIMIENTO (pestana 'Metas'): metas editables de RGU/MRC
+         por campana guardadas en localStorage + % automatico. Pendiente
+         escribir las metas oficiales cuando las comparta Julio (R1.7/R2.5).
+       * ACTUALIZACION AUTOMATICA (R4.2): Amir/soho_prod/actualizar_dashboard.bat
+     - Validado: node --check OK (JS valido), divs balanceados 160/160,
+       navegador carga sin errores de consola, pestana Metas verificada.
+     - Nota: el equipo de Julio quedo como campana 'SOHO' (sus bases Winback/
+       Cross-selling son de JULIO 2026; el reporte Vici/Ventas es ene-jun).
+
 --------------------------------------------------------------------------------
   PROXIMAS ENTRADAS (agregar aqui abajo con la fecha)
 --------------------------------------------------------------------------------

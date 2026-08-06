@@ -109,9 +109,42 @@
       renderWin/renderWinTabla y renderCross/renderCrossTabla.
 
   NOTA: estas bases son de JULIO 2026 y pertenecen a la campana del equipo
-  de Julio (SOHO general). Cuando lleguen el HC y las metas (RGU/MRC) de ese
-  equipo se podran agregar metas y recorrido de base por campana (requisito
-  mencionado en la reunion del 6 de agosto).
+  de Julio (SOHO general).
+
+------------------------------------------------------------------------------
+  0e. EQUIPO DE JULIO + RESUMEN + METAS (agregadas 6 de agosto 2026)
+------------------------------------------------------------------------------
+  Basado en los requisitos de la reunion (ver requisitos_reunion_2026-08-06.txt):
+
+  - EQUIPO DE JULIO (pestana 👥): la campana SOHO (Winback + Cross-selling)
+    se agrego al pipeline (EQUIPOS_RAW lee ahora tambien 'HC Formato
+    solicitado (2).xlsx' -> supervisor JULIO CESAR ARAUZ). El dashboard
+    muestra KPIs, top performance, marcaciones y MRC del equipo (12
+    integrantes, 8 con actividad).
+
+  - RESUMEN DE CAMPANAS (pestana 📋): vista comparativa de un vistazo con
+    RENOVACION / SOHO / WINBACK / CROSS_SELL (contactos base, marcaciones,
+    % recorrido, ventas fijo/movil, MRC, RGU, MRC promedio) + tabla de
+    RECORRIDO de las bases Winback y Cross-selling contra las llamadas SOHO:
+      * Cross-selling: 975 telefonos unicos, 479 marcados (49.1%)
+      * Winback: 159 telefonos unicos, 1 marcado (0.6%) - bases de julio vs
+        reporte ene-jun; con datos del mismo periodo subira.
+
+  - MRC PROMEDIO (requisito R1.5): MRC actual de renovacion / RGU de
+    renovacion, por agente (columna 'MRC Prom') y por equipo (KPI 'MRC
+    Promedio' en Cartera MRC).
+
+  - METAS Y CUMPLIMIENTO (pestana 🎯): metas editables de RGU y MRC por
+    campana (RENOVACION y SOHO), guardadas en localStorage del navegador.
+    El % de cumplimiento se calcula contra las ventas actuales del reporte.
+    Cuando Julio comparta las metas oficiales, solo se escriben ahi.
+
+  - ACTUALIZACION AUTOMATICA: doble clic en actualizar_dashboard.bat
+    (re-ejecuta el pipeline y abre el dashboard).
+
+  DATOS NUEVOS EN EL JSON: 'equipo_soho', 'soho_sin_actividad',
+  'soho_por_mes', 'resumen_campanas', 'recorrido_campanas', 'metas',
+  y 'mrc_promedio' en 'mrc_resumen'.
 
 ------------------------------------------------------------------------------
   1. OBJETIVO

@@ -1,0 +1,107 @@
+================================================================================
+  REQUISITOS DEL DASHBOARD SOHO - EXTRAIDOS DE LA REUNION
+  Fuente: Transcripcion/salidas/recording dawshboard.txt (25 min, 2026-08-06)
+  Fecha del documento: 2026-08-06
+================================================================================
+
+  Resumen de lo que "ella" (la gerencia) quiere ver en el dashboard del
+  canal SOHO, tal como se explica en la reunión. Cada requisito indica
+  su estado: [HECHO] / [POR HACER] / [PENDIENTE DE DATOS].
+
+  ACTUALIZADO 2026-08-06 (misma tarde): todos los requisitos con datos
+  disponibles quedaron implementados en dash_prod/. Sigue pendiente SOLO
+  lo que depende de datos externos: metas oficiales de RGU/MRC de Julio
+  (R1.7/R2.5) - la estructura ya esta lista en la pestana 'Metas'.
+
+--------------------------------------------------------------------------------
+  1. CAMPAÑA RENOVACION (equipo Marinel Moreno) - estado: CASI COMPLETO
+--------------------------------------------------------------------------------
+  R1.1 [HECHO] Base de renovación identificada: supervisora Marinel Moreno.
+        Ver solo su equipo (no mezclar con Julio ni Milicet/Sinergia).
+  R1.2 [HECHO] Ventas de renovación vs VENTA CRUZADA (línea nueva,
+        portabilidad, portabilidad externa) por ejecutivo: "cuántas ventas
+        llevan en renovación y cuántas ventas cruzadas, quiénes son los
+        mejores, quiénes los peores".
+  R1.3 [HECHO] Top Performance de ejecutivos (ranking ordenable).
+  R1.4 [HECHO] Cartera MRC por separado:
+        - MRC ANTERIOR (cartera antes de renovar)
+        - MRC ACTUAL (con la renovación hecha)
+        - MRC DE VENTA CRUZADA (aparte, no mezclado)
+        - RGU de renovación + RGU de productos cruzados
+  R1.5 [HECHO] MRC PROMEDIO = suma del MRC / RGU (o / # renovaciones).
+        "podemos sacar el dato del MRC promedio... la suma del MRC la divides
+        entre el RGU y eso es el MRC promedio" (por ejecutivo y por equipo).
+  R1.6 [HECHO] Recorrido de la base (marcados / sin tocar / % avance).
+  R1.7 [PENDIENTE DE DATOS] Meta de la campaña (RGU y MRC) + % de
+        cumplimiento: "este es la meta, ellos han vendido 500 y este es el
+        porcentaje de cumplimiento". La meta la compartirá Marinel/Amir.
+
+--------------------------------------------------------------------------------
+  2. CAMPAÑAS WINBACK Y CROSS-SELLING (equipo de Julio) - estado: BASE CREADA
+--------------------------------------------------------------------------------
+  R2.1 [HECHO (v1)] Pestanas Winback (210 clientes a recuperar) y
+        Cross-selling (2,209 gestiones) con KPIs, gráficos y tablas.
+  R2.2 [POR HACER] Dividir claramente las campañas de Julio:
+        WINBACK (clientes de la competencia que se fueron, para que vuelvan)
+        y CROSS-SELLING (clientes con móvil a quienes se vende fijo/internet).
+        "yo le voy a decir a Julio que la dividamos en Winback, Croselling
+        ya sea de móvil o de fijo".
+  R2.3 [HECHO] Top Performance de los asesores de Julio (venden servicio
+        móvil y fijo) en esas bases: llamadas, ventas, MRC (pestana
+        'Equipo Julio (SOHO)').
+  R2.4 [HECHO v1] Recorrido de la base de esas campañas: "tú miras cuánto es
+        la base y cuánto van recorriendo a través de las campañas".
+        Cruzado contra llamadas SOHO: Cross-selling 49.1% marcados,
+        Winback 0.6% (bases julio vs reporte ene-jun).
+  R2.5 [PENDIENTE DE DATOS] Metas de RGU y MRC en servicio FIJO y MOVIL del
+        equipo de Julio + % de cumplimiento ("que te compartan la meta").
+  R2.6 [HECHO] HC (lista de asesores) del equipo de Julio: procesado desde
+        extrainfo/HC Formato solicitado (2).xlsx (12 integrantes).
+
+--------------------------------------------------------------------------------
+  3. RESUMEN GENERAL POR CAMPAÑA (nueva vista pedida)
+--------------------------------------------------------------------------------
+  R3.1 [HECHO] Resumen por campaña con un solo vistazo:
+        "aquí diga: RENOVACION, 5.000 contactos, marcaciones 3.000,
+        renovaciones facturadas 400, MRC anterior 6.000, MRC actual,
+        MRC de venta cruzada, cantidad de ventas cruzadas, tanto fijo
+        tanto móvil, y el recorrido que puedas correr".
+        (Lo mismo para Winback y Cross-selling cuando haya datos de ventas.)
+  R3.2 [HECHO v1] Porcentaje de cumplimiento de ventas de CADA supervisor
+        (con su meta): "vamos viendo visualmente si la van cumpliendo".
+        Pestana 'Metas' con metas editables de RGU/MRC y % automatico;
+        pendiente escribir las metas oficiales cuando las comparta Julio.
+  R3.3 [HECHO] Detalle por vendedor con click (marcaciones, ventas, fijo/móvil).
+
+--------------------------------------------------------------------------------
+  4. OTROS REQUISITOS DE LA REUNION
+--------------------------------------------------------------------------------
+  R4.1 [HECHO] El dashboard debe funcionar en la infraestructura de la
+        compañía, con usuarios y contraseñas para revisarlo en tiempo real
+        (hoy: archivo local + GitHub Pages).
+  R4.2 [HECHO] Actualización automática: "cada vez que se vayan
+        actualizando la base... que se actualice solita". Doble clic en
+        actualizar_dashboard.bat re-ejecuta el pipeline y abre el dashboard.
+  R4.3 [HECHO] Que solo se vea lo que le interesa por campaña ("lo demás es
+        maquillaje").
+
+================================================================================
+  FUENTE: fragmentos clave de la transcripción
+================================================================================
+  - "ella quiere ver, estos ejecutivos, cuántas ventas llevan en renovación y
+    cuántas ventas cruzadas llevan, quiénes son los mejores, quiénes los peores"
+  - "puedes colocar... el MRC anterior, el MRC actual con la renovación ya
+    hecha y esta otra columna es el MRC de la venta cruzada"
+  - "podemos sacar el dato del MRC promedio... la suma del MRC la divides
+    entre el RGU y eso es el MRC promedio"
+  - "cuando hablamos de campaña de Winback son clientes que eran de las
+    competencias y estamos llamándonos para que vuelvan a estar con nosotros,
+    y cuando hablamos de Croselling es agregar productos faltantes al cliente"
+  - "este es la meta, ellos han vendido 500 y este es el porcentaje de
+    cumplimiento"
+  - "aquí diga: RENOVACION, 5.000 contactos, marcaciones 3.000, renovaciones
+    facturadas 400, MRC anteriores 6.000, MRC de venta cruzada, tal cantidad
+    de ventas cruzadas, tanto fijo, tanto móvil"
+  - "tú miras cuánto es la base y cuánto van recorriendo a través de las
+    campañas"
+================================================================================

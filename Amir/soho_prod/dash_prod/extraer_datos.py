@@ -137,6 +137,7 @@ import openpyxl
 EQUIPOS_RAW = [
     # (archivo, supervisor, nombre_campana)
     ('HC AGOSTO.xlsx',                'MARINEL MORENO',      'RENOVACION'),
+    ('HC Formato solicitado (2).xlsx','JULIO CESAR ARAUZ',   'SOHO'),
 ]
 
 equipos = {}
@@ -782,6 +783,7 @@ for k in all_keys:
         'mrc_ant_renov': round(sum(vpk[m]['mrc_ant_renov'] for m in MESES_ORDEN), 2),
         'mrc_act_renov': round(sum(vpk[m]['mrc_act_renov'] for m in MESES_ORDEN), 2),
         'mrc_cruz': round(sum(vpk[m]['mrc_cruz'] for m in MESES_ORDEN), 2),
+        'mrc_prom': 0.0,
         'rgu_renov': int(round(sum(vpk[m]['rgu_renov'] for m in MESES_ORDEN))),
         'rgu_cruz': int(round(sum(vpk[m]['rgu_cruz'] for m in MESES_ORDEN))),
         'tramites': dict(vm_s['tramite']) if vm_s else {},
@@ -875,6 +877,8 @@ for a in agentes.values():
     a['ef_ventas_x_llamada'] = round(a['ventas_total'] / a['llamadas'], 3) if a['llamadas'] else 0.0
     a['ef_conv_pct'] = round(a['ventas_total'] / a['llamadas'] * 100, 2) if a['llamadas'] else 0.0
     a['ef_mrc_x_venta'] = round(a['mrc'] / a['ventas_total'], 2) if a['ventas_total'] else 0.0
+    # MRC promedio (requisito de la reunion): MRC actual de renovacion / RGU renovacion
+    a['mrc_prom'] = round(a['mrc_act_renov'] / a['rgu_renov'], 2) if a['rgu_renov'] else 0.0
 
 # --- Roster completo POR CAMPAÑA (HC + overrides): los integrantes del roster
 # sin actividad aparecen con ceros. Se arma para TODAS las campañas para que el
@@ -903,7 +907,7 @@ def armar_equipo(campana):
                 'ventas_movil': 0, 'ventas_fijo': 0, 'lineas_fact': 0, 'ventas_total': 0,
                 'rgu': 0.0, 'mrc': 0.0, 'venta_cruzada': 0, 'gestiones_cross': 0,
                 'ventas_renov': 0, 'ventas_cruz': 0,
-                'mrc_ant_renov': 0.0, 'mrc_act_renov': 0.0, 'mrc_cruz': 0.0,
+                'mrc_ant_renov': 0.0, 'mrc_act_renov': 0.0, 'mrc_cruz': 0.0, 'mrc_prom': 0.0,
                 'rgu_renov': 0.0, 'rgu_cruz': 0.0,
                 'tramites': {}, 'tipoventa': {}, 'status_fijo': {},
                 'por_mes': {m: 0 for m in MESES_ORDEN},
@@ -961,6 +965,123 @@ for m in MESES_ORDEN:
         renov_por_mes[m]['contactados'] / renov_por_mes[m]['llamadas'] * 100, 1) if renov_por_mes[m]['llamadas'] else 0
 
 # =============================================================================
+# 6a. EQUIPO DE JULIO (campaña SOHO: Winback + Cross-selling)
+# =============================================================================
+if 'SOHO' in campanas_data:
+    soho_con_datos = campanas_data['SOHO']['con_datos']
+    soho_sin_actividad = campanas_data['SOHO']['sin_actividad']
+else:
+    soho_con_datos, soho_sin_actividad = [], []
+
+soho_por_mes = {}
+for m in MESES_ORDEN:
+    soho_por_mes[m] = {
+        'llamadas': sum(a['por_mes'].get(m, 0) for a in soho_con_datos),
+        'contactados': sum(a['contactados_por_mes'].get(m, 0) for a in soho_con_datos),
+        'no_contesta': sum(a['no_contesta_por_mes'].get(m, 0) for a in soho_con_datos),
+        'numeros': sum(a['numeros_por_mes'].get(m, 0) for a in soho_con_datos),
+        'ventas_movil': sum(a['ventas_por_mes'][m]['movil'] for a in soho_con_datos),
+        'ventas_fijo': sum(a['ventas_por_mes'][m]['fijo'] for a in soho_con_datos),
+        'lineas_fact': sum(a['ventas_por_mes'][m]['lineas'] for a in soho_con_datos),
+        'mrc': round(sum(a['ventas_por_mes'][m]['mrc'] for a in soho_con_datos), 2),
+        'rgu': round(sum(a['ventas_por_mes'][m]['rgu'] for a in soho_con_datos), 1),
+        'cruzada': sum(a['cruzada_por_mes'].get(m, 0) for a in soho_con_datos),
+    }
+    soho_por_mes[m]['tasa_contacto'] = round(
+        soho_por_mes[m]['contactados'] / soho_por_mes[m]['llamadas'] * 100, 1) if soho_por_mes[m]['llamadas'] else 0
+print('Equipo SOHO (Julio):', len(soho_con_datos), 'agentes con datos |', len(soho_sin_actividad), 'sin actividad')
+
+# =============================================================================
+# 6ab. RESUMEN POR CAMPAÑA + RECORRIDO POR CAMPAÑA (vista 'Resumen de Campanas')
+# =============================================================================
+def resumen_equipo(campana, con_datos):
+    llam = sum(a['llamadas'] for a in con_datos)
+    cont = sum(a['contactados'] for a in con_datos)
+    tot_rgu = sum(a['rgu'] for a in con_datos)
+    return {
+        'campana': campana,
+        'llamadas': llam,
+        'contactados': cont,
+        'tasa_contacto': round(cont / llam * 100, 1) if llam else 0,
+        'ventas_movil': sum(a['ventas_movil'] for a in con_datos),
+        'ventas_fijo': sum(a['ventas_fijo'] for a in con_datos),
+        'ventas_total': sum(a['ventas_total'] for a in con_datos),
+        'mrc': round(sum(a['mrc'] for a in con_datos), 2),
+        'rgu': round(tot_rgu, 1),
+        'mrc_prom': round(sum(a['mrc'] for a in con_datos) / tot_rgu, 2) if tot_rgu else 0,
+    }
+
+resumen_campanas = {
+    'RENOVACION': dict({
+        'supervisor': 'MARINEL MORENO',
+        'contactos_base': recorrido_base['total'],
+        'marcados_base': recorrido_base['marcados'],
+        'pct_recorrido': recorrido_base['pct_recorrido'],
+        'facturadas': sum(a['ventas_renov'] for a in renov_con_datos),
+        'mrc_anterior': round(sum(a['mrc_ant_renov'] for a in renov_con_datos), 2),
+        'mrc_actual': round(sum(a['mrc_act_renov'] for a in renov_con_datos), 2),
+        'mrc_cruzada': round(sum(a['mrc_cruz'] for a in renov_con_datos), 2),
+        'ventas_cruzadas': sum(a['ventas_cruz'] for a in renov_con_datos),
+        'rgu_renov': int(round(sum(a['rgu_renov'] for a in renov_con_datos))),
+        'rgu_cruz': int(round(sum(a['rgu_cruz'] for a in renov_con_datos))),
+    }, **resumen_equipo('RENOVACION', renov_con_datos)),
+    'SOHO': dict({
+        'supervisor': 'JULIO CESAR ARAUZ',
+        'contactos_base': None, 'marcados_base': None, 'pct_recorrido': None,
+        'facturadas': sum(a['ventas_total'] for a in soho_con_datos),
+        'mrc_anterior': 0, 'mrc_actual': 0, 'mrc_cruzada': 0,
+        'ventas_cruzadas': sum(a['ventas_cruz'] for a in soho_con_datos),
+        'rgu_renov': 0, 'rgu_cruz': 0,
+    }, **resumen_equipo('SOHO', soho_con_datos)),
+}
+resumen_campanas['WINBACK'] = {
+    'campana': 'WINBACK', 'supervisor': 'JULIO CESAR ARAUZ',
+    'clientes': winback['resumen'].get('clientes', 0),
+    'rgu': winback['resumen'].get('rgu', 0),
+    'mrc': winback['resumen'].get('mrc', 0),
+    'razones': winback['resumen'].get('razones', 0),
+    'principal': winback['por_razon'][0]['r'] if winback['por_razon'] else '',
+}
+resumen_campanas['CROSS_SELL'] = {
+    'campana': 'CROSS_SELL', 'supervisor': 'JULIO CESAR ARAUZ',
+    'gestiones': cross_data['resumen'].get('gestiones', 0),
+    'con_tel': cross_data['resumen'].get('con_tel', 0),
+    'sin_tel_base': cross_data['resumen'].get('sin_tel_base', 0),
+    'ejecutivas': cross_data['resumen'].get('ejecutivas', 0),
+}
+
+# Recorrido de las bases Winback/Cross contra las llamadas SOHO (equipo de Julio)
+soho_llam = [r for r in llamadas if r['campana'] == 'SOHO']
+por_tel_soho = defaultdict(list)
+for r in soho_llam:
+    t = tel8(r['phone'])
+    if t:
+        por_tel_soho[t].append(r)
+
+def recorrido_de_bases(lista_tels):
+    tels = set(t for t in lista_tels if t)
+    marc = set(t for t in tels if t in por_tel_soho)
+    cont = set(t for t in marc if any(r['status'] and r['status'] not in STATUS_NO_CONTACTO
+                                      for r in por_tel_soho[t]))
+    return {
+        'total': len(tels),
+        'marcados': len(marc),
+        'contactados': len(cont),
+        'pct': round(len(marc) / len(tels) * 100, 1) if tels else 0,
+    }
+
+win_tels = [tel8(t) for d in winback['detalle']
+            for t in (d['t1'], d['t2']) if t and t not in ('#N/A',)]
+cross_tels = [tel8(d['tel']) for d in cross_data['detalle']
+              if d['tel'] and d['tel'] != '#N/A']
+recorrido_campanas = {
+    'WINBACK': recorrido_de_bases(win_tels),
+    'CROSS_SELL': recorrido_de_bases(cross_tels),
+}
+print('Recorrido Winback:', recorrido_campanas['WINBACK'])
+print('Recorrido Cross-sell:', recorrido_campanas['CROSS_SELL'])
+
+# =============================================================================
 # 6b. RESUMEN MRC / VENTA CRUZADA (visual de Amir): MRC anterior, MRC actual y
 # MRC de venta cruzada por separado, + RGU de renovación y RGU cruzados
 # =============================================================================
@@ -976,6 +1097,9 @@ mrc_resumen = {
     'rgu_cruzada': int(round(sum(a['rgu_cruz'] for a in renov_con_datos))),
     'ventas_renovacion': sum(a['ventas_renov'] for a in renov_con_datos),
     'ventas_cruzadas': sum(a['ventas_cruz'] for a in renov_con_datos),
+    'mrc_promedio': round(sum(a['mrc_act_renov'] for a in renov_con_datos)
+                          / sum(a['rgu_renov'] for a in renov_con_datos), 2)
+        if sum(a['rgu_renov'] for a in renov_con_datos) else 0,
 }
 mrc_por_mes = {}
 for m in MESES_ORDEN:
@@ -1009,6 +1133,12 @@ data = {
     'renov_por_mes': renov_por_mes,
     'equipo_renovacion': renov_con_datos,
     'renov_sin_actividad': renov_sin_actividad,
+    'equipo_soho': soho_con_datos,
+    'soho_sin_actividad': soho_sin_actividad,
+    'soho_por_mes': soho_por_mes,
+    'resumen_campanas': resumen_campanas,
+    'recorrido_campanas': recorrido_campanas,
+    'metas': {'RENOVACION': {'rgu': 0, 'mrc': 0}, 'SOHO': {'rgu': 0, 'mrc': 0}},
     'recorrido_base': recorrido_base,
     'winback': winback,
     'cross_sell': cross_data,
@@ -1133,6 +1263,9 @@ tr:hover td{background:rgba(123,31,162,.12)}
   <button class="tab" onclick="sw('rec',this)">🗺️ Recorrido de la Base</button>
   <button class="tab" onclick="sw('winback',this)">🔄 Winback</button>
   <button class="tab" onclick="sw('cross',this)">🛒 Cross-selling</button>
+  <button class="tab" onclick="sw('resumen',this)">📋 Resumen de Campañas</button>
+  <button class="tab" onclick="sw('julio',this)">👥 Equipo Julio (SOHO)</button>
+  <button class="tab" onclick="sw('metas',this)">🎯 Metas y Cumplimiento</button>
 </div>
 
 <div id="v-renov" class="content active">
@@ -1141,7 +1274,7 @@ tr:hover td{background:rgba(123,31,162,.12)}
     <div style="overflow-x:auto;max-height:520px;overflow-y:auto;">
     <table id="tabRenov"><thead><tr>
       <th>#</th><th>Agente</th><th class="rt">Llamadas</th><th class="rt">Contactados</th><th class="rt">% Contacto</th>
-      <th class="rt">Ventas Renov</th><th class="rt">Ventas Cruz</th><th class="rt">RGU</th><th class="rt">MRC $</th><th>Progreso</th>
+      <th class="rt">Ventas Renov</th><th class="rt">Ventas Cruz</th><th class="rt">RGU</th><th class="rt">MRC $</th><th class="rt">MRC Prom $</th><th>Progreso</th>
     </tr></thead><tbody></tbody></table>
     </div>
   </div>
@@ -1312,6 +1445,69 @@ tr:hover td{background:rgba(123,31,162,.12)}
   </div>
 </div>
 
+<div id="v-resumen" class="content">
+  <div class="kpi-row" id="resKpiRow"></div>
+  <div class="card full">
+    <h2>📊 Comparativa por Campaña (un vistazo)</h2>
+    <div style="overflow-x:auto">
+    <table id="tabResumen"><thead><tr>
+      <th>Campaña</th><th>Supervisor</th><th class="rt">Contactos Base</th><th class="rt">Marcaciones</th>
+      <th class="rt">% Recorrido</th><th class="rt">Ventas</th><th class="rt">Fijo</th><th class="rt">Móvil</th>
+      <th class="rt">MRC $</th><th class="rt">RGU</th><th class="rt">MRC Prom $</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="resNota"></div>
+  </div>
+  <div class="card full">
+    <h2>🗺️ Recorrido de las Bases Winback y Cross-selling (llamadas SOHO de Julio)</h2>
+    <div style="overflow-x:auto">
+    <table id="tabRecCamp"><thead><tr>
+      <th>Base</th><th class="rt">Teléfonos únicos</th><th class="rt">Marcados</th><th class="rt">Contactados</th><th class="rt">% Recorrido</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="recCampNota"></div>
+  </div>
+</div>
+
+<div id="v-julio" class="content">
+  <div class="kpi-row" id="julioKpiRow"></div>
+  <div class="grid-3" style="margin-bottom:14px">
+    <div class="card"><h2>🥇 Top Vendedores Equipo Julio</h2><div class="chart-box-sm"><canvas id="chJulioTop"></canvas></div></div>
+    <div class="card"><h2>📞 Marcaciones por Agente</h2><div class="chart-box-sm"><canvas id="chJulioLlam"></canvas></div></div>
+    <div class="card"><h2>💰 MRC por Agente</h2><div class="chart-box-sm"><canvas id="chJulioMrc"></canvas></div></div>
+  </div>
+  <div class="card full">
+    <h2>📊 Rendimiento del Equipo de Julio (SOHO: Winback + Cross-selling)</h2>
+    <div style="overflow-x:auto;max-height:560px;overflow-y:auto;">
+    <table id="tabJulio"><thead><tr>
+      <th>#</th><th>Agente</th><th class="rt">Llamadas</th><th class="rt">Contactados</th><th class="rt">% Contacto</th>
+      <th class="rt">Ventas Móvil</th><th class="rt">Ventas Fijo</th><th class="rt">Ventas Tot</th>
+      <th class="rt">RGU</th><th class="rt">MRC $</th><th class="rt">MRC Prom $</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" id="julioNota"></div>
+  </div>
+</div>
+
+<div id="v-metas" class="content">
+  <div class="card full">
+    <h2>🎯 Metas y % de Cumplimiento por Campaña</h2>
+    <div class="note" style="margin-bottom:10px">Escribe la meta de RGU y MRC de cada campaña y presiona Guardar (se guardan en este navegador). El % se calcula con las ventas actuales del reporte. Cuando Julio comparta las metas oficiales, solo hay que escribirlas aquí.</div>
+    <div style="overflow-x:auto">
+    <table id="tabMetas"><thead><tr>
+      <th>Campaña</th><th class="rt">RGU Actual</th><th class="rt">Meta RGU</th><th class="rt">% RGU</th>
+      <th class="rt">MRC Actual $</th><th class="rt">Meta MRC $</th><th class="rt">% MRC</th>
+    </tr></thead><tbody></tbody></table>
+    </div>
+    <div style="margin-top:12px">
+      <button class="mes-btn" onclick="guardarMetas()">💾 Guardar Metas</button>
+      <button class="mes-btn" onclick="limpiarMetas()">🗑️ Limpiar</button>
+      <span id="metasMsg" style="margin-left:10px;font-size:12px;color:#81c784"></span>
+    </div>
+    <div class="note" id="metasNota"></div>
+  </div>
+</div>
+
 <script>
 const D = __DATA__;
 const fmt$ = v => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -1360,6 +1556,7 @@ function agFiltrado(a){
     mrc_ant_renov: vp.mrc_ant_renov||0,
     mrc_act_renov: vp.mrc_act_renov||0,
     mrc_cruz: vp.mrc_cruz||0,
+    mrc_prom: (vp.rgu_renov||0) ? +((vp.mrc_act_renov||0)/(vp.rgu_renov)).toFixed(2) : 0,
     rgu_renov: vp.rgu_renov||0,
     rgu_cruz: vp.rgu_cruz||0,
     tramites: vp.tramite||{}, tipoventa: vp.tipoventa||{},
@@ -1458,13 +1655,14 @@ function renderRenov(){
       <td class="rt">${r.ventas_cruz}</td>
       <td class="rt">${r.rgu.toLocaleString()}</td>
       <td class="rt">${fmt$(r.mrc)}</td>
+      <td class="rt">${r.mrc_prom?fmt$(r.mrc_prom):'—'}</td>
       <td style="min-width:140px"><div class="bar" style="width:${pct}%"></div><span style="font-size:10px;color:#7986cb">${pct}% de máx</span></td>
     </tr>`;
   }).join('');
 }
 document.querySelector('#tabRenov thead').addEventListener('click', e=>{
   const th = e.target.closest('th'); if(!th) return;
-  const map = {0:'agente',1:'agente',2:'llamadas',3:'contactados',4:'tasa_contacto',5:'ventas_renov',6:'ventas_cruz',7:'rgu',8:'mrc'};
+  const map = {0:'agente',1:'agente',2:'llamadas',3:'contactados',4:'tasa_contacto',5:'ventas_renov',6:'ventas_cruz',7:'rgu',8:'mrc',9:'mrc_prom'};
   const idx = Array.from(th.parentNode.children).indexOf(th);
   const k = map[idx]; if(!k) return;
   if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir = (k==='agente')?1:-1;}
@@ -1795,6 +1993,7 @@ function renderMrc(){
     ['MRC Venta Cruzada', fmt$(val('mrc_cruzada')), 'línea nueva + portabilidad + port. externa', 'orange'],
     ['RGU Renovación', (val('rgu_renovacion')||0).toLocaleString(), 'cantidad de líneas RENOVACION', 'teal'],
     ['RGU Cruzados', (val('rgu_cruzada')||0).toLocaleString(), 'líneas de venta cruzada', 'red'],
+    ['MRC Promedio', (val('rgu_renovacion')||0) ? fmt$((val('mrc_actual')) / (val('rgu_renovacion'))) : '—', 'MRC actual ÷ RGU renovación', 'teal'],
   ];
   const elM = document.getElementById('mrcKpiRow');
   if(elM) elM.innerHTML = kpisM.map(a=>
@@ -1914,6 +2113,130 @@ function renderCrossTabla(){
     </tr>`).join('') || '<tr><td colspan="7" class="ct">Sin resultados</td></tr>';
 }
 
+// ---------- RESUMEN DE CAMPANAS ----------
+function renderResumen(){
+  const R = D.resumen_campanas; if(!R) return;
+  const ren = R.RENOVACION||{}, so = R.SOHO||{}, wb = R.WINBACK||{}, cs = R.CROSS_SELL||{};
+  const cards = [
+    ['Renovación (Marinel)', (ren.llamadas||0).toLocaleString()+' llamadas', (ren.ventas_total||0)+' ventas · '+fmt$(ren.mrc||0)+' MRC', 'purple'],
+    ['Equipo Julio (SOHO)', (so.llamadas||0).toLocaleString()+' llamadas', (so.ventas_total||0)+' ventas · '+fmt$(so.mrc||0)+' MRC', 'blue'],
+    ['Winback', (wb.clientes||0)+' clientes a recuperar', (wb.rgu||0)+' RGU · '+fmt$(wb.mrc||0)+' MRC acum.', 'orange'],
+    ['Cross-selling', (cs.gestiones||0).toLocaleString()+' gestiones', (cs.con_tel||0)+' con teléfono · '+(cs.ejecutivas||0)+' ejecutivas', 'green'],
+  ];
+  document.getElementById('resKpiRow').innerHTML = cards.map(a=>
+    `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  const filas = [
+    {n:'RENOVACIÓN', s:'Marinel Moreno', b:ren.contactos_base!=null?ren.contactos_base.toLocaleString():'—', ll:(ren.llamadas||0).toLocaleString(), p:ren.pct_recorrido!=null?ren.pct_recorrido+'%':'—', v:ren.ventas_total||0, f:ren.ventas_fijo||0, m:ren.ventas_movil||0, mrc:fmt$(ren.mrc||0), rgu:(ren.rgu||0).toLocaleString(), mp:fmt$(ren.mrc_prom||0)},
+    {n:'SOHO (Julio)', s:'Julio César Arauz', b:so.contactos_base!=null?so.contactos_base.toLocaleString():'—', ll:(so.llamadas||0).toLocaleString(), p:so.pct_recorrido!=null?so.pct_recorrido+'%':'—', v:so.ventas_total||0, f:so.ventas_fijo||0, m:so.ventas_movil||0, mrc:fmt$(so.mrc||0), rgu:(so.rgu||0).toLocaleString(), mp:fmt$(so.mrc_prom||0)},
+    {n:'WINBACK', s:'Julio César Arauz', b:(wb.clientes||0).toLocaleString()+' clientes', ll:'—', p:'—', v:'—', f:'—', m:'—', mrc:fmt$(wb.mrc||0), rgu:(wb.rgu||0).toLocaleString(), mp:'—'},
+    {n:'CROSS-SELL', s:'Julio César Arauz', b:(cs.gestiones||0).toLocaleString()+' gestiones', ll:'—', p:'—', v:'—', f:'—', m:'—', mrc:'—', rgu:'—', mp:'—'},
+  ];
+  document.getElementById('tabResumen').querySelector('tbody').innerHTML = filas.map(x=>`<tr>
+      <td><strong>${x.n}</strong></td><td>${x.s}</td><td class="rt">${x.b}</td><td class="rt">${x.ll}</td>
+      <td class="rt">${x.p}</td><td class="rt">${x.v}</td><td class="rt">${x.f}</td><td class="rt">${x.m}</td>
+      <td class="rt">${x.mrc}</td><td class="rt">${x.rgu}</td><td class="rt">${x.mp}</td>
+    </tr>`).join('');
+  const elN = document.getElementById('resNota');
+  if(elN) elN.textContent = 'Renovación: contactos/marcaciones del recorrido de base (reporte ene-jun). Winback/Cross: bases de julio 2026. MRC Prom = MRC ÷ RGU.';
+  // recorrido por campana
+  const RC = D.recorrido_campanas||{};
+  const filasRC = [['WINBACK', RC.WINBACK], ['CROSS_SELL', RC.CROSS_SELL]].map(([k,v])=>{
+    v = v||{};
+    return `<tr><td><strong>${k}</strong></td><td class="rt">${(v.total||0).toLocaleString()}</td><td class="rt">${(v.marcados||0).toLocaleString()}</td><td class="rt">${(v.contactados||0).toLocaleString()}</td><td class="rt">${(v.pct||0)}%</td></tr>`;
+  }).join('');
+  document.getElementById('tabRecCamp').querySelector('tbody').innerHTML = filasRC || '<tr><td colspan="5" class="ct">Sin datos</td></tr>';
+  const n2 = document.getElementById('recCampNota');
+  if(n2) n2.textContent = 'Llave de cruce: teléfono (últimos 8 dígitos) contra las marcaciones SOHO del reporte (ene-jun). Las bases son de julio 2026; con bases y reporte del mismo periodo el % subirá.';
+}
+
+// ---------- EQUIPO JULIO ----------
+function renderJulio(){
+  if(!D.equipo_soho) return;
+  const J = D.equipo_soho, Js = D.soho_sin_actividad||[];
+  const sum = f => J.reduce((a,x)=>a+f(x),0);
+  const totL = sum(x=>x.llamadas), totC = sum(x=>x.contactados);
+  const totMrc = sum(x=>x.mrc), totRgu = sum(x=>x.rgu);
+  const kpisJ = [
+    ['Llamadas', totL.toLocaleString(), 'equipo SOHO (Julio)', 'purple'],
+    ['Contactados', totC.toLocaleString(), totL? (totC/totL*100).toFixed(1)+'% tasa contacto':'', 'green'],
+    ['Ventas Totales', sum(x=>x.ventas_total), 'móvil + fijo + líneas', 'blue'],
+    ['MRC Generado', fmt$(totMrc), 'móvil + fijo + líneas', 'orange'],
+    ['RGU Total', totRgu.toLocaleString(), 'servicios vendidos', 'teal'],
+    ['MRC Promedio', totRgu? fmt$(totMrc/totRgu) : '—', 'MRC ÷ RGU del equipo', 'red'],
+  ];
+  const elJ = document.getElementById('julioKpiRow');
+  if(elJ) elJ.innerHTML = kpisJ.map(a=>
+    `<div class="kpi c-${a[3]}"><div class="lbl">${a[0]}</div><div class="val">${a[1]}</div><div class="sub">${a[2]}</div></div>`).join('');
+  const rows = J.concat(Js).sort((a,b)=>(b.ventas_total+b.mrc/1000)-(a.ventas_total+a.mrc/1000));
+  document.getElementById('tabJulio').querySelector('tbody').innerHTML = rows.map((r,i)=>`<tr class="${r.llamadas===0&&r.ventas_total===0?'tr-low':''}">
+      <td><span class="pos pos-${i+1}">${i+1}</span></td>
+      <td><strong>${r.agente}</strong></td>
+      <td class="rt">${r.llamadas.toLocaleString()}</td><td class="rt">${r.contactados.toLocaleString()}</td>
+      <td class="rt">${r.tasa_contacto}%</td>
+      <td class="rt">${r.ventas_movil}</td><td class="rt">${r.ventas_fijo}</td><td class="rt"><strong>${r.ventas_total}</strong></td>
+      <td class="rt">${r.rgu.toLocaleString()}</td><td class="rt">${fmt$(r.mrc)}</td><td class="rt">${r.mrc_prom?fmt$(r.mrc_prom):'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="11" class="ct">Sin resultados</td></tr>';
+  const nJ = document.getElementById('julioNota');
+  if(nJ) nJ.textContent = 'Ventas del reporte ene-jun para el equipo de Julio (campaña SOHO: Winback y Cross-selling, móvil y fijo). Los integrantes sin actividad aparecen en rojo.';
+  const top = J.slice().sort((a,b)=>b.ventas_total-a.ventas_total).slice(0,10);
+  nuevoChart('chJulioTop',{type:'bar',data:{labels:top.map(r=>r.agente.length>22?r.agente.slice(0,22)+'…':r.agente),datasets:[{label:'Ventas',data:top.map(r=>r.ventas_total),backgroundColor:COLORS,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  const lm = J.slice().sort((a,b)=>b.llamadas-a.llamadas).slice(0,10);
+  nuevoChart('chJulioLlam',{type:'bar',data:{labels:lm.map(r=>r.agente.length>22?r.agente.slice(0,22)+'…':r.agente),datasets:[{label:'Llamadas',data:lm.map(r=>r.llamadas),backgroundColor:'#42a5f5',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+  const mm = J.slice().sort((a,b)=>b.mrc-a.mrc).slice(0,10);
+  nuevoChart('chJulioMrc',{type:'bar',data:{labels:mm.map(r=>r.agente.length>22?r.agente.slice(0,22)+'…':r.agente),datasets:[{label:'MRC $',data:mm.map(r=>r.mrc),backgroundColor:'#ffa726',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9fa8da'}},y:{ticks:{color:'#9fa8da',font:{size:9}}}}}});
+}
+
+// ---------- METAS Y CUMPLIMIENTO ----------
+function metasCargadas(){
+  try { return JSON.parse(localStorage.getItem('soho_metas')||'{}'); } catch(e){ return {}; }
+}
+function renderMetas(){
+  const M = metasCargadas();
+  const R = D.resumen_campanas||{};
+  const def = [['RENOVACION','Renovación (Marinel Moreno)','MARINEL MORENO', R.RENOVACION||{}],
+               ['SOHO','Equipo Julio (Winback + Cross-selling)','JULIO CESAR ARAUZ', R.SOHO||{}]];
+  document.getElementById('tabMetas').querySelector('tbody').innerHTML = def.map(([key,nom,sup,d])=>{
+    const rguA = d.rgu||0, mrcA = d.mrc||0;
+    const meta = M[key]||{};
+    const rguM = meta.rgu||'', mrcM = meta.mrc||'';
+    const pR = rguM ? (rguA/rguM*100).toFixed(0)+'%' : '—';
+    const pM = mrcM ? (mrcA/mrcM*100).toFixed(0)+'%' : '—';
+    return `<tr>
+      <td><strong>${nom}</strong><div style="font-size:10px;color:#7986cb">${sup}</div></td>
+      <td class="rt">${rguA.toLocaleString()}</td>
+      <td class="rt"><input type="number" id="meta_rgu_${key}" value="${rguM}" style="width:90px;background:rgba(255,255,255,.06);color:#e8eaf6;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px;text-align:right"></td>
+      <td class="rt">${pR}</td>
+      <td class="rt">${fmt$(mrcA)}</td>
+      <td class="rt"><input type="number" id="meta_mrc_${key}" value="${mrcM}" style="width:110px;background:rgba(255,255,255,.06);color:#e8eaf6;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px;text-align:right"></td>
+      <td class="rt">${pM}</td>
+    </tr>`;
+  }).join('');
+  const nM = document.getElementById('metasNota');
+  if(nM) nM.textContent = 'Los valores actuales (RGU y MRC) salen del reporte ene-jun. Las metas las define la gerencia por campaña; una vez guardadas, el % de cumplimiento se calcula automáticamente.';
+}
+function guardarMetas(){
+  const M = metasCargadas();
+  ['RENOVACION','SOHO'].forEach(key=>{
+    const r = document.getElementById('meta_rgu_'+key), m = document.getElementById('meta_mrc_'+key);
+    if(!r || !m) return;
+    M[key] = {rgu: Number(r.value)||0, mrc: Number(m.value)||0};
+  });
+  localStorage.setItem('soho_metas', JSON.stringify(M));
+  const msg = document.getElementById('metasMsg');
+  if(msg){ msg.textContent = '✅ Metas guardadas'; setTimeout(()=>msg.textContent='',2500); }
+  renderMetas();
+}
+function limpiarMetas(){
+  localStorage.removeItem('soho_metas');
+  renderMetas();
+}
+
 function renderAll(){
   const safe = fn => { try { fn(); } catch(e){ console.error('Error en '+fn.name+':', e); } };
   safe(kpis);
@@ -1926,6 +2249,9 @@ function renderAll(){
   safe(renderRecorrido);
   safe(renderWin);
   safe(renderCross);
+  safe(renderResumen);
+  safe(renderJulio);
+  safe(renderMetas);
 }
 
 renderAll();
