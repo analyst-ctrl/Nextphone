@@ -1,0 +1,125 @@
+================================================================
+INSTRUCCIONES - REPORTE DE COBROS JULIO 2026 (EXCEL)
+================================================================
+Archivo: REPORTE DE COBROS - JULIO 2026.xlsx
+Folder  : Lixi\cobros_historial\REPORTE JULIO\
+Generado a partir de los archivos de Lixi\cobros_historial\Materials\
+================================================================
+
+----------------------------------------------------------------
+1) QUE CONTIENE EL EXCEL
+----------------------------------------------------------------
+ HOJAS DEL ARCHIVO:
+  - Vici       : CALL REPORT - JULIO 31 (2).xlsx        (3,535 llamadas)
+  - Formas     : LLAMADAS SALIENTES - COBROS - JULIO 31 (1).xlsx
+                                                         (1,039 gestiones)
+  - Base       : NEXTPANAMA __ INNOVATEK __ LLAMAYA 08.07.26.xlsx
+                                                         (33,764 cuentas)
+  - DASHBOARD2 : FUNNEL + RESUMEN + FINANCIEROS POR CANAL (con formulas)
+  - datos      : Resumen Ejecutivo + Productividad + Financieros (formulas)
+  - AVISOS     : ADVERTENCIAS IMPORTANTES PARA ENTREGAR
+
+----------------------------------------------------------------
+2) QUE ES AUTOMATICO (FORMULAS VIVAS)
+----------------------------------------------------------------
+ Todas las celdas de DASHBOARD2 y datos son FORMULAS que leen de
+ Vici / Formas / Base. Al abrir el archivo en Excel los valores se
+ recalcular solos (se activo recalculo automatico). No hace falta
+ escribir nada a mano.
+
+ Principales formulas:
+  Asignadas      =COUNTIF(Base!S:S,"Mora")+COUNTIF(Base!S:S,"Cero Pago")
+  Gestionadas    =SUMPRODUCTO de cuentas unicas en Formas (col D)
+  Contactadas    =COUNTIFS(Formas col H, <>Correo de voz / <>No
+                 contactado / <>Numero equivocado / <>Mensaje a tercero)
+  Promesas       =COUNTA(Formas J)-COUNTBLANK(Formas J)
+  Pagos          =COUNTIF(Formas L,"si")
+  Cartera ($)    =SUMPRODUCTO((Formas J<>"")*Formas K)  -> Total Promesas
+  Recuperacion   =SUMIF(Formas L,"si",Formas N)
+  RPC            =SUMPRODUCTO de escenarios productivos en Formas H
+  Financieros    =SUMIF(Formas G,"<canal>",Formas K) y SUMPRODUCTO
+                 para recuperado por canal.
+
+----------------------------------------------------------------
+3) VALORES ESPERADOS AL ABRIR (para verificar)
+----------------------------------------------------------------
+  FUNNEL:
+    Asignadas   13,130     (Mora + Cero Pago de la base 08.07.26)
+    Gestionadas    948
+    Contactadas    650
+    Promesas        56
+    Pagos          364
+
+  RESUMEN:
+    HC              1
+    Cartera ($)   2,283.08     (Total de promesas)
+    Recuperacion 12,785.67
+    % Recuperacion 560.02%     (fuera de rango, ver AVISOS)
+    Contactabilidad 18.39%
+    RPC            463
+    % RPC          71.23%
+    Promesas cumplidas 364
+    % Cumplimiento 650.00%     (fuera de rango, ver AVISOS)
+
+  PRODUCTIVIDAD:
+    Llamadas      3,535
+    Contactos       650
+    RPC             463
+    Cant Promesas    56
+
+  FINANCIEROS POR CANAL (Promesa / Recuperado):
+    Call Center  Outbound   364.82 / 1,366.15
+    Digital                100.14 /   493.66
+    Masivo (D2D)         1,579.00 / 10,070.09
+    Soho                   208.66 /   803.50
+    Soho -Callcenter         0.00 /    52.27
+    Punto de ventas         30.46 /     0.00
+    Oeste                    0.00 /     0.00
+
+----------------------------------------------------------------
+4) AVISO IMPORTANTE (ESTA EN LA HOJA "AVISOS")
+----------------------------------------------------------------
+ ANTES DE ENTREGAR, REVISAR:
+
+ 1) PAGOS SIN PROMESA (EL PRINCIPAL PROBLEMA):
+    Julio tiene 364 pagos "si" pero solo 56 promesas registradas
+    (362 pagos NO tienen fecha de promesa). Por eso:
+      - % Recuperacion = 560%  (por encima de lo prometido)
+      - % Cumplimiento = 650%  (imposible: pagos > promesas)
+    Validar si la columna "Fecha promesa de pago" se diligencio
+    parcialmente en el formulario de julio.
+
+ 2) ASIGNADAS:
+    Mayo/Junio reportaron 3,566 cuentas; la base de julio trae
+    33,764 y 13,130 en Mora/Cero Pago. Definir que base se usa.
+
+ 3) VOLUMEN DE GESTIONES:
+    Formas julio = 1,039 vs 4,220 (mayo) y 4,351 (junio).
+    Parece INCOMPLETO (Vici si es consistente: 3,535 llamadas).
+
+ 4) CARTERA (criterio corregido):
+    Se uso la metodologia historica: Cartera = Total de Promesa
+    de Pago. Verificado: Mayo $4,667.45 y Junio $6,890.04 cuadran.
+
+ 5) RECUPERADO:
+    Julio recupero $12,785.67 (mas que junio) con menos gestiones.
+    Validar montos pagados (335 de 364 pagos traen monto).
+
+ 6) CANALES:
+    Aparecen Soho, Soho -Callcenter y Punto de ventas (no estan en
+    el instructivo). Se mantuvieron los 7 canales reales.
+
+----------------------------------------------------------------
+5) COMO ENTREGAR / MODIFICAR
+----------------------------------------------------------------
+ 1. Abrir el archivo en Excel (permitir que se recalculen formulas).
+ 2. Si Excel pregunta por recalculo: Aceptar.
+ 3. Verificar la hoja AVISOS y comentar los puntos con la gerencia.
+ 4. Si se corrige la base de asignadas, cambiar la formula de
+    Asignadas en DASHBOARD2 B3 y en datos B4 (o escribir 3,566).
+ 5. Guardar como: REPORTE COBROS - JULIO 2026.xlsx
+ 6. Entregar junto con el PDF del dashboard y este instructivo.
+
+----------------------------------------------------------------
+FIN DE LAS INSTRUCCIONES
+================================================================

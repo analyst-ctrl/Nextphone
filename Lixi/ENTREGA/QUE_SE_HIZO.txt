@@ -1,0 +1,86 @@
+========================================================
+QUE SE HIZO - CARPETA ENTREGA
+Carpeta: Lixi\ENTREGA\
+Fecha de generacion: 11/08/2026
+========================================================
+
+CONTENIDO DE ESTA CARPETA
+------------------------------------------------------------
+ 1) REPORTE DE COBROS - JULIO 2026.xlsx
+    Reporte de GESTION de cobros del mes de JULIO 2026.
+    Hojas: Vici (llamadas), Formas (gestiones), Base (cartera
+    NEXTPANAMA/INNOVATEK/LLAMAYA 08.07.26), DASHBOARD2 (funnel +
+    resumen + financieros por canal, con FORMULAS VIVAS), datos,
+    AVISOS (advertencias de calidad) y Fuentes (links).
+
+ 2) Reporte_Cartera_Formulas.xlsx
+    Reporte de CARTERA (tel/equipos financiados), generado desde
+    cobros.db con FORMULAS VIVAS (COUNTIF / SUMPRODUCT / COUNTIF).
+    Hojas: Base (33,969 cuentas), Llamadas (4,055 llamadas Vici),
+    Dashboard (KPIs + graficos), Cuentas (detalle 2,000),
+    Top Deudores (top 50 por dias de atraso) y Fuentes (links).
+
+ 3) REPORTE COBROS - JULIO 2026 - INTEGRADO.xlsx
+    EL CAMBUINADO: fusion de los dos reportes en un solo archivo.
+    Hojas de gestion (Vici, Formas, Base, DASHBOARD2, AVISOS,
+    datos) + hojas de cartera (Cartera_Base, Cartera_Llamadas,
+    Dashboard Cartera, Top Deudores) + Fuentes.
+    Es el archivo recomendado para entregar a gerencia.
+
+ 4) INSTRUCCIONES USO REPORTE JULIO.txt
+    Como usar el reporte de gestion de julio (original).
+
+ 5) INSTRUCTIVO REPORTE JULIO.txt
+    Como se armo el reporte de julio (formulas y metodo).
+
+ 6) QUE_SE_HIZO.txt  (este archivo)
+------------------------------------------------------------
+
+POR QUE EXISTEN DOS TIPOS DE REPORTE
+------------------------------------------------------------
+ - El reporte de GESTION (julio) mide el desempeno del call center:
+   funnel Asignadas -> Gestionadas -> Contactadas -> Promesas ->
+   Pagos, %Recuperacion, Contactabilidad, RPC, %Cumplimiento y
+   montos por canal. Viene de las hojas Vici/Formas/Base.
+ - El reporte de CARTERA mide el negocio: cuantas cuentas hay,
+   cuantas en mora, ventas totales, dias de atraso y los mayores
+   deudores. Viene de la base cobros.db (listas 51124 + call report
+   exportados de ViciDial).
+
+LO QUE SE GENERO / SE HIZO
+------------------------------------------------------------
+ 1. Se creo esta carpeta Lixi\ENTREGA\ para los archivos a entregar
+    (sin modificar ningun archivo original).
+ 2. Se copio el reporte de gestion de julio y se le agrego una hoja
+    FUENTES con links a las carpetas de origen.
+ 3. Se creo Reporte_Cartera_Formulas.xlsx: la cartera ya no es solo
+    valores, ahora tiene FORMULAS VIVAS que se recalculan al abrir
+    (los KPI leen de las hojas Base y Llamadas del mismo archivo).
+ 4. Se creo el reporte INTEGRADO (cambuinado) con las hojas de
+    ambos reportes en un solo Excel.
+ 5. Todas las hojas FUENTES contienen los links a:
+      - Carpeta ENTREGA
+      - Reporte julio original (cobros_historial\REPORTE JULIO)
+      - Materias primas julio (cobros_historial\Materials)
+      - Pipeline de cartera (Lixi\Cobros: scripts + cobros.db)
+      - Reporte cartera original (Cobros\Reporte_Cobros.xlsx)
+
+NOTAS IMPORTANTES PARA ENTREGAR
+------------------------------------------------------------
+ - Abrir los Excel en Excel/Power BI y permitir el RECALCULO de
+   formulas (los valores se actualizan solos).
+ - El reporte de julio tiene AVISOS pendientes de validar con el
+   operativo antes de entregar:
+     * 364 pagos "si" pero solo 56 promesas -> %Recuperacion y
+       %Cumplimiento fuera de rango (560% / 650%).
+     * Asignadas: la base nueva da 13,130 (historico era 3,566).
+     * Volumen de gestiones de julio parece incompleto (1,039 vs
+       4,220 en mayo y 4,351 en junio).
+ - Para el proximo mes, el pipeline Lixi\Cobros\ (importar.py +
+   excel_report.py) puede regenerar la cartera automaticamente.
+   El siguiente paso opcional es agregar los KPIs del funnel al
+   script para automatizar tambien el reporte de gestion.
+
+========================================================
+FIN DE QUE_SE_HIZO
+========================================================

@@ -1,0 +1,332 @@
+================================================================
+REPORTE DE COBROS - MES DE JULIO 2026
+DATAPHONE | COBROS
+Generado con base en: INSTRUCTIVO REPORTE JULIO.txt y datos reales
+de los archivos del folder Materials\ (corte 31 de julio)
+================================================================
+
+CONTENIDO
+----------------------------------------------------------------
+ 1) ESTRUCTURA DEL REPORTE
+ 2) FORMULAS (todas) CON VALORES CALCULADOS DE JULIO
+ 3) FUNNEL DE COBROS (DASHBOARD2)
+ 4) RESUMEN EJECUTIVO (hoja datos)
+ 5) PRODUCTIVIDAD OPERATIVA
+ 6) RESULTADOS FINANCIEROS POR CANAL
+ 7) TABLA DE VALIDACION vs MAYO / JUNIO
+ 8) ALERTAS Y DISCREPANCIAS DE JULIO
+================================================================
+
+
+----------------------------------------------------------------
+CONVENCION DE HOJAS EN EL ARCHIVO EXCEL
+----------------------------------------------------------------
+ 'Vici'   = CALL REPORT - JULIO 31 (2).xlsx          (llamadas Vici)
+ 'Formas' = LLAMADAS SALIENTES - COBROS - JULIO 31 (1).xlsx (gestiones)
+ 'Base'   = NEXTPANAMA __ INNOVATEK __ LLAMAYA 08.07.26.xlsx (cartera)
+
+ Columnas de 'Formas' (julio):
+   A = Marca temporal | B = Agente | C = Numero celular | D = Cuenta
+   E = Identificacion (cedula) | F = Campania | G = Canal
+   H = Escenario | I = Motivo | J = Fecha promesa de pago
+   K = Monto de promesa de pago | L = Realiza el pago (si/no)
+   M = Fecha de Pago | N = Monto pagado | O = Tiempo de mora (dias)
+
+ Columnas de 'Vici' (julio):
+   A = call_date | B = phone_number_dialed | C = status
+   D = user | E = full_name | ... | AI = status_name
+
+ Columnas de 'Base' (julio):
+   A = numero_contrato | L = monto_cuotas | M = Cuotas_Pagadas
+   S = ESTATUS (Al dia / Mora / Cero Pago / Mora Real)
+   U = DIAS_ATRASO
+
+----------------------------------------------------------------
+1) ESTRUCTURA DEL REPORTE (mismo formato de Mayo/Junio)
+----------------------------------------------------------------
+ Hoja "DASHBOARD2":
+   - Titulo: DATAPHONE | COBROS
+   - FUNNEL DE COBROS (Status / Cant)
+       Asignadas | Gestionadas | Contactadas | Promesas | Pagos
+   - RESUMEN (HC, Cuentas asignadas, Cartera $)
+   - MES EN TRANSITO (JULIO)
+   - Resultados Financieros (Segmento / Promesa de Pago / Monto Recuperado)
+   - % PROMESA
+
+ Hoja "datos":
+   - Resumen Ejecutivo: HC, Cuentas asignadas, Cartera ($),
+     Recuperacion ($), % Recuperacion, Contactabilidad,
+     RPC, Promesas, Promesas cumplidas, % Cumplimiento
+   - Productividad Operativa: Llamadas, Contactos, RPC,
+     Cant Promesas de pago, % RPC
+   - Resultados Financieros por canal:
+     Call Center Outbound, Digital, Masivo (D2D), Oeste
+
+----------------------------------------------------------------
+2) FORMULAS (TODAS) + VALORES DE JULIO CALCULADOS
+----------------------------------------------------------------
+Datos base de julio usados en el calculo:
+  - 'Vici'   : 3,535 llamadas
+  - 'Formas' : 1,039 gestiones (filas de datos)
+  - 'Base'   : 33,764 cuentas | Mora 10,549 | Cero Pago 2,581
+               | Mora Real 869 | Al dia 19,765
+
+
+------------- FUNNEL (DASHBOARD2) -------------
+
+ Asignadas  (cuentas unicas en 'Base' con ESTATUS Mora/Cero Pago)
+   =SUMPRODUCTO((ESTATUS rango="Mora")+(ESTATUS rango="Cero Pago"))
+   Convencion instructivo: solo Mora y Cero Pago.
+   VALOR JULIO (Mora+Cero):         13,130
+   Si se incluye "Mora Real" (869): 13,999
+
+ Gestionadas  (cuentas unicas con al menos 1 gestion en 'Formas')
+   =SUMPRODUCTO(('Formas'!D2:D2000<>"")/COUNTIF('Formas'!D2:D2000,'Formas'!D2:D2000&""))
+   VALOR JULIO: 948
+
+ Contactadas  (registros con escenario de contacto real, NO son:
+   Correo de voz, No contactado, Numero equivocado, Mensaje a tercero)
+   =COUNTIFS('Formas'!H2:H2000,"<>Correo de voz",
+             'Formas'!H2:H2000,"<>No contactado",
+             'Formas'!H2:H2000,"<>Numero equivocado",
+             'Formas'!H2:H2000,"<>Mensaje a tercero")
+   VALOR JULIO: 650
+   Desglose escenarios julio:
+     Cliente al dia 348 | Contactado 185 | Cuenta cesada 112
+     Correo de voz 232 | No contactado 78 | Mensaje a tercero 49
+     Numero equivocado 30 | Menor de edad 2 | Volver a llamar 1
+     Persona en prision 1 | Lenguaje inapropiado 1
+
+ Promesas  (registros donde "Fecha promesa de pago" NO esta vacia)
+   =COUNTA('Formas'!J2:J2000)-COUNTBLANK('Formas'!J2:J2000)
+   VALOR JULIO: 56
+   Monto de promesa total: $2,283.08
+
+ Pagos  (registros donde "Realiza el pago" = si)
+   =COUNTIF('Formas'!L2:L2000,"si")
+   VALOR JULIO: 364
+
+ % PROMESA
+   = Promesas / Asignadas
+   VALOR JULIO: 56 / 13,130  = 0.43%   (o 56/13,999 = 0.40%)
+   Mayo: 3.22% | Junio: 5.08%
+
+
+------------- RESUMEN EJECUTIVO (hoja datos) -------------
+
+ HC (cantidad de agentes)
+   =SUMPRODUCTO(('Formas'!B2:B2000<>"")/COUNTIF('Formas'!B2:B2000,'Formas'!B2:B2000&""))
+   VALOR JULIO: 1  (Lili Velez)
+
+ Cuentas asignadas
+   = Asignadas (del funnel)
+   VALOR JULIO: 13,130   (Mora+Cero Pago)
+
+ Cartera ($)
+   Formula instructivo (desde 'Base'):
+     =SUMAR.SI('Base'!S2:S34000,"Mora",'Base'!L2:L34000)
+      +SUMAR.SI('Base'!S2:S34000,"Cero Pago",'Base'!L2:L34000)
+   Nota: sin una columna de saldo en la base, el saldo real es
+   monto_cuotas x (cuotas totales - Cuotas_Pagadas). Con la base
+   actual NEXTPANAMA (08.07.26) el saldo en mora es del orden de
+   $2,100,000+, NO comparable con mayo/junio.
+   Referencia mayo/junio (cartera utilizada en reportes previos):
+     Mayo: $4,667.45 | Junio: $6,890.04
+
+ Recuperacion ($)  (suma de Monto pagado donde pago = si)
+   =SUMAR.SI('Formas'!L2:L2000,"si",'Formas'!N2:N2000)
+   VALOR JULIO: $12,785.67
+
+ % Recuperacion
+   = Recuperacion / Cartera
+   VALOR JULIO: 12,785.67 / Cartera  (depende del criterio de cartera)
+   Mayo: 35.81% | Junio: 117.33%
+
+ Contactabilidad
+   = Contactos / Llamadas
+   VALOR JULIO: 650 / 3,535 = 18.39%
+   Mayo: 11.88% | Junio: 43.54%
+
+ RPC (contactos productivos, escenarios con RPC=1 segun tabla Ref):
+   Cliente al dia | Cuenta cesada | Cliente ocupado | Volver a llamar
+   Lenguaje inapropiado | Incidente herramienta | Persona detenida
+   =SUMAPRODUCTO(( 'Formas'!H2:H2000="Cliente al dia" )
+                +( 'Formas'!H2:H2000="Cuenta cesada" )
+                +( 'Formas'!H2:H2000="Volver a llamar" )
+                +( 'Formas'!H2:H2000="Cliente con lenguaje inapropiado" )
+                +( 'Formas'!H2:H2000="Persona en prision" ))
+   VALOR JULIO: 348 + 112 + 1 + 1 + 1 = 463
+
+ % RPC
+   = RPC / Contactos
+   VALOR JULIO: 463 / 650 = 71.23%
+   Mayo: 80.96% | Junio: 84.89%
+
+ Promesas
+   = Promesas (del funnel)
+   VALOR JULIO: 56
+
+ Promesas cumplidas
+   =COUNTIF('Formas'!L2:L2000,"si")
+   VALOR JULIO: 364
+   ATENCION: supera a las promesas (364 > 56). Indica pagos
+   registrados sin promesa previa en el formulario (ver seccion 8).
+
+ % Cumplimiento
+   = Promesas cumplidas / Promesas
+   VALOR JULIO: 364 / 56 = 650.00%  (fuera de rango, ver alertas)
+   Mayo: 79.13% | Junio: 55.25%
+
+
+------------- PRODUCTIVIDAD OPERATIVA (hoja datos) -------------
+
+ Llamadas
+   =COUNTA('Vici'!A2:A4000)
+   VALOR JULIO: 3,535
+   Mayo: 6,496 | Junio: 2,159
+
+ Contactos
+   = Contactadas (del funnel, escenarios contactables)
+   VALOR JULIO: 650
+   Mayo: 772 | Junio: 940
+
+ RPC
+   = RPC (contactos productivos)
+   VALOR JULIO: 463
+   Mayo: 625 | Junio: 798
+
+ Cant Promesas de pago
+   = Promesas (del funnel)
+   VALOR JULIO: 56
+
+ % RPC
+   = RPC / Contactos
+   VALOR JULIO: 71.23%
+
+
+------------- FINANCIEROS POR CANAL (hoja datos) -------------
+  Promesa  =SUMAR.SI('Formas'!G2:G2000,"<CANAL>",'Formas'!K2:K2000)
+  Recuperado =SUMAPRODUCTO(('Formas'!G2:G2000="<CANAL>")
+                          *('Formas'!L2:L2000="si")*'Formas'!N2:N2000)
+
+  CANAL                              PROMESA ($)   RECUPERADO ($)
+  Call Center  Outbound                364.82         1,366.15
+  Digital                              100.14           493.66
+  Masivo (D2D)                       1,579.00        10,070.09
+  Soho                                 208.66           803.50
+  Soho -Callcenter                       0.00            52.27
+  Punto de ventas                       30.46             0.00
+  Oeste                                  0.00             0.00
+  TOTAL GENERAL                      2,283.08        12,785.67
+
+
+----------------------------------------------------------------
+3) FUNNEL DE COBROS - JULIO (resumen)
+----------------------------------------------------------------
+  Status       |  Cant
+  Asignadas    |  13,130  (Mora+Cero Pago; con Mora Real: 13,999)
+  Gestionadas  |     948
+  Contactadas  |     650
+  Promesas     |      56
+  Pagos        |     364
+
+----------------------------------------------------------------
+4) RESUMEN EJECUTIVO - JULIO
+----------------------------------------------------------------
+  HC                      1
+  Cuentas asignadas       13,130
+  Cartera ($)             (ver alertas: criterio historico vs base)
+  Recuperacion ($)        12,785.67
+  % Recuperacion          (depende de Cartera)
+  Contactabilidad         18.39%
+  RPC (n)                 463
+  % RPC                   71.23%
+  Promesas                56
+  Promesas cumplidas      364
+  % Cumplimiento          650.00%  (fuera de rango, ver seccion 8)
+
+----------------------------------------------------------------
+5) PRODUCTIVIDAD OPERATIVA - JULIO
+----------------------------------------------------------------
+  Llamadas             3,535
+  Contactos              650
+  RPC                    463
+  Cant Promesas de pago   56
+  % RPC                71.23%
+
+----------------------------------------------------------------
+6) RESULTADOS FINANCIEROS POR CANAL - JULIO
+----------------------------------------------------------------
+  (ver tabla en seccion 2, bloque FINANCIEROS POR CANAL)
+
+----------------------------------------------------------------
+7) TABLA DE VALIDACION vs HISTORICO
+----------------------------------------------------------------
+  INDICADOR              MAYO      JUNIO     JULIO 2026
+  Asignadas              3,566     3,566     13,130  (*)
+  Gestionadas            3,468       831        948
+  Contactadas              772       940        650
+  Promesas                 115       181         56
+  Pagos                     91       100        364
+  Llamadas               6,496     2,159      3,535
+  RPC                      625       798        463
+  Cartera ($)          $4,667.45 $6,890.04      n/d (**)
+  Recuperacion ($)     $1,671.46 $8,084.35  $12,785.67
+  % Recuperacion         35.81%   117.33%      n/d (**)
+  Contactabilidad        11.88%    43.54%     18.39%
+  % RPC                  80.96%    84.89%     71.23%
+  % Cumplimiento         79.13%    55.25%    650.00% (***)
+  % PROMESA               3.22%     5.08%      0.43%
+
+  (*) Mayo/Junio usaron una base de 3,566 cuentas; la base de julio
+      (NEXTPANAMA 08.07.26) trae 33,764 y en mora/cero pago 13,130.
+      El numero de asignadas depende de la base que se defina como
+      "cuentas asignadas" del mes (ver seccion 8, alerta 1).
+  (**) Cartera sin definir: el historial usa una cartera chica
+      ($4,667 / $6,890) mientras la base de julio trae saldos por
+      millones. Sin cartera no hay % Recuperacion comparable.
+  (***) % Cumplimiento fuera de rango por pagos sin promesa (ver 8).
+
+----------------------------------------------------------------
+8) ALERTAS Y DISCREPANCIAS DE JULIO
+----------------------------------------------------------------
+ 1. BASE (ASIGNADAS):
+    Mayo/Junio reportan 3,566 asignadas; la base de julio trae
+    33,764 cuentas y 13,130 en Mora/Cero Pago. O la base de julio
+    es mucho mayor, o "asignadas" en historial era un subconjunto.
+    DEFINIR la base de "cuentas asignadas" antes de fijar el numero.
+
+ 2. CARTERA:
+    El historial usa cartera $4,667.45 (mayo) y $6,890.04 (junio),
+    valores que NO salen de sumar saldos de la base NEXTPANAMA de
+    julio (los saldos de mora suman millones). Falta la columna de
+    saldo / el criterio exacto para reproducir esos numeros.
+
+ 3. PAGOS SIN PROMESA:
+    Pagos julio = 364 pero Promesas = 56. Hay 362 pagos "si" sin
+    fecha de promesa registrada. Esto rompe % Cumplimiento (650%).
+    Verificar si la columna J se diligencio solo parcialmente en el
+    formulario de julio, o si se deben contar pagos por otra via.
+
+ 4. VOLUMEN DE GESTIONES:
+    'Formas' julio trae solo 1,039 gestiones vs 4,220 (mayo) y
+    4,351 (junio). El volumen parece INCOMPLETO (aunque la base
+    'Vici' de julio con 3,535 llamadas es consistente con junio).
+
+ 5. CONTACTABILIDAD:
+    650 contactadas / 3,535 llamadas = 18.39%, dentro del rango
+    historico (11.88% - 43.54%). OK.
+
+ 6. RECUPERADO vs HISTORICO:
+    Julio recupero $12,785.67, por encima de junio ($8,084.35),
+    pero con menos gestiones. Validar montos pagados (335 de 364
+    pagos traen monto).
+
+ 7. CANALES:
+    "Soho" y "Soho -Callcenter" y "Punto de ventas" aparecen en
+    julio. El instructivo solo listaba Call Center / Digital /
+    Masivo / Oeste. Mantener los 7 canales reales del formulario.
+
+================================================================
+FIN DEL REPORTE - JULIO 2026
+================================================================

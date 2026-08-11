@@ -1,0 +1,485 @@
+================================================================
+INSTRUCTIVO - REPORTE DE COBROS MES DE JULIO 2026
+Basado en los reportes historicos: Mayo (REPORTE COBRO ACTUAL)
+y Junio (REPORTE COBROS - 30 DE JUNIO)
+================================================================
+
+INDICE
+----------------------------------------------------------------
+ 1) ARCHIVOS REQUERIDOS
+ 2) ARCHIVOS DE REFERENCIA (historicos)
+ 3) ESTRUCTURA DEL REPORTE
+ 4) FORMULAS (todas)
+ 5) DIAGRAMA ENTIDAD - RELACION (E/R)
+ 6) DIAGRAMA DE FLUJO
+ 7) PASOS PARA ARMAR EL REPORTE DE JULIO
+ 8) ALERTAS DETECTADAS
+================================================================
+
+
+----------------------------------------------------------------
+1) ARCHIVOS REQUERIDOS (para generar el reporte de JULIO)
+----------------------------------------------------------------
+ Los archivos que se requirieron para JULIO son:
+
+ A) BASE DE CARTERA (cuentas asignadas + saldo)
+    -> NEXTPANAMA __ INNOVATEK __ LLAMAYA 08.07.26.xlsx
+       Hoja "Sheet 1"  |  33,765 filas  |  22 columnas
+       Columnas utiles:
+         numero_contrato   (clave primaria de la cuenta)
+         fecha_venta, numero_identificacion, Nombre Completo,
+         Referencia_telefono, imei, modelo_telefono,
+         aliado, tienda, vendendor, precio, monto_cuotas,
+         Cuotas_Pagadas, direccion, telefono_cliente,
+         nombre_referido, telefono_referido, telefono_alterno,
+         ESTATUS (Al dia / Mora / Cero Pago),
+         marca, DIAS_ATRASO
+       USO: de aqui sale "Cuentas asignadas" y "Cartera ($)".
+
+ B) LLAMADAS / CALL REPORT (Vici) DEL MES
+    -> CALL REPORT - JULIO 31 (2).xlsx
+       Hoja "Hoja1"  |  3,536 filas  |  39 columnas
+       Columnas utiles:
+         call_date, phone_number_dialed, status, user,
+         full_name, campaign_id, vendor_lead_code, source_id,
+         list_id, gmt_offset_now, phone_code, phone_number,
+         title, first_name, middle_initial, last_name,
+         address1, address2, address3, city, state, ...
+       USO: de aqui sale "Llamadas" y "Contactos" (Vici).
+       NOTA: status "AB" = el sistema contesto; los contactos
+             reales se definen por tipificacion/escenario.
+
+ C) GESTIONES / FORMAS (promesas, pagos, escenarios)
+    -> LLAMADAS SALIENTES - COBROS - JULIO 31 (1).xlsx
+       Hoja "Hoja1"  |  1,040 filas  |  16 columnas
+       Columnas:
+         Marca temporal, Agente, Numero celular, Cuenta,
+         Identificacion (cedula), Campania, Canal,
+         Escenario, Motivo, Fecha promesa de pago,
+         Monto de promesa de pago, Realiza el pago,
+         Fecha de Pago, Monto pagado, Tiempo de mora (dias),
+         Otros Motivo
+       USO: de aqui sale "Promesas", "Pagos", "Monto
+             Recuperado", "Promesa de Pago" por canal
+             (Call Center / Digital / Masivo D2D / Oeste).
+
+
+----------------------------------------------------------------
+2) ARCHIVOS DE REFERENCIA (historicos, ya en el folder)
+----------------------------------------------------------------
+ -> REPORTE COBRO ACTUAL.xlsx ............... plantilla MAYA
+ -> REPORTE COBROS - 30 DE JUNIO (2).xlsx ... plantilla JUNIO
+    (tiene las pestanas DASHBOARD2 y datos con los KPIs)
+ -> CALL REPORT JUNIO.xlsx .................. llamadas Vici junio
+ -> FORMS JUNIO.xlsx ........................ gestiones junio
+ -> Llamadas salientes cobros mayo 2026 (Respuestas) (12).xlsx
+    ........................................ gestiones mayo
+ -> estos archivos sirven de VALIDACION (ver seccion 4, tablas
+    de referencia con los valores de mayo y junio)
+
+
+----------------------------------------------------------------
+3) ESTRUCTURA DEL REPORTE (mismo formato de Mayo/Junio)
+----------------------------------------------------------------
+ Hoja "DASHBOARD2":
+   - Titulo: DATAPHONE | COBROS
+   - FUNNEL DE COBROS (Status / Cant)
+       Asignadas | Gestionadas | Contactadas | Promesas | Pagos
+   - RESUMEN (HC, Cuentas asignadas, Cartera $)
+   - MES EN TRANSITO (JULIO)
+   - Resultados Financieros (Segmento / Promesa de Pago /
+     Monto Recuperado)
+   - % PROMESA
+
+ Hoja "datos":
+   - Resumen Ejecutivo: HC, Cuentas asignadas, Cartera ($),
+     Recuperacion ($), % Recuperacion, Contactabilidad,
+     RPC, Promesas, Promesas cumplidas, % Cumplimiento
+   - Productividad Operativa: Llamadas, Contactos, RPC,
+     Cant Promesas de pago, % RPC
+   - Resultados Financieros por canal:
+     Call Center Outbound, Digital, Masivo (D2D), Oeste
+
+
+----------------------------------------------------------------
+4) FORMULAS (TODAS) PARA CADA INDICADOR
+----------------------------------------------------------------
+Convencion de hojas (crear estas pestanas en el reporte):
+  'Vici'   = CALL REPORT JULIO (llamadas)
+  'Formas' = LLAMADAS SALIENTES JULIO (gestiones)
+  'Base'   = cartera asignada (NEXTPANAMA/INNOVATEK/LLAMAYA)
+
+------------- FUNNEL (DASHBOARD2) -------------
+ Asignadas
+   =COUNTA('Base'!A2:A50000)
+   o mejor (contar cuentas unicas, sin repetidos):
+   =SUMPRODUCTO(('Base'!A2:A50000<>"")/COUNTIF('Base'!A2:A50000,'Base'!A2:A50000&""))
+
+ Gestionadas  (cuentas unicas que tienen al menos 1 gestion)
+   =SUMPRODUCTO(('Formas'!D2:D5000<>"")/COUNTIF('Formas'!D2:D5000,'Formas'!D2:D5000&""))
+   (columna D = Cuenta en Formas; si no, usar la cedula o el
+    numero de celular, lo que identifique la cuenta)
+
+ Contactadas  (registros con escenario de contacto real, NO son:
+   Correo de voz, No contactado, Numero equivocado,
+   Mensaje a tercero)
+   =COUNTIFS('Formas'!H2:H5000,"<>Correo de voz",
+             'Formas'!H2:H5000,"<>No contactado",
+             'Formas'!H2:H5000,"<>Numero equivocado",
+             'Formas'!H2:H5000,"<>Mensaje a tercero")
+   (columna H = Escenario)
+
+ Promesas  (registros donde "Fecha promesa de pago" NO esta vacia)
+   =COUNTIFS('Formas'!J2:J5000,"<>",
+             'Formas'!J2:J5000,"<>Fecha  promesa de pago")
+   o =COUNTA('Formas'!J2:J5000)-COUNTBLANK('Formas'!J2:J5000)
+   (columna J = Fecha promesa de pago)
+
+ Pagos  (registros donde "Realiza el pago" = si)
+   =COUNTIF('Formas'!L2:L5000,"si")
+   (columna L = Realiza el pago)
+
+ % PROMESA
+   = Promesas / Asignadas
+   Mayo:  115 / 3,566  = 3.22%
+   Junio: 181 / 3,566  = 5.08%
+
+------------- RESUMEN EJECUTIVO (hoja datos) -------------
+ HC (cantidad de agentes)
+   =SUMPRODUCTO(('Formas'!B2:B5000<>"")/COUNTIF('Formas'!B2:B5000,'Formas'!B2:B5000&""))
+   (columna B = Agente)
+
+ Cuentas asignadas
+   = Asignadas (del funnel)
+
+ Cartera ($)
+   =SUMA('Base'!saldo)   donde saldo = monto_cuotas x
+                         (cuotas totales - Cuotas_Pagadas),
+   o si la base trae Monto_Vencido / Monto_Total:
+   =SUMAR.SI('Base'!ESTATUS,"Mora",'Base'!Monto_Total)
+   + SUMAR.SI('Base'!ESTATUS,"Cero Pago",'Base'!Monto_Total)
+   NOTA: Junio uso Cartera = $6,890.04 y Mayo $4,667.45;
+         validar que el calculo reproduzca esos numeros.
+
+ Recuperacion ($)  (suma de Monto pagado donde pago = si)
+   =SUMAR.SI('Formas'!L2:L5000,"si",'Formas'!N2:N5000)
+   (columna N = Monto pagado)
+
+ % Recuperacion
+   = Recuperacion / Cartera
+   Mayo: 1,671.46 / 4,667.45 = 35.81%
+   Junio: 8,084.35 / 6,890.04 = 117.33%
+
+ Contactabilidad
+   = Contactos / Llamadas
+   Mayo: 772 / 6,496  = 11.88%
+   Junio: 940 / 2,159 = 43.54%
+
+ RPC (numero de contactos productivos)
+   = contactos cuyo escenario tiene RPC=1 segun tabla Ref:
+     6002 Cliente al dia     6003 Cuenta cesada
+     6005 Cliente ocupado    6007 Volver a llamar
+     6008 Lenguaje inapropiado  6009 Incidente herramienta
+     6011 Persona detenida
+   (en Excel:
+   =SUMAPRODUCTO(( 'Formas'!H2:H5000="Cliente al dia" )
+                +( 'Formas'!H2:H5000="Cuenta cesada" )
+                +( 'Formas'!H2:H5000="Cliente ocupado" )
+                +( 'Formas'!H2:H5000="Volver a llamar" )))
+
+ % RPC
+   = RPC / Contactos
+   Mayo: 625 / 772  = 80.96%
+   Junio: 798 / 940 = 84.89%
+
+ Promesas
+   = Promesas (del funnel)
+
+ Promesas cumplidas
+   =COUNTIF('Formas'!L2:L5000,"si")   (pagos registrados)
+
+ % Cumplimiento
+   = Promesas cumplidas / Promesas
+   Mayo: 91 / 115  = 79.13%
+   Junio: 100 / 181 = 55.25%
+
+------------- PRODUCTIVIDAD OPERATIVA (hoja datos) -------------
+ Llamadas
+   =COUNTA('Vici'!A2:A40000) -1   (restar el encabezado si
+                                    queda incluido en el rango)
+   (columna A del Vici = call_date)
+   Mayo: 6,496 llamadas | Junio: 2,159 llamadas
+
+ Contactos
+   = contactos efectivos segun Vici (fila con connect/contesto)
+   o = Contactadas (del funnel / escenarios contactables)
+   Mayo: 772 | Junio: 940
+
+ RPC
+   = RPC (contactos productivos)  Mayo: 625 | Junio: 798
+
+ Cant Promesas de pago
+   = Promesas (del funnel)  Mayo: 115 | Junio: 181
+
+ % RPC
+   = RPC / Contactos
+
+------------- FINANCIEROS POR CANAL (hoja datos) -------------
+ Call Center Outbound:
+   Promesa  =SUMAR.SI('Formas'!G2:G5000,"Call Center Outbound",'Formas'!K2:K5000)
+   Recuperado =SUMAPRODUCTO(('Formas'!G2:G5000="Call Center Outbound")
+                           *('Formas'!L2:L5000="si")*'Formas'!N2:N5000)
+   (columna G = Canal, columna K = Monto promesa, columna N = Monto pagado)
+
+ Digital:        igual pero con "Digital"
+ Masivo (D2D):   igual pero con "Masivo (D2D)"
+ Oeste:          igual pero con "Oeste"
+
+ Valores de referencia Junio:
+   Call Center Outbound:  promesa $831.10  recuperado $788.27
+   Digital:               promesa $511.71  recuperado $482.34
+   Masivo (D2D):          promesa $4,552.24 recuperado $4,881.61
+   Oeste:                 promesa $0.00     recuperado $0.00
+
+------------- VALIDACIONES / VALORES DE REFERENCIA -------------
+ INDICADOR              MAYO      JUNIO
+ Asignadas              3,566     3,566
+ Gestionadas            3,468       831
+ Contactadas              772       940
+ Promesas                 115       181
+ Pagos                     91       100
+ Llamadas               6,496     2,159
+ RPC                      625       798
+ Cartera ($)          $4,667.45 $6,890.04
+ Recuperacion ($)     $1,671.46 $8,084.35
+ % Recuperacion         35.81%   117.33%
+ Contactabilidad        11.88%    43.54%
+ % RPC                  80.96%    84.89%
+ % Cumplimiento         79.13%    55.25%
+ % PROMESA               3.22%     5.08%
+
+
+----------------------------------------------------------------
+5) DIAGRAMA ENTIDAD - RELACION (E/R)
+----------------------------------------------------------------
+ Formato notacion: 1:N = uno a muchos , N:M = muchos a muchos
+
+                   +----------------------------------+
+                   |             AGENTE              |
+                   |----------------------------------|
+                   | id_agente (PK)                  |
+                   | nombre_agente                   |
+                   | canal_asignado                  |
+                   +----------------------------------+
+                                 |
+                                 | 1
+                                 |
+                                 | N   (un agente realiza muchas gestiones)
+                                 v
++---------------------------+          +------------------------------+
+|         BASE_CARTERA      |          |          GESTION (Formas)   |
+|---------------------------|          |------------------------------|
+| numero_contrato (PK)      |1        N| id_gestion (PK)             |
+| cedula (identificacion)   |----------| fecha (marca temporal)      |
+| nombre_completo           | 1 --> N  | id_agente (FK)              |
+| telefono_cliente          |          | numero_celular              |
+| fecha_venta               |          | numero_contrato (FK)        |
+| precio / monto_cuotas     |          | canal                       |
+| cuotas_pagadas            |          | escenario (tipificacion)    |
+| ESTATUS (Al dia/Mora/...) |          | motivo                      |
+| DIAS_ATRASO               |          | fecha_promesa               |
+| saldo / monto_vencido     |          | monto_promesa               |
++---------------------------+          | realiza_pago (si/no)        |
+        |        |                     | fecha_pago                  |
+        |        |                     | monto_pagado                |
+        |        |                     | dias_mora                   |
+        |        |                     +------------------------------+
+        |        |                                | 1
+        |        | 1                              |
+        |        |                                | N  (una cuenta recibe
+        |        |                                v     muchas gestiones)
+        |        |                     +------------------------------+
+        |        |                     |        LLAMADA (Vici)        |
+        |        |                     |------------------------------|
+        |        |                     | id_llamada (PK)             |
+        |        |                     | call_date                   |
+        |        |                     | telefono_marcado            |
+        |        |                     | status (AB, conectado, etc) |
+        |        |                     | user (agente Vici)          |
+        |        |                     | campaign_id                 |
+        |        |                     | list_id                     |
+        |        |                     | numero_contrato (FK)        |
+        |        |                     +------------------------------+
+        |        |
+        |        +------------------------------+
+        +--> 1:N (una cuenta en base puede tener
+                    muchas llamadas y muchas gestiones)
+
+ RESUMEN DE RELACIONES
+  BASE_CARTERA (1) ------< (N) LLAMADA     : una cuenta recibe muchas llamadas
+  BASE_CARTERA (1) ------< (N) GESTION     : una cuenta tiene muchas gestiones
+  AGENTE (1) ------------< (N) GESTION     : un agente registra muchas gestiones
+  AGENTE (1) ------------< (N) LLAMADA     : un agente (user Vici) hace muchas llamadas
+  GESTION (N) ------------> (1) BASE       : la gestion pertenece a una cuenta
+  LLAMADA (N) ------------> (1) BASE       : la llamada pertenece a una cuenta
+  GESTION y LLAMADA se vinculan por el numero de contrato/cuenta
+
+ Los KPI del REPORTE se derivan (no se almacenan):
+  REPORTE_JULIO = funcion de ( BASE_CARTERA, LLAMADA, GESTION )
+   - Asignadas        <- BASE_CARTERA (cuentas en mora/cero pago)
+   - Llamadas/Contactos <- LLAMADA (Vici)
+   - Promesas/Pagos   <- GESTION (Formas)
+   - Cartera/Recuperacion <- BASE_CARTERA + GESTION
+
+
+----------------------------------------------------------------
+6) DIAGRAMA DE FLUJO (proceso para generar el reporte)
+----------------------------------------------------------------
+                       +----------------------+
+                       |       INICIO         |
+                       | Recibir datos de     |
+                       | cobros del mes       |
+                       +----------------------+
+                                  |
+                                  v
+              +-----------------------------------+
+              | 1. RECOLECTAR ARCHIVOS FUENTE     |
+              |   A. Base cartera (NEXTPANAMA/    |
+              |      INNOVATEK/LLAMAYA 08.07.26)  |
+              |   B. Call report Vici             |
+              |      (CALL REPORT - JULIO 31)     |
+              |   C. Formas de gestiones          |
+              |      (LLAMADAS SALIENTES JULIO)   |
+              +-----------------------------------+
+                                  |
+                                  v
+              +-----------------------------------+
+              | 2. VERIFICAR COMPLETITUD          |
+              |   - filas de Vici (llamadas)      |
+              |   - filas de Formas (gestiones)   |
+              |   - fecha de la base de cartera   |
+              |   ? datos completos? ------------> NO -> volver a
+              |                                     |    pedir los
+              +-------------------------------------+    archivos
+                                  | SI                     |
+                                  v                         |
+              +-----------------------------------+       |
+              | 3. IMPORTAR A LA PLANTILLA        |       |
+              |   Vici   <- call report julio     |       |
+              |   Formas <- llamadas salientes    |       |
+              |   Base   <- base cartera mora     |       |
+              +-----------------------------------+       |
+                                  |                       |
+                                  v                       |
+              +-----------------------------------+       |
+              | 4. LIMPIAR DATOS                  |       |
+              |   - quitar cedulas en Numero      |       |
+              |     celular (ej. 10-709-843)      |       |
+              |   - quitar encabezado de Vici     |       |
+              |   - estandarizar escenarios       |       |
+              +-----------------------------------+       |
+                                  |                       |
+                                  v                       |
+              +-----------------------------------+       |
+              | 5. CALCULAR KPI CON FORMULAS      |       |
+              |   FUNNEL: Asignadas, Gestionadas, |       |
+              |     Contactadas, Promesas, Pagos  |       |
+              |   RESUMEN: Cartera, Recuperacion, |       |
+              |     %Recup, Contactabilidad, RPC, |       |
+              |     %RPC, %Cumplimiento           |       |
+              |   PRODUCTIVIDAD: Llamadas,        |       |
+              |     Contactos, RPC, %RPC          |       |
+              |   FINANCIEROS por canal           |       |
+              +-----------------------------------+       |
+                                  |                       |
+                                  v                       |
+              +-----------------------------------+       |
+              | 6. POBLAR DASHBOARD2 Y datos      |       |
+              |   (FUNNEL + RESUMEN +             |       |
+              |    Resultados Financieros)        |       |
+              +-----------------------------------+       |
+                                  |                       |
+                                  v                       |
+              +-----------------------------------+       |
+              | 7. VALIDAR CONTRA HISTORICOS      |       |
+              |   comparar con Mayo y Junio:      |       |
+              |   %RPC, %Cumplimiento, %Recup,    |       |
+              |   Contactabilidad                 |       |
+              |   ? valores coherentes? ---------> NO ----+
+              +----------------------------------+        |
+                                  | SI                     |
+                                  v                        |
+              +-----------------------------------+       |
+              | 8. REVISION FINAL + ENTREGA       |       |
+              |   REPORTE COBROS - JULIO.xlsx     |       |
+              +-----------------------------------+       |
+                                  |                       |
+                                  v                       |
+                        +------------------+              |
+                        |      FIN        |              |
+                        +------------------+              |
+                                  ^                       |
+                                  |                       |
+                                  +-----------------------+
+                                             (volver a pedir /
+                                              corregir datos)
+
+ EN DETALLE, paso 5 (formulas por bloque):
+   FUNNEL:   Asignadas --> Base
+             Gestionadas --> Formas (cuentas unicas)
+             Contactadas --> Formas (escenarios contactables)
+             Promesas --> Formas (fecha promesa no vacia)
+             Pagos --> Formas (realiza pago = si)
+   RESUMEN:  Cartera --> Base (suma saldo en mora)
+             Recuperacion --> Formas (sum monto pagado, pago=si)
+             % Recuperacion = Recuperacion / Cartera
+             Contactabilidad = Contactos / Llamadas
+             RPC = contactos productivos
+             % RPC = RPC / Contactos
+             Promesas cumplidas = Pagos
+             % Cumplimiento = Pagos / Promesas
+   FINANCIERO: por cada canal --> Formas (monto promesa y monto
+             pagado agrupados por Canal)
+
+
+----------------------------------------------------------------
+7) PASOS PARA ARMAR EL REPORTE DE JULIO
+----------------------------------------------------------------
+ 1. Copiar el archivo "REPORTE COBROS - 30 DE JUNIO (2).xlsx"
+    como plantilla y renombrarlo "REPORTE COBROS - JULIO.xlsx".
+ 2. Hoja 'Vici':    pegar todo CALL REPORT - JULIO 31 (2).xlsx
+    Hoja 'Formas':  pegar todo LLAMADAS SALIENTES - COBROS - JULIO 31 (1).xlsx
+    Hoja 'Base':    pegar base NEXTPANAMA/INNOVATEK/LLAMAYA filtrada
+                    por ESTATUS = Mora / Cero Pago (los que deben).
+ 3. Actualizar "MES EN TRANSITO" -> JULIO.
+ 4. Reemplazar formulas con los rangos reales (las filas son
+    dinamicas segun cuantas filas peguen).
+ 5. Verificar que Llamadas de Vici no quede con filas vacias
+    ni con el encabezado contado (restar 1 a COUNTA).
+ 6. Seguir el diagrama de flujo de la seccion 6 para
+    validar y entregar.
+
+
+----------------------------------------------------------------
+8) ALERTAS DETECTADAS EN LOS ARCHIVOS DE JULIO
+----------------------------------------------------------------
+ - El archivo de llamadas salientes de julio tiene solo 1,040
+   filas vs 4,220 (mayo) y 4,351 (junio): el volumen parece
+   INCOMPLETO. Confirmar que es el archivo final del mes.
+ - El CALL REPORT de julio tiene 3,536 filas vs 2,160 (junio):
+   volumen OK.
+ - La base NEXTPANAMA esta fechada 08.07.26 (8 de julio), no al
+   cierre del mes. Si se necesita cartera al 31 de julio, pedir
+   la base actualizada.
+ - En "LLAMADAS SALIENTES - JULIO" la columna "Numero celular"
+   trae algunos valores con cedula (ej. "10-709-843"), limpiar
+   antes de cruzar con la base.
+ - El status "AB" en el call report = contesto el sistema; los
+   contactos reales se definen por escenario/tipificacion.
+ - Los valores de junio no coinciden exactamente entre pestanas
+   (ej. Gestionadas 831 vs Contactadas 940): validar el criterio
+   de cada columna del funnel.
+
+================================================================
+FIN DEL INSTRUCTIVO
+================================================================
