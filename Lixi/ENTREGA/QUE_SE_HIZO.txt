@@ -34,6 +34,15 @@ CONTENIDO DE ESTA CARPETA
     Como se armo el reporte de julio (formulas y metodo).
 
  6) QUE_SE_HIZO.txt  (este archivo)
+
+ 7) Dashboard_Cobros_Julio.html
+    Dashboard interactivo de cartera (33,969 cuentas) con filtros
+    por estado/aliado/tienda, busqueda, orden, paginacion y export
+    CSV. Autocontenido (abre sin internet).
+
+ 8) n8n\
+    Diseno para automatizar el pipeline mensual con n8n (workflow
+    importable + README). Pendiente de uso.
 ------------------------------------------------------------
 
 POR QUE EXISTEN DOS TIPOS DE REPORTE
@@ -76,10 +85,15 @@ NOTAS IMPORTANTES PARA ENTREGAR
      * Asignadas: la base nueva da 13,130 (historico era 3,566).
      * Volumen de gestiones de julio parece incompleto (1,039 vs
        4,220 en mayo y 4,351 en junio).
- - Para el proximo mes, el pipeline Lixi\Cobros\ (importar.py +
-   excel_report.py) puede regenerar la cartera automaticamente.
-   El siguiente paso opcional es agregar los KPIs del funnel al
-   script para automatizar tambien el reporte de gestion.
+  - Para el proximo mes, el pipeline Lixi\Cobros\ (importar.py +
+    excel_report.py) puede regenerar la cartera automaticamente.
+    El siguiente paso opcional es agregar los KPIs del funnel al
+    script para automatizar tambien el reporte de gestion.
+  - IMPORTANTE: el INTEGRADO usa SOLO datos de julio (Base, Formas,
+    Vici del mes). No incluye junio ni mayo. Su hoja DASHBOARD2
+    calcula EN VIVO con formulas sobre las hojas del mismo archivo
+    (Base/Formas/Vici); la hoja "datos" de ese archivo quedo vacia
+    (solo titulos) porque ya no es la fuente de los numeros.
 
 ========================================================
 FIN DE QUE_SE_HIZO

@@ -1,0 +1,345 @@
+================================================================================
+  INSTRUCTIVO: COMO SE CALCULA TODO EN LA HOJA 'DASHBOARD2'
+  Archivo: reporte_cobro_dashboard (1).xlsx   (DATAPHONE | COBROS)
+  Mes en transito: MAYO   |   Cifras de ejemplo con los valores reales
+================================================================================
+
+  Este instructivo explica, paso a paso, de donde sale cada numero del
+  dashboard y con que formula se calcula. Sirve para:
+    - Entender el reporte sin abrir el Excel
+    - Replicarlo para otros meses (AGOSTO, etc.)
+    - Explicar los resultados al cliente
+
+----------------------------------------------------------------------
+  CONTENIDO
+----------------------------------------------------------------------
+  1. Que es cada hoja del archivo (la "cocina" del dashboard)
+  2. Paso 1: como se construyen las hojas crudas (Vici, Promesas, bases)
+  3. Paso 2: que hacen las tablas dinamicas de 'analisis'
+  4. Paso 3: como se ensamblan los KPIs en 'datos'
+  5. Paso 4: como se pinta todo en 'DASHBOARD2'
+  6. Glosario de formulas con ejemplos numericos (MAYO)
+  7. Preguntas frecuentes / errores comunes
+  8. Cambio de mes (checklist)
+
+================================================================================
+  1) QUE ES CADA HOJA DEL ARCHIVO
+================================================================================
+
+  DASHBOARD2      -> El reporte final que se presenta (todo lo que se ve)
+  datos           -> Ensambla los KPIs con formulas GETPIVOTDATA / XLOOKUP
+  analisis        -> Tablas dinamicas (pivots) que alimentan 'datos'
+  Vici            -> Call report del marcador (llamadas del mes)
+  Promesas se pago dinero -> Gestiones (promesas y pagos) del mes
+  bases UTILIZADAS-> Cartera asignada (cuentas en mora / cero pago)
+  Ref             -> Tabla fija de tipificaciones (Connect / RPC)
+  dashboard       -> Hoja en blanco (sin uso)
+
+  NOTA: 'Resumen Ejecutivo', 'Productividad', 'Financieros', 'Agentes',
+  'Funnel', 'Promesas vs Pagos' y 'Efectividad' son hojas ocultas con
+  datos de ejemplo (valores quemados). El dashboard REAL usa 'datos'
+  y 'analisis', no esas hojas ocultas.
+
+  Flujo de la informacion:
+
+    [Vici]  -->  [analisis (pivots)]  -->  [datos (KPIs)]  -->  [DASHBOARD2]
+    [Promesas se pago dinero]  --------^          ^                    ^
+    [bases UTILIZADAS]  --------------------------+--------------------+
+
+================================================================================
+  2) PASO 1: LAS HOJAS CRUDAS (de donde sale la data)
+================================================================================
+
+  A) HOJA 'Vici'  -> Call report del marcador (4,943 llamadas en MAYO)
+     - Se exporta del sistema Vici, campana COBRO, lista 'Cobros Mayo'.
+     - Columnas crudas importantes (de la exportacion):
+         H call_date | I phone_number_dialed | J status | K user |
+         L full_name | M campaign_id | N vendor_lead_code | P list_id |
+         Y campana (MASIVO/SOHO/DIGITAL/...) | Z tiempo de mora |
+         AR list_name | AS list_description | AT status_name
+     - Columnas CALCULADAS (son las que alimentan los pivots):
+         A Campania   = XLOOKUP(phone -> bases UTILIZADAS[Contacto1]
+                                -> bases UTILIZADAS[Source.Name])
+         B Connect    = VLOOKUP(status, Ref!A:C)  -> 1 si hubo contacto
+         C RPC        = VLOOKUP(status, Ref!A:D)  -> 1 si fue productivo
+         D Call Day   = TEXT(call_date, "dd/mmm")  -> ej. 04/may
+         E Frecuencia = COUNTIF(phone_number_dialed)  -> veces llamadas
+         F Intentos   = 1  (cada fila = 1 intento de llamada)
+         G unicos     = 1 si el telefono difiere de la fila siguiente
+
+  B) HOJA 'Promesas se pago dinero'  -> Gestiones del mes (1,040 en MAYO)
+     - Origen: "Llamadas salientes cobros MAYO 2026 (Respuestas) (12).xlsx"
+     - Columnas:
+         A Fecha | B Marca temporal | C Agente | D Numero celular |
+         E Cuenta | F Identificacion (cedula) | G Campana |
+         H Canal (Masivo D2D / Soho / Digital / Call Center Outbound) |
+         I Escenario (Cliente al dia, Cuenta cesada, Correo de voz...) |
+         J Motivo | K Fecha promesa de pago | L Monto de promesa |
+         M Realiza el pago (si/no) | N Fecha de Pago | O Monto pagado |
+         P Tiempo de mora
+     - Columnas CALCULADAS:
+         R Mes Pago      = mes de la fecha de pago
+         S Mes Promesa   = mes de la fecha de promesa
+         T Dia Pago      = dia de la fecha de pago
+         U Dia Promesa   = dia de la fecha de promesa
+         V Intentos de Promesas = 1 si hay fecha de promesa
+         W Intentos de pago     = 1 si hay fecha de pago
+
+  C) HOJA 'bases UTILIZADAS'  -> Cartera asignada (2,420 cuentas)
+     - Origen: "Base de datos de Cobros 31072026.xlsx" +
+               "NEXTPANAMA __ INNOVATEK __ LLAMAYA 03.08.26.xlsx"
+     - Source.Name = 'Cobros Abril Canal Fijo' (1,347) y
+                     'Cobros Mayo' (1,073)  <-- este es el mes en transito
+     - Columnas clave:
+         A Source.Name | B Nombre_Cliente | C Numero_Cuenta |
+         D Nombre de Lista | E Provincia | H/I/J Contacto1/2/3 |
+         L Monto_Vencido | M Monto_Total | O Fecha_Promesa_Pago |
+         S Cedula | T Canal | U Tiempo de mora |
+         V _Producto_Linea = XLOOKUP(Contacto1 -> Vici[status_name])
+
+  D) HOJA 'Ref'  -> Tabla fija (no cambia de mes)
+     - Convierte cada status del dialer en dos banderas:
+         Connect (0/1): hubo contacto con la persona?
+         RPC     (0/1): el contacto fue productivo (RPC = Real Phone Call)?
+     - Ejemplos: 'Cliente al dia' -> Connect 1, RPC 1.
+                 'No Answer'      -> Connect 0, RPC 0.
+
+================================================================================
+  3) PASO 2: LAS TABLAS DINAMICAS DE 'analisis' (los pivots)
+================================================================================
+
+  La hoja 'analisis' tiene pivots que agrupan los datos crudos. Cada
+  pivot responde una pregunta:
+
+  A2    Llamadas diarias por agente   (filas = dias, columnas = agentes)
+  A21   Agentes -> Connect y RPC totales por agente
+  H12   Cuenta de Contacto1 por base  (Source.Name = 'Cobros Mayo')
+  K12   Cuenta de Contacto1 TOTAL de la base cartera
+  T13   PENDIENTES: cuentas por categoria de mora
+        (1 MES, 2 MESES, 3 MESES, 4 MESES, NPN)
+  T25   PENDIENTES recuperados: cuentas con pago por categoria
+  G34   RESULTADOS FINANCIEROS por Canal:
+          H Monto de Promesa de Pago
+          I Suma de Monto pagado
+          J Suma de Intentos de Promesas
+          K Suma de Intentos de pago
+  A54   Cartera por base (count de Contacto1)
+  A60   Recuperacion diaria (Monto de Promesa de Pago por dia)
+  F54   Llamadas diarias (matriz agente x dia)
+  Z21   'Cliente al dia' / 'Cuenta cesada' de la base
+  AH21  Monto pagado / Intentos de pago por mes (abr/may/jun)
+
+================================================================================
+  4) PASO 3: COMO SE ENSAMBLAN LOS KPIS EN LA HOJA 'datos'
+================================================================================
+
+  'datos' es el puente entre los pivots y el dashboard. Formula por formula:
+
+  RESUMEN EJECUTIVO (B3:B12)
+  --------------------------
+  B3  HC                = 1 (fijo, valor de referencia)
+  B4  Cuentas asignadas = analisis!L17   -> cuentas unicas de la base
+  B5  Cartera ($)       = GETPIVOTDATA(" Monto de Promesa de Pago",
+                                        analisis!$G$34)
+  B6  Recuperacion      = GETPIVOTDATA("Suma de Monto pagado",
+                                        analisis!$G$34)
+  B7  % Recuperacion    = B6 / B5
+  B8  Contactabilidad   = F5 / E5   (Connect / Intentos)
+  B9  RPC               = G5 / F5   (RPC / Connect)
+  B10 Promesas          = analisis!J33  (Suma de Intentos de Promesas)
+  B11 Promesas cumplidas= B37 (Pagos del funnel)
+  B12 % Cumplimiento    = B11 / B10
+
+  PRODUCTIVIDAD OPERATIVA (E5:I5)
+  -------------------------------
+  E5  Llamadas   = GETPIVOTDATA("Intentos", analisis!$A$11)
+  F5  Contactos  = GETPIVOTDATA(" Connect", analisis!$A$21)
+  G5  RPC        = GETPIVOTDATA(" RPC",     analisis!$A$21)
+  H5  Cant Promesas = analisis!J33
+  I5  % RPC      = G5 / F5
+
+  FUNNEL DE COBRANZA (B33:B37)
+  -----------------------------
+  B33 Asignadas   = B4 (Cuentas asignadas)
+  B34 Gestionadas = analisis!I17 (cuentas 'Cobros Mayo' con gestion)
+  B35 Contactadas = F5 (Connect del Vici)
+  B36 Promesas    = analisis!J33
+  B37 Pagos       = analisis!K33 (Intentos de pago)
+
+  PENDIENTES POR MES (B57:C61)
+  ----------------------------
+  B57:B61 REGISTROS CARGADOS = XLOOKUP(A57:A61, analisis!T14:T22,
+                                       analisis!U14:U22)
+  C57:C61 RECUPERADO         = XLOOKUP(A57:A61, analisis!T26:T32,
+                                       analisis!U26:U32)
+
+  PERFORMANCE POR AGENTE (B27:G27)  [agente: Lili Velez]
+  ---------------------------------
+  B27 Cartera      = analisis!C57
+  C27 Recuperado   = GETPIVOTDATA("Suma de Intentos de pago",
+                     analisis!$G$34, "Agente ", "Lili Velez")
+  D27 % Recuperacion = C27 / B27
+  E27 Promesas     = GETPIVOTDATA(" Monto de Promesa de Pago",
+                     analisis!$G$34, "Agente ", "Lili Velez")
+  F27 Cumplidas    = GETPIVOTDATA("Suma de Monto pagado",
+                     analisis!$G$34, "Agente ", "Lili Velez")
+  G27 % Efectividad = F27 / E27
+
+================================================================================
+  5) PASO 4: COMO SE PINTA 'DASHBOARD2'
+================================================================================
+
+  DASHBOARD2 solo muestra valores; casi todas las celdas apuntan a 'datos':
+
+  FUNNEL DE COBROS (H3:I8)
+  ------------------------
+  I4 Asignadas    = datos!B33   -> 1,073
+  I5 Gestionadas  = datos!B34   -> 989
+  I6 Contactadas  = datos!B35   -> 630
+  I7 Promesas     = datos!B36   -> 85
+  I8 Pagos        = datos!B37   -> 46
+
+  RESUMEN | MES EN TRANSITO (A12:B22)
+  -----------------------------------
+  B13 HC                  = datos!B3  -> 1
+  B14 Cuentas asignadas   = datos!B4  -> 1,073
+  B15 Cartera ($)         = datos!B5  -> 3,570.68
+  B16 Recuperacion ($)    = datos!B6  -> 1,145.24
+  B17 % Recuperacion      = datos!B7  -> 32.07%
+  B18 Contactabilidad     = datos!B8  -> 12.75%
+  B19 RPC                 = datos!B9  -> 79.21%
+  B20 Promesas            = datos!B10 -> 85
+  B21 Promesas cumplidas  = datos!B11 -> 46
+  B22 % Cumplimiento      = datos!B12 -> 54.12%
+
+  RESULTADOS FINANCIEROS (C13:E23)
+  --------------------------------
+  D/E por canal = XLOOKUP(canal, datos!A16:A23, datos!B/C16:23)
+    Call Center Outbound -> 234.44 prometido / 0 recuperado
+    Digital              -> 160.35 / 0
+    La dona              -> 0 / 0
+    Masivo (D2D)         -> 2,542.91 / 882.48
+    Movil                -> 0 / 0
+    Oeste                -> 0 / 0
+    Punto de ventas      -> 0 / 0
+    Soho                 -> 600.74 / 262.76
+    Soho -Callcenter     -> 32.24 / 0
+    Total general        -> 3,570.68 / 1,145.24
+
+  % PROMESA (F13, F20)
+  --------------------
+  F13 = B20/B14 = 85 / 1,073 = 7.92%  (promesas vs cuentas asignadas)
+  F20 = B21/B14 = 46 / 1,073 = 4.29%  (cumplidas vs cuentas asignadas)
+
+  PERFORMANCE POR AGENTE (A25:G28)
+  --------------------------------
+  B27:G27 = datos!B27:G27 (Cartera, Recuperado, %Recup, Promesas,
+                           Cumplidas, %Efectividad)
+  B28:G28 = SUM / AVERAGE de la fila 27
+
+  PRODUCTIVIDAD OPERATIVA (A29:G32)
+  ---------------------------------
+  B31 Llamadas    = GETPIVOTDATA("Intentos", analisis!$A$11,
+                                 "full_name", "Lili Velez")  -> 1,157
+  C31 Contactos   = GETPIVOTDATA(" Connect", analisis!$A$21,
+                                 "full_name", "Lili Velez")  -> 630
+  D31 RPC         = GETPIVOTDATA(" RPC", analisis!$A$21,
+                                 "full_name", "Lili Velez")  -> 499
+  E31 Promesas    = GETPIVOTDATA("Suma de Intentos de Promesas",
+                                 analisis!$G$34, "Agente ", "Lili Velez") -> 85
+  F31 % RPC       = D31/C31 = 499/630 = 79.21%
+  G31 % Contactos = C31/B31 = 630/1,157 = 54.45%
+
+  DIVISION POR MES PENDIENTE (A33:F39)
+  ------------------------------------
+  B35:B39 REGISTROS CARGADOS = datos!B57:B61
+       1 MES PENDIENTE = 43 | 2 MESES = 159 | 3 MESES = 178 |
+       4 MESES = 25 | NPN = 359
+  C35:C39 RECUPERADO   = datos!C57:C61
+       1 MES = 3 | 2 MESES = 10 | 3 MESES = 3 | 4 MESES = 0 | NPN = 30
+  E35 Cliente al dia = GETPIVOTDATA("Contacto1", analisis!$Z$21,
+                                    "_Producto_Linea", "Cliente al dia") -> 8
+  F35 Cuenta cesada  = GETPIVOTDATA("Contacto1", analisis!$Z$21,
+                                    "_Producto_Linea", "Cuenta cesada") -> 82
+
+  LLAMADAS DIARIAS (A41+)
+  -----------------------
+  Grafico alimentado por la matriz agente x dia del pivot analisis
+  (total 4,943 llamadas en MAYO).
+
+================================================================================
+  6) GLOSARIO DE FORMULAS CON EJEMPLOS NUMERICOS (MAYO)
+================================================================================
+
+  FORMULA                       CALCULO                    RESULTADO
+  ----------------------------  --------------------------  -----------
+  % Recuperacion = Recup/Cartera 1,145.24 / 3,570.68        32.07%
+  Contactabilidad = Connect/Llamadas 630 / 4,943            12.75%
+  RPC = RPC productivos/Connect  499 / 630                  79.21%
+  % Cumplimiento = Pagos/Promesas 46 / 85                   54.12%
+  % Promesa = Promesas/Asignadas  85 / 1,073                7.92%
+  % Promesa cumplida = Cumplidas/Asignadas 46 / 1,073       4.29%
+  % RPC agente = RPC/Contactos   499 / 630                  79.21%
+  % Contactos agente = Contactos/Llamadas 630 / 1,157       54.45%
+  % Efectividad = Cumplidas/Promesas 1,145.24 / 3,570.68    32.07%
+
+  DEFINICIONES DE NEGOCIO
+  -----------------------
+  - Cartera ($): suma de lo prometido de pago por la cartera asignada.
+  - Recuperacion ($): monto efectivamente pagado (con fecha de pago).
+  - Contactabilidad: % de llamadas que lograron hablar con alguien.
+  - RPC (Real Phone Call): % de contactos que fueron productivos.
+  - Promesa: gestion donde el cliente se compromete a pagar.
+  - Cumplida: promesa que se convirtio en pago real.
+
+================================================================================
+  7) PREGUNTAS FRECUENTES / ERRORES COMUNES
+================================================================================
+
+  Q: Por que el % Recuperacion no coincide con lo que veo en pagos?
+  R: % Recuperacion compara MONTO pagado vs MONTO prometido. El funnel
+     (Pagos) cuenta NUMERO de promesas cumplidas, no montos.
+
+  Q: Por que Contactabilidad es tan baja (12.75%)?
+  R: Se calcula sobre el TOTAL de llamadas del Vici (4,943), que incluye
+     intentos sin respuesta, buzones, busy, etc. Es normal en call center.
+
+  Q: Los numeros salen #REF! o 0
+  R: Faltan datos en alguna hoja cruda, o no se refrescaron las tablas
+     dinamicas. Ir a 'analisis' -> clic derecho -> Actualizar todo.
+
+  Q: Puedo cambiar el nombre del agente en el dashboard?
+  R: Si. En DASHBOARD2 A27 y en los GETPIVOTDATA de 'datos' y 'analisis'
+     aparece 'Lili Velez'. Cambiarlo en las 3 hojas (o filtrar el pivot).
+
+  Q: Por que hay hojas ocultas con datos que no coinciden?
+  R: Son plantillas/ejemplo (Resumen Ejecutivo, Financieros, etc.) con
+     valores quemados. El reporte real usa 'datos' y 'analisis'.
+
+================================================================================
+  8) CAMBIO DE MES (CHECKLIST) - ej: cargar AGOSTO
+================================================================================
+
+  [ ] 1. Hoja 'Vici': reemplazar con el call report nuevo
+          (VICI COBROS AGOSTO.xlsx / VICI COBROS KREDIYA AGOSTO.xlsx)
+  [ ] 2. Hoja 'Promesas se pago dinero': reemplazar con
+          "Llamadas salientes cobros AGOSTO 2026 (Respuestas) (16).xlsx"
+  [ ] 3. Hoja 'bases UTILIZADAS': consolidar con la base del mes
+          (Base de datos de Cobros 31072026.xlsx +
+           NEXTPANAMA __ INNOVATEK __ LLAMAYA 03.08.26.xlsx)
+  [ ] 4. Actualizar Source.Name a 'Cobros AGOSTO' y el filtro de lista
+          en Vici (list_name / AR-AS)
+  [ ] 5. Refrescar TODAS las tablas dinamicas de 'analisis'
+          (Datos -> Actualizar todo, o Ctrl+Alt+F5)
+  [ ] 6. Verificar que 'datos' recalcule (los GETPIVOTDATA apuntan solos)
+  [ ] 7. En DASHBOARD2, confirmar que 'MES EN TRANSITO' diga AGOSTO
+  [ ] 8. Revisar que la hoja 'DASHBOARD2 Copia' se actualizo igual
+  [ ] 9. Guardar y enviar el reporte
+
+  REGLA DE ORO: NUNCA edites los valores de DASHBOARD2 a mano.
+  Todo se recalcula solo desde 'datos' -> 'analisis' -> hojas crudas.
+  Si cambias un numero a mano, se pierde al refrescar.
+
+================================================================================
+  FIN DEL INSTRUCTIVO
+================================================================================
