@@ -1,0 +1,46 @@
+CÓMO SE PREPARÓ ESTA INFORMACIÓN
+================================
+
+SOLICITUD (correo de LM, reunión con José Puyol):
+1. Resultados por campaña, presentados de manera separada por campaña.
+2. Comparativo de resultados del mes anterior vs. mes actual a la fecha,
+   con el corte al mismo día (acumulado al 13 del mes anterior vs. acumulado al 13 de este mes).
+3. Análisis por cuartiles, usando el HC actualizado como base.
+
+FUENTES DE DATOS:
+- Lixi/emergencia/HC Actualizado Agosto.xlsx   (plantilla de AGOSTO - la adjuntada en el correo)
+- Lixi/3diasporsemana/Headcount 1/HC Actualizado Julio 2026.xlsx  (plantilla de JULIO, para el comparativo)
+
+NOTA: El HC es una base de planilla/headcount (personas por campaña, cargo, supervisor, estado,
+fecha de ingreso). No contiene métricas de ventas. Por eso los "resultados" presentados son de
+composición y tamaño de la plantilla por campaña, el comparativo es de personas activas/ingresadas
+con corte al día 13, y el análisis por cuartiles es por antigüedad (meses desde fecha de ingreso).
+
+PASOS REALIZADOS:
+1. Se cargaron las dos plantillas con openpyxl (Python).
+2. Se limpiaron filas vacías (solo se tomaron filas con Nombre).
+3. Resultados por campaña:
+   - Se agruparon las personas por campaña: Renovación, Pre2Pos, Administrativo.
+   - Por cada campaña se desglosó por Cargo y por Estado (Activo / Capacitación).
+4. Comparativo mes anterior vs. actual (corte al mismo día):
+   - Se tomó la Fecha de Ingreso de cada persona.
+   - "Acumulado al 13": personas con fecha de ingreso <= 13 del mes.
+   - Julio: 83 personas al 13/07. Agosto: 84 personas al 13/08. Variación: +1 (+1.2%).
+   - Desglose por campaña:
+        Campaña        Julio(13)   Agosto(13)
+        Renovación        37          38
+        Pre2Pos           30          31
+        Administrativo    16          15
+5. Análisis por cuartiles (antigüedad, al corte 13/08/2026):
+   - Se calculó para cada persona de agosto los días desde su fecha de ingreso hasta el 13/08/2026.
+   - Se ordenaron los 84 valores y se dividieron en 4 cuartiles:
+        Q1 (más nuevos): 26 personas, 0.9 a 3.7 meses
+        Q2:               17 personas, 3.9 a 6.7 meses
+        Q3:               21 personas, 7.0 a 17.8 meses
+        Q4 (más antiguos):20 personas, 18.8 a 101.0 meses
+
+ENTREGABLES:
+- dashboard_resultados.html  -> dashboard con gráficos, tablas por campaña, comparativo y cuartiles.
+- HC Actualizado Agosto.xlsx -> base original adjunta en el correo (enlace de descarga en el dashboard).
+
+Archivos generados en: Lixi/emergencia/
