@@ -42,5 +42,54 @@ PASOS REALIZADOS:
 ENTREGABLES:
 - dashboard_resultados.html  -> dashboard con gráficos, tablas por campaña, comparativo y cuartiles.
 - HC Actualizado Agosto.xlsx -> base original adjunta en el correo (enlace de descarga en el dashboard).
+- generar_datos.py           -> extrae los datos de los HC (julio y agosto) a datos.json.
+- generar_dashboard.py       -> genera el HTML final con los datos embebidos (no requiere servidor).
 
 Archivos generados en: Lixi/emergencia/
+
+GUÍA DE LECTURA EJECUTIVA DEL DASHBOARD
+=======================================
+Cada sección del dashboard incluye una nota "Lectura del gráfico" con interpretación ejecutiva.
+Resumen de cómo se lee cada elemento:
+
+1) KPI (tarjetas superiores)
+   - "Plantilla (mes)": total de personas registradas en el HC del mes seleccionado.
+   - "Activos": % de personas con estado Activo respecto al total (operatividad de la planta).
+   - "Acumulado al 13": personas cuya fecha de ingreso es <= día 13 del mes (mismo corte para todos).
+   - "vs mes anterior": variación neta (personas y %) del acumulado al día 13 contra el mes previo.
+     Verde = crecimiento, rojo = reducción. Es el indicador clave para la reunión.
+
+2) Resultados por campaña (gráfico de barras "Plantilla por campaña")
+   - Muestra la dotación total de cada campaña (Renovación, Pre2Pos, Administrativo).
+   - La campaña con la barra más alta es la de mayor personal asignado; se usa para mostrar
+     dónde está concentrado el esfuerzo operativo.
+
+3) Comparativo mes anterior vs. actual (gráfico "corte al día 13")
+   - Dos barras por campaña: color claro = mes anterior, azul = mes actual, siempre con el corte
+     al mismo día (13). Permite responder directamente: "¿cuánto llevábamos acumulado al 13 del
+     mes anterior vs. lo alcanzado al 13 de este mes?".
+   - Interpretación: si la barra azul es más alta, el mes actual va por delante; si es más baja, va
+     por detrás al mismo punto de corte.
+
+4) Desglose por campaña (tarjetas)
+   - Por cada campaña: tabla de Cargos (composición de roles) y de Estado (Activo / Capacitación).
+   - La etiqueta "vs mes anterior" indica el movimiento neto de personas: verde = sumó, rojo = restó.
+   - Sirve para explicar el porqué del resultado del comparativo (ej. Pre2Pos creció porque sumó agentes).
+
+5) Análisis por cuartiles (gráfico de dona + tabla)
+   - Divide la plantilla en 4 grupos por antigüedad (meses desde fecha de ingreso al corte del 13).
+   - Q1 = personal más nuevo (menos experiencia en campaña), Q4 = personal más antiguo (base de
+     experiencia operativa).
+   - Útil para la reunión: dimensionar la curva de experiencia del equipo y detectar riesgo de
+     rotación si Q1 es muy grande.
+
+6) Plantilla por supervisor (barras horizontales)
+   - Personas a cargo de cada supervisor. Muestra el alcance de supervisión y si la carga está
+     balanceada o concentrada en pocos líderes.
+
+CONSEJOS PARA PRESENTAR CON JOSÉ PUYOL:
+- Abrir siempre en el mes AGOSTO 2026 (último), que es el corte más reciente.
+- Empezar por la tarjeta "vs mes anterior" (mensaje central del correo).
+- Usar el comparativo por campaña para mostrar el detalle del mes anterior vs. mes actual.
+- Cerrar con los cuartiles para hablar de la experiencia/antigüedad del equipo.
+- El dashboard es dinámico: haga clic en un mes para alternar entre Julio y Agosto.

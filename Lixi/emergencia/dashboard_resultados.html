@@ -87,6 +87,15 @@ tr:hover td { background:#eef5fc; }
   padding:12px 16px; font-size:13px; color:var(--tx); margin-top:18px; line-height:1.5;
 }
 .nota b { color:var(--azul); }
+.expl {
+  grid-column:1 / -1; background:#fff; border:1px solid #dbe7f3; border-left:4px solid var(--azul2);
+  border-radius:10px; padding:14px 18px; font-size:13.5px; color:#445; line-height:1.65; margin-top:14px;
+}
+.expl b { color:var(--azul); }
+.expl .tag {
+  display:inline-block; background:var(--azul); color:#fff; border-radius:5px; font-size:10.5px;
+  letter-spacing:.8px; text-transform:uppercase; padding:3px 8px; margin-bottom:6px; font-weight:700;
+}
 .fade-in { animation:fadeIn .4s ease; }
 @keyframes fadeIn { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
 @media (max-width:860px) { .chart-row { grid-template-columns:1fr; } .header { padding:24px; } }
@@ -134,7 +143,8 @@ function corteMes(mes) { return { y: mes.y, m: mes.m, d: CORTE }; }
 
 function antiguedadDias(fIngreso, corte) {
   if (!fIngreso) return null;
-  const f = new Date(fIngreso.year, fIngreso.month - 1, fIngreso.day);
+  const [ay, am, ad] = fIngreso.split('-').map(Number);
+  const f = new Date(ay, am - 1, ad);
   const c = new Date(corte.y, corte.m - 1, corte.d);
   return Math.round((c - f) / 86400000);
 }
@@ -235,11 +245,33 @@ function render(nombre) {
     </div>` : ''}
   </div>`;
 
+  const pctAct = (k.activos / k.total * 100).toFixed(1);
+  const resumen = [];
+  resumen.push(`La plantilla de <b>${mes.corto} ${mes.y}</b> se compone de <b>${fmt.format(k.total)} personas</b> (${pctAct}% activas). El acumulado de ingresos al d\u00eda ${CORTE} es de <b>${fmt.format(k.cut13)} personas</b>` +
+    (kPrev ? `, lo que representa una variaci\u00f3n de <b>${varCut >= 0 ? '+' : ''}${varCut}</b> (${varPct}%) frente a los ${fmt.format(kPrev.cut13)} del ${prev}.` : '.'));
+
+  html += `<div class="section">
+    <div class="expl fade-in">
+      <span class="tag">Resumen ejecutivo</span><br>${resumen.join(' ')}
+    </div>
+  </div>`;
+
+  const campVentas = campOrden.filter(c => /ventas/i.test(c) || /reno|pre|s2s/i.test(c));
+  const totalVentas = campVentas.reduce((a, c) => a + camps.get(c).length, 0);
+  const pctVentas = totalVentas ? (totalVentas / k.total * 100).toFixed(1) : null;
+
   html += `<div class="section">
     <div class="section-title">Resultados por campa&ntilde;a</div>
     <div class="chart-row">
       <div class="chart-box"><h3>Plantilla por campa&ntilde;a</h3><canvas id="chCamp"></canvas></div>
       <div class="chart-box"><h3>${prev ? 'Comparativo corte al ' + CORTE + ': ' + prev.replace('2026','') + ' vs ' + nombre.replace('2026','') : 'Composici\u00f3n'}</h3><canvas id="chComp"></canvas></div>
+      <div class="expl">
+        <span class="tag">Lectura del gr\u00e1fico</span><br>
+        La campa\u00f1a con mayor dotaci\u00f3n en ${mes.corto} es <b>${campOrden[0]}</b> con ${fmt.format(camps.get(campOrden[0]).length)} personas
+        (${(camps.get(campOrden[0]).length / k.total * 100).toFixed(1)}% de la plantilla), seguida de <b>${campOrden[1]}</b> con ${fmt.format(camps.get(campOrden[1]).length)}.
+        ${pctVentas !== null ? `El esfuerzo comercial (campa\u00f1as de ventas) concentra el <b>${pctVentas}%</b> de la dotaci\u00f3n.` : ''}
+        ${prevRows ? `En el comparativo al d\u00eda ${CORTE}, las variaciones por campa\u00f1a se muestran en la l\u00ednea azul (${nombre}) frente a la l\u00ednea clara (${prev}): el saldo neto es <b>${varCut >= 0 ? '+' : ''}${varCut} persona(s)</b>.` : ''}
+      </div>
     </div>
   </div>`;
 
@@ -267,9 +299,19 @@ function render(nombre) {
       </tbody></table>
     </div>`;
   });
-  html += `</div></div>`;
+  html += `</div>
+  <div class="expl fade-in" style="margin-top:14px">
+    <span class="tag">Lectura del detalle</span><br>
+    Cada tarjeta desglosa la campa\u00f1a por <b>cargo</b> (distribuci\u00f3n de roles) y por <b>estado</b>
+    (activos vs. capacitaci\u00f3n). La columna <i>vs ${prev}</i> muestra el movimiento neto de personal
+    respecto al mes anterior: verde indica crecimiento de dotaci\u00f3n y rojo, reducci\u00f3n.
+  </div>
+  </div>`;
 
   if (cuartiles) {
+    const qTop = cuartiles.q[0].n;
+    const pctQ1 = (qTop / cuartiles.n * 100).toFixed(1);
+    const qUltimo = cuartiles.q[3];
     html += `<div class="section">
       <div class="section-title">An&aacute;lisis por cuartiles (antig&uuml;edad al corte ${CORTE}/${mes.m})</div>
       <div class="chart-row">
@@ -279,15 +321,32 @@ function render(nombre) {
           ${cuartiles.q.map(q => `<tr><td>${q.nombre}</td><td>${q.n}</td><td>${q.desde} &ndash; ${q.hasta} meses</td><td>${q.diasMin} &ndash; ${q.diasMax}</td></tr>`).join('')}
           </tbody></table>
         </div>
+        <div class="expl">
+          <span class="tag">Lectura del gr\u00e1fico</span><br>
+          La plantilla se dividi\u00f3 en 4 cuartiles por <b>antig\u00fcedad</b> (meses desde la fecha de ingreso al corte).
+          El <b>Q1</b> agrupa al ${pctQ1}% del personal (${qTop} personas) con menos experiencia en campa\u00f1a,
+          mientras el <b>Q4</b> concentra al ${fmt.format(qUltimo.n)}% m\u00e1s antiguo (${qUltimo.desde} &ndash; ${qUltimo.hasta} meses),
+          que representa la base de experiencia operativa del equipo.
+        </div>
       </div>
     </div>`;
   }
 
   const sup = new Map();
   rows.forEach(r => sup.set(r.s, (sup.get(r.s) || 0) + 1));
+  const supMax = [...sup.entries()].sort((a, b) => b[1] - a[1])[0];
+  const supTotal = sup.size;
   html += `<div class="section">
     <div class="section-title">Plantilla por supervisor</div>
-    <div class="chart-box"><h3>Personas a cargo</h3><canvas id="chSup"></canvas></div>
+    <div class="chart-row">
+      <div class="chart-box"><h3>Personas a cargo</h3><canvas id="chSup"></canvas></div>
+      <div class="expl">
+        <span class="tag">Lectura del gr\u00e1fico</span><br>
+        La distribuci\u00f3n de la carga operativa recae en <b>${supMax[0]}</b> con ${fmt.format(supMax[1])} personas a cargo
+        (${(supMax[1] / k.total * 100).toFixed(1)}% de la plantilla), entre ${fmt.format(supTotal)} supervisores.
+        Esto permite dimensionar el alcance de supervisi\u00f3n y el balance de carga entre l\u00edderes.
+      </div>
+    </div>
   </div>`;
 
   document.getElementById('contenido').innerHTML = html;
