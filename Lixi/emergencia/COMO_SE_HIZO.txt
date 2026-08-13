@@ -93,3 +93,26 @@ CONSEJOS PARA PRESENTAR CON JOSÉ PUYOL:
 - Usar el comparativo por campaña para mostrar el detalle del mes anterior vs. mes actual.
 - Cerrar con los cuartiles para hablar de la experiencia/antigüedad del equipo.
 - El dashboard es dinámico: haga clic en un mes para alternar entre Julio y Agosto.
+
+ESTADO FINAL - CUMPLIMIENTO DE REQUERIMIENTOS:
+1. Resultados por campaña, presentados de manera separada por campaña: CUMPLIDO.
+   Sección "Desglose por campaña" con tarjeta independiente por campaña (Renovación,
+   Pre2Pos, Administrativo) con cargo y estado, más gráfico de barras.
+2. Comparativo mes anterior vs. mes actual al mismo corte (día 13): CUMPLIDO.
+   El gráfico comparativo usa el ACUMULADO al día 13 de cada mes (personas con fecha de
+   ingreso <= 13), no el total del mes. Ej: Julio 83 al 13/07 vs Agosto 84 al 13/08.
+3. Análisis por cuartiles usando el HC como base: CUMPLIDO.
+   Dona + tabla por antigüedad (meses desde fecha de ingreso) calculada al corte del día 13.
+
+ENLACE PUBLICADO (GitHub Pages):
+https://analyst-ctrl.github.io/Nextphone/Lixi/emergencia/dashboard_resultados.html
+
+CÓMO REGENERAR EL DASHBOARD:
+- Si cambia el HC de agosto: reemplace el archivo "HC Actualizado Agosto.xlsx".
+- Para agregar otro mes: agregue un HC en "Lixi/3diasporsemana/Headcount 1/" y ajuste
+  "generar_datos.py" para incluirlo en el JSON.
+- Ejecutar en orden, desde la carpeta Lixi/emergencia:
+     python generar_datos.py
+     python generar_dashboard.py
+- Commits finales: ff1b8b9 (creación), a38c27e (cuartiles + explicaciones),
+  ddfddd4 (comparativo con corte al día 13).
