@@ -181,6 +181,17 @@ function campañas(rows) {
   return map;
 }
 
+function cutByCampana(rows, mes) {
+  const corte = corteMes(mes);
+  const map = new Map();
+  rows.forEach(r => {
+    if (r.f && antiguedadDias(r.f, corte) < 0) return;
+    if (!map.has(r.c)) map.set(r.c, 0);
+    map.set(r.c, map.get(r.c) + 1);
+  });
+  return map;
+}
+
 function qsData(rows, mes) {
   const corte = corteMes(mes);
   const dias = rows.map(r => antiguedadDias(r.f, corte)).filter(d => d !== null).sort((a, b) => a - b);
@@ -280,7 +291,7 @@ function render(nombre) {
         La campa\u00f1a con mayor dotaci\u00f3n en ${mes.corto} es <b>${campOrden[0]}</b> con ${fmt.format(camps.get(campOrden[0]).length)} personas
         (${(camps.get(campOrden[0]).length / k.total * 100).toFixed(1)}% de la plantilla), seguida de <b>${campOrden[1]}</b> con ${fmt.format(camps.get(campOrden[1]).length)}.
         ${pctVentas !== null ? `El esfuerzo comercial (campa\u00f1as de ventas) concentra el <b>${pctVentas}%</b> de la dotaci\u00f3n.` : ''}
-        ${prevRows ? `En el comparativo al d\u00eda ${CORTE}, las variaciones por campa\u00f1a se muestran en la l\u00ednea azul (${nombre}) frente a la l\u00ednea clara (${prev}): el saldo neto es <b>${varCut >= 0 ? '+' : ''}${varCut} persona(s)</b>.` : ''}
+        ${prevRows ? `El comparativo usa el <b>acumulado al d\u00eda ${CORTE}</b> de cada mes (solo personas ingresadas a esa fecha), tal como se pidi\u00f3: color claro = ${prev} al 13, azul = ${nombre} al 13. El saldo neto del mes es <b>${varCut >= 0 ? '+' : ''}${varCut} persona(s)</b>.` : ''}
       </div>
     </div>
   </div>`;
@@ -370,12 +381,13 @@ function render(nombre) {
   });
 
   if (prevRows) {
-    const prevCamps = campañas(prevRows);
+    const prevCut = cutByCampana(prevRows, parseMes(prev));
+    const curCut = cutByCampana(rows, mes);
     chart('chComp', 'bar', {
       labels,
       datasets: [
-        { label: prev, data: labels.map(c => (prevCamps.get(c) || []).length), backgroundColor: '#A8C7E7', borderRadius: 4 },
-        { label: nombre, data: labels.map(c => camps.get(c).length), backgroundColor: '#2E75B6', borderRadius: 4 }
+        { label: prev + ' (al 13)', data: labels.map(c => prevCut.get(c) || 0), backgroundColor: '#A8C7E7', borderRadius: 4 },
+        { label: nombre + ' (al 13)', data: labels.map(c => curCut.get(c) || 0), backgroundColor: '#2E75B6', borderRadius: 4 }
       ],
       options: { plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } }
     });
