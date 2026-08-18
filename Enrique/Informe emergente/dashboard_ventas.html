@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte de Ventas — Sharep (Informe Emergente)</title>
+<script src="chart.umd.min.js" onerror="document.write('<script src=&quot;https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js&quot;><\/script>')"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card2: #24324a;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --amber: #f59e0b;
+    --pink: #ec4899;
+    --yellow: #facc15;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    padding: 24px;
+  }
+  header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+  h1 { font-size: 22px; font-weight: 600; }
+  h1 small { display: block; color: var(--muted); font-size: 13px; font-weight: 400; margin-top: 4px; }
+  .filters {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 20px;
+  }
+  .filters label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .filters select, .filters input {
+    background: var(--card2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    min-width: 160px;
+  }
+  .presets { display: flex; gap: 6px; }
+  .presets button {
+    background: var(--card2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .presets button:hover { background: var(--blue); border-color: var(--blue); }
+  .presets button.active { background: var(--blue); border-color: var(--blue); font-weight: 600; }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 4px solid var(--blue);
+  }
+  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .kpi .value { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi.green { border-left-color: var(--green); }
+  .kpi.red { border-left-color: var(--red); }
+  .kpi.amber { border-left-color: var(--amber); }
+  .kpi.pink { border-left-color: var(--pink); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .panel h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .panel.wide { grid-column: 1 / -1; }
+  .chartbox { position: relative; height: 300px; }
+  .chartbox.tall { height: 420px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  td:first-child, th:first-child { text-align: left; }
+  tr:hover td { background: rgba(59,130,246,.06); }
+  .bar-cell { position: relative; }
+  .bar-cell .bar {
+    position: absolute; inset: 0; left: 0; top: 50%;
+    height: 12px; transform: translateY(-50%);
+    background: var(--green); opacity: .25; border-radius: 4px;
+  }
+  .pct { font-weight: 600; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 900px) { .panel.wide { grid-column: auto; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Reporte de Ventas — Sharep
+    <small id="contexto"></small>
+  </h1>
+  <div class="presets" id="presets">
+    <button data-days="30">Últimos 30 días</button>
+    <button data-days="90">Últimos 3 meses</button>
+    <button data-year="2026">2026 (YTD)</button>
+    <button data-all="1">Todo el historial</button>
+  </div>
+</header>
+
+<div class="filters">
+  <label>Desde
+    <input type="date" id="fDesde">
+  </label>
+  <label>Hasta
+    <input type="date" id="fHasta">
+  </label>
+  <label>Supervisor
+    <select id="fSupervisor"></select>
+  </label>
+  <label>Asesor
+    <select id="fAsesor"></select>
+  </label>
+  <label>Tipo de venta
+    <select id="fTipo"></select>
+  </label>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="label">Total ventas</div><div class="value" id="kTotal">—</div><div class="sub" id="kTotalSub"></div></div>
+  <div class="kpi green"><div class="label">Ventas exitosas</div><div class="value" id="kExitosas">—</div><div class="sub" id="kExitosasSub"></div></div>
+  <div class="kpi green"><div class="label">% Éxito</div><div class="value" id="kPct">—</div><div class="sub">exitosas / total</div></div>
+  <div class="kpi red"><div class="label">No exitosas</div><div class="value" id="kNo">—</div><div class="sub">desiste + cancelada + rechazo + calibrador</div></div>
+  <div class="kpi amber"><div class="label">En proceso</div><div class="value" id="kProceso">—</div><div class="sub">BO / mensajería / pendientes</div></div>
+  <div class="kpi pink"><div class="label">Valor planes (exitosas)</div><div class="value" id="kValor">—</div><div class="sub">suma del precio del plan</div></div>
+</div>
+
+<div class="grid">
+  <div class="panel wide"><h2>Evolución diaria — total vs exitosas</h2><div class="chartbox"><canvas id="cDiario"></canvas></div></div>
+
+  <div class="panel wide"><h2>Ventas por mes (por resultado)</h2><div class="chartbox"><canvas id="cMes"></canvas></div></div>
+
+  <div class="panel"><h2>Por resultado</h2><div class="chartbox"><canvas id="cCategoria"></canvas></div></div>
+
+  <div class="panel"><h2>Por tipo de venta</h2><div class="chartbox"><canvas id="cTipo"></canvas></div></div>
+
+  <div class="panel"><h2>Top asesores (exitosas)</h2><div class="chartbox tall"><canvas id="cAsesor"></canvas></div></div>
+
+  <div class="panel"><h2>Por supervisor</h2><div class="chartbox"><canvas id="cSupervisor"></canvas></div></div>
+
+  <div class="panel wide"><h2>Ranking de asesores</h2>
+    <div style="max-height:420px; overflow:auto;"><table id="tRanking">
+      <thead><tr><th>#</th><th>Asesor</th><th>Supervisor</th><th>Total</th><th>Exitosas</th><th>% Éxito</th><th>No exitosas</th><th>En proceso</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+
+<script src="ventas_data.js"></script>
+<script>
+"use strict";
+
+// ---------- utilidades ----------
+const fmt = (n) => n.toLocaleString("es-PA");
+const fmtMoney = (n) => "$" + n.toLocaleString("es-PA", { maximumFractionDigits: 0 });
+const iso = (d) => d.toISOString().slice(0, 10);
+const CATS = ["exitosa", "desistida", "cancelada", "calibrador", "rechazada", "en_proceso", "otros"];
+const CAT_LABEL = {
+  exitosa: "Exitosas", desistida: "Cliente desiste", cancelada: "Canceladas",
+  calibrador: "Calibrador rechaza", rechazada: "Rechazadas", en_proceso: "En proceso", otros: "Otros"
+};
+const CAT_COLOR = {
+  exitosa: "#22c55e", desistida: "#ef4444", cancelada: "#f59e0b",
+  calibrador: "#facc15", rechazada: "#ec4899", en_proceso: "#3b82f6", otros: "#94a3b8"
+};
+const NO_EXITOSA = ["desistida", "cancelada", "calibrador", "rechazada"];
+
+// ---------- estado ----------
+const ROWS = VENTAS_DATA.rows;
+let charts = {};
+
+// ---------- filtros ----------
+const $ = (id) => document.getElementById(id);
+const fSupervisor = $("fSupervisor"), fAsesor = $("fAsesor"), fTipo = $("fTipo");
+const fDesde = $("fDesde"), fHasta = $("fHasta");
+
+function uniqueSorted(values) {
+  return [...new Set(values)].filter(Boolean).sort((a, b) => a.localeCompare(b, "es"));
+}
+
+function poblarSelect(sel, valores, placeholder) {
+  sel.innerHTML = "";
+  const opt = document.createElement("option");
+  opt.value = ""; opt.textContent = placeholder;
+  sel.appendChild(opt);
+  for (const v of valores) {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = v;
+    sel.appendChild(o);
+  }
+}
+
+function initFiltros() {
+  poblarSelect(fSupervisor, uniqueSorted(ROWS.map(r => r.s)), "Todos los supervisores");
+  poblarSelect(fTipo, uniqueSorted(ROWS.map(r => r.t)), "Todos los tipos");
+  const fechas = ROWS.map(r => r.f).sort();
+  fDesde.min = fechas[0]; fDesde.max = fechas[fechas.length - 1];
+  fHasta.min = fechas[0]; fHasta.max = fechas[fechas.length - 1];
+  aplicarPreset({ all: 1 });
+}
+
+function actualizarAsesores() {
+  const sup = fSupervisor.value;
+  const asesores = uniqueSorted(ROWS.filter(r => !sup || r.s === sup).map(r => r.a));
+  const previo = fAsesor.value;
+  poblarSelect(fAsesor, asesores, "Todos los asesores");
+  if (previo && asesores.includes(previo)) fAsesor.value = previo;
+}
+
+function aplicarPreset(p) {
+  const hoy = new Date();
+  if (p.all) { fDesde.value = fDesde.min; fHasta.value = fHasta.max; }
+  else if (p.year) { fDesde.value = p.year + "-01-01"; fHasta.value = fHasta.max; }
+  else if (p.days) {
+    const d = new Date(hoy); d.setDate(d.getDate() - (p.days - 1));
+    fDesde.value = iso(d); fHasta.value = fHasta.max < iso(hoy) ? fHasta.max : iso(hoy);
+  }
+  marcarPreset(p);
+  render();
+}
+function marcarPreset(p) {
+  document.querySelectorAll("#presets button").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#presets button").forEach(b => {
+    const key = b.dataset.days ? "days" : b.dataset.year ? "year" : "all";
+    if (p[key] !== undefined && String(b.dataset[key]) === String(p[key])) b.classList.add("active");
+  });
+}
+
+// ---------- filtrado y agregación ----------
+function filasFiltradas() {
+  const desde = fDesde.value || fDesde.min, hasta = fHasta.value || fHasta.max;
+  const sup = fSupervisor.value, ase = fAsesor.value, tipo = fTipo.value;
+  return ROWS.filter(r =>
+    r.f >= desde && r.f <= hasta &&
+    (!sup || r.s === sup) && (!ase || r.a === ase) && (!tipo || r.t === tipo)
+  );
+}
+
+function agregar(filas, claveFn, valFn) {
+  const map = new Map();
+  for (const r of filas) {
+    const k = claveFn(r);
+    const cur = map.get(k) || { n: 0, p: 0, porCat: {} };
+    cur.n += r.n;
+    cur.p += r.p;
+    cur.porCat[r.c] = (cur.porCat[r.c] || 0) + r.n;
+    map.set(k, cur);
+  }
+  return map;
+}
+
+// ---------- render ----------
+function render() {
+  const filas = filasFiltradas();
+  const total = filas.reduce((s, r) => s + r.n, 0);
+  const porCat = agregar(filas, () => "x");
+  const catCounts = {};
+  for (const c of CATS) catCounts[c] = porCat.get("x")?.porCat[c] || 0;
+  const exitosas = catCounts.exitosa;
+  const noExitosas = NO_EXITOSA.reduce((s, c) => s + catCounts[c], 0);
+  const enProceso = catCounts.en_proceso;
+  const valor = porCat.get("x")?.p || 0;
+  const pct = total ? (exitosas / total) * 100 : 0;
+
+  // KPIs
+  $("kTotal").textContent = fmt(total);
+  $("kTotalSub").textContent = `${filas.length} grupos de registros`;
+  $("kExitosas").textContent = fmt(exitosas);
+  $("kExitosasSub").textContent = pct.toFixed(1) + "% del total";
+  $("kPct").textContent = pct.toFixed(1) + "%";
+  $("kNo").textContent = fmt(noExitosas);
+  $("kNo").style.color = noExitosas ? "#f87171" : "";
+  $("kProceso").textContent = fmt(enProceso);
+  $("kValor").textContent = fmtMoney(valor);
+  $("contexto").textContent = `Período: ${fDesde.value || "inicio"} → ${fHasta.value || "hoy"} · ${total.toLocaleString("es-PA")} ventas`;
+
+  renderDiario(filas);
+  renderMes(filas);
+  renderCategoria(catCounts);
+  renderTipo(filas);
+  renderAsesores(filas);
+  renderSupervisor(filas);
+  renderRanking(filas);
+  $("footer").textContent = `Fuente: ${VENTAS_DATA.meta.fuente} · ${VENTAS_DATA.meta.registros.toLocaleString("es-PA")} registros · Generado con extraer_datos.py (${VENTAS_DATA.meta.generado})`;
+}
+
+function nuevoChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id), config);
+}
+
+function renderDiario(filas) {
+  const porDia = agregar(filas, r => r.f);
+  const dias = [...porDia.keys()].sort();
+  const totales = [], exit = [];
+  for (const d of dias) {
+    const x = porDia.get(d);
+    totales.push(x.n);
+    exit.push(x.porCat.exitosa || 0);
+  }
+  nuevoChart("cDiario", {
+    type: "line",
+    data: {
+      labels: dias.map(d => d.slice(8, 10) + "/" + d.slice(5, 7)),
+      datasets: [
+        { label: "Total", data: totales, borderColor: "#64748b", backgroundColor: "rgba(100,116,139,.15)", fill: true, tension: .25, pointRadius: 0, borderWidth: 2 },
+        { label: "Exitosas", data: exit, borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.12)", fill: true, tension: .25, pointRadius: 0, borderWidth: 2 }
+      ]
+    },
+    options: baseOpts()
+  });
+}
+
+function renderMes(filas) {
+  const porMes = agregar(filas, r => r.f.slice(0, 7));
+  const meses = [...porMes.keys()].sort();
+  const exit = [], no = [], proc = [];
+  for (const m of meses) {
+    const x = porMes.get(m);
+    exit.push(x.porCat.exitosa || 0);
+    no.push(NO_EXITOSA.reduce((s, c) => s + (x.porCat[c] || 0), 0));
+    proc.push((x.porCat.en_proceso || 0) + (x.porCat.otros || 0));
+  }
+  nuevoChart("cMes", {
+    type: "bar",
+    data: {
+      labels: meses.map(m => { const [y, mo] = m.split("-"); return `${["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][+mo-1]} ${y}`; }),
+      datasets: [
+        { label: "Exitosas", data: exit, backgroundColor: "#22c55e", stack: "s" },
+        { label: "No exitosas", data: no, backgroundColor: "#ef4444", stack: "s" },
+        { label: "En proceso", data: proc, backgroundColor: "#3b82f6", stack: "s" }
+      ]
+    },
+    options: baseOpts()
+  });
+}
+
+function renderCategoria(catCounts) {
+  const labels = CATS.map(c => CAT_LABEL[c]);
+  const data = CATS.map(c => catCounts[c] || 0);
+  nuevoChart("cCategoria", {
+    type: "doughnut",
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: CATS.map(c => CAT_COLOR[c]), borderColor: "#1e293b", borderWidth: 2 }]
+    },
+    options: { ...baseOpts(), cutout: "55%", plugins: { legend: { position: "right", labels: { color: "#cbd5e1", boxWidth: 12 } } } }
+  });
+}
+
+function renderTipo(filas) {
+  const porTipo = agregar(filas, r => r.t);
+  const tipos = [...porTipo.keys()].sort((a, b) => porTipo.get(b).n - porTipo.get(a).n);
+  nuevoChart("cTipo", {
+    type: "doughnut",
+    data: {
+      labels: tipos,
+      datasets: [{ data: tipos.map(t => porTipo.get(t).n), backgroundColor: ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#ec4899", "#22c55e", "#94a3b8"], borderColor: "#1e293b", borderWidth: 2 }]
+    },
+    options: { ...baseOpts(), cutout: "55%", plugins: { legend: { position: "right", labels: { color: "#cbd5e1", boxWidth: 12 } } } }
+  });
+}
+
+function renderAsesores(filas) {
+  const porA = agregar(filas, r => r.a);
+  const tops = [...porA.entries()].sort((a, b) => (b[1].porCat.exitosa || 0) - (a[1].porCat.exitosa || 0)).slice(0, 15).reverse();
+  nuevoChart("cAsesor", {
+    type: "bar",
+    data: {
+      labels: tops.map(([a]) => a.split(" ").slice(0, 2).join(" ")),
+      datasets: [
+        { label: "Total", data: tops.map(([, x]) => x.n), backgroundColor: "rgba(100,116,139,.35)", borderRadius: 3 },
+        { label: "Exitosas", data: tops.map(([, x]) => x.porCat.exitosa || 0), backgroundColor: "#22c55e", borderRadius: 3 }
+      ]
+    },
+    options: { ...baseOpts(), indexAxis: "y", plugins: { legend: { position: "top", labels: { color: "#cbd5e1", boxWidth: 12 } } } }
+  });
+}
+
+function renderSupervisor(filas) {
+  const porS = agregar(filas, r => r.s);
+  const sups = [...porS.entries()].sort((a, b) => b[1].n - a[1].n);
+  const labels = sups.map(([s]) => s.split(" ").slice(0, 2).join(" "));
+  const totales = sups.map(([, x]) => x.n);
+  const exit = sups.map(([, x]) => x.porCat.exitosa || 0);
+  const pct = sups.map(([, x]) => (x.n ? Math.round(((x.porCat.exitosa || 0) / x.n) * 100) : 0));
+  nuevoChart("cSupervisor", {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Total", data: totales, backgroundColor: "rgba(100,116,139,.35)", borderRadius: 3 },
+        { label: "Exitosas", data: exit, backgroundColor: "#22c55e", borderRadius: 3 },
+        { label: "% Éxito", data: pct, type: "line", borderColor: "#facc15", backgroundColor: "#facc15", yAxisID: "y2", tension: .3, pointRadius: 3 }
+      ]
+    },
+    options: {
+      ...baseOpts(),
+      scales: {
+        x: { stacked: false, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,.1)" } },
+        y: { beginAtZero: true, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,.1)" } },
+        y2: { position: "right", min: 0, max: 100, ticks: { color: "#facc15", callback: v => v + "%" }, grid: { drawOnChartArea: false } }
+      },
+      plugins: { legend: { labels: { color: "#cbd5e1", boxWidth: 12 } } }
+    }
+  });
+}
+
+function renderRanking(filas) {
+  const porA = agregar(filas, r => r.a + "|" + r.s);
+  const rows = [...porA.entries()]
+    .map(([k, x]) => { const [a, s] = k.split("|"); return { a, s, n: x.n, e: x.porCat.exitosa || 0, no: NO_EXITOSA.reduce((t, c) => t + (x.porCat[c] || 0), 0), pr: x.porCat.en_proceso || 0 }; })
+    .sort((x, y) => y.e - x.e || y.n - x.n)
+    .slice(0, 25);
+  const tbody = $("tRanking").querySelector("tbody");
+  tbody.innerHTML = "";
+  rows.forEach((r, i) => {
+    const pct = r.n ? ((r.e / r.n) * 100).toFixed(1) : "0.0";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${r.a}</td>
+      <td>${r.s}</td>
+      <td>${fmt(r.n)}</td>
+      <td>${fmt(r.e)}</td>
+      <td><div class="bar-cell">${pct}%<div class="bar" style="width:${Math.min(pct, 100)}%"></div></div></td>
+      <td>${fmt(r.no)}</td>
+      <td>${fmt(r.pr)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function baseOpts() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { labels: { color: "#cbd5e1", boxWidth: 12 } },
+      tooltip: { backgroundColor: "#0f172a", borderColor: "#334155", borderWidth: 1, callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.parsed.y ?? ctx.parsed)}` } }
+    },
+    scales: {
+      x: { ticks: { color: "#94a3b8", maxRotation: 60, autoSkip: true, maxTicksLimit: 15 }, grid: { color: "rgba(148,163,184,.1)" } },
+      y: { beginAtZero: true, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,.1)" } }
+    }
+  };
+}
+
+// ---------- eventos ----------
+fSupervisor.addEventListener("change", () => { actualizarAsesores(); render(); });
+fAsesor.addEventListener("change", render);
+fTipo.addEventListener("change", render);
+fDesde.addEventListener("change", () => { marcarPreset({}); render(); });
+fHasta.addEventListener("change", () => { marcarPreset({}); render(); });
+document.querySelectorAll("#presets button").forEach(b =>
+  b.addEventListener("click", () => {
+    if (b.dataset.days) aplicarPreset({ days: +b.dataset.days });
+    else if (b.dataset.year) aplicarPreset({ year: b.dataset.year });
+    else aplicarPreset({ all: 1 });
+  })
+);
+
+initFiltros();
+</script>
+</body>
+</html>
