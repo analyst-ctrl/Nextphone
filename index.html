@@ -3,121 +3,498 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lixi - Dashboards</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Nextphone - Centro de Dashboards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d1b2a 100%);
             color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            padding: 3rem 1rem 1.5rem;
         }
         .logo {
-            font-size: 4rem;
-            font-weight: 700;
-            letter-spacing: 4px;
-            margin-bottom: 0.5rem;
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: 6px;
             background: linear-gradient(90deg, #f857a6, #ff5858, #ffc371);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: none;
         }
         .subtitle {
-            font-size: 1rem;
-            color: #aaa;
-            margin-bottom: 3rem;
+            font-size: 0.95rem;
+            color: #888;
+            margin-top: 0.3rem;
+            letter-spacing: 3px;
             font-weight: 300;
-            letter-spacing: 2px;
         }
-        .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
+        .header-bar {
+            width: 80px;
+            height: 3px;
+            background: linear-gradient(90deg, #f857a6, #ff5858);
+            margin: 1.2rem auto 0;
+            border-radius: 2px;
+        }
+
+        /* BUSCADOR */
+        .search-wrap {
+            max-width: 500px;
+            margin: 1.5rem auto 2rem;
+            padding: 0 1.5rem;
+        }
+        .search-wrap input {
             width: 100%;
-            max-width: 420px;
-            padding: 0 1rem;
+            padding: 0.85rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            backdrop-filter: blur(10px);
+            transition: border-color 0.3s;
         }
-        .menu a {
+        .search-wrap input::placeholder { color: #666; }
+        .search-wrap input:focus { border-color: rgba(248,87,166,0.5); }
+
+        /* SECCIONES */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+        }
+
+        .dept-section {
+            margin-bottom: 2.5rem;
+            animation: fadeIn 0.6s ease both;
+        }
+        .dept-section:nth-child(2) { animation-delay: 0.1s; }
+        .dept-section:nth-child(3) { animation-delay: 0.2s; }
+        .dept-section:nth-child(4) { animation-delay: 0.3s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dept-header {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 1.2rem 1.5rem;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
-            text-decoration: none;
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
-        .menu a:hover {
-            background: rgba(255,255,255,0.14);
-            border-color: rgba(248,87,166,0.5);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(248,87,166,0.2);
-        }
-        .menu a .icon {
-            font-size: 1.6rem;
-            width: 44px;
-            height: 44px;
+        .dept-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #f857a6, #ff5858);
-            border-radius: 10px;
+            font-size: 1.2rem;
             flex-shrink: 0;
         }
-        .menu a .info { display: flex; flex-direction: column; gap: 2px; }
-        .menu a .info .label { font-size: 0.75rem; color: #888; font-weight: 400; }
-        .footer {
-            margin-top: 3rem;
-            font-size: 0.75rem;
-            color: #555;
+        .dept-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
+        .dept-count {
+            font-size: 0.7rem;
+            color: #666;
+            background: rgba(255,255,255,0.08);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* GRID DE CARDS */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 1.3rem;
+            text-decoration: none;
+            color: #fff;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .card:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(248,87,166,0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        .card-desc {
+            font-size: 0.78rem;
+            color: #888;
+            line-height: 1.5;
+        }
+        .card-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            font-weight: 500;
+            align-self: flex-start;
+            margin-top: 0.2rem;
+        }
+
+        /* COLORES POR DEPARTAMENTO */
+        .lixi .dept-icon { background: linear-gradient(135deg, #f857a6, #ff5858); }
+        .lixi .card-icon { background: linear-gradient(135deg, #f857a6, #ff5858); }
+        .lixi .card-tag { background: rgba(248,87,166,0.15); color: #f857a6; }
+
+        .amir .dept-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .amir .card-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .amir .card-tag { background: rgba(79,172,254,0.15); color: #4facfe; }
+
+        .ingris .dept-icon { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .ingris .card-icon { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .ingris .card-tag { background: rgba(67,233,123,0.15); color: #43e97b; }
+
+        .enrique .dept-icon { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .enrique .card-icon { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .enrique .card-tag { background: rgba(250,112,154,0.15); color: #fa709a; }
+
+        .general .dept-icon { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+        .general .card-icon { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+        .general .card-tag { background: rgba(161,140,209,0.15); color: #a18cd1; }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            font-size: 0.75rem;
+            color: #444;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .footer span { color: #666; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .logo { font-size: 2.2rem; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .container { padding: 0 1rem 2rem; }
+        }
+
+        /* NO RESULTS */
+        .no-results {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            color: #555;
+            font-size: 1rem;
+        }
+        .no-results.visible { display: block; }
     </style>
 </head>
 <body>
-    <div class="logo">LIXI</div>
-    <div class="subtitle">DASHBOARD CENTER</div>
 
-    <div class="menu">
-        <a href="pruebas/dashboard_iphone_julio.html">
-            <div class="icon">&#128241;</div>
-            <div class="info">
-                <span>iPhone Julio 2026</span>
-                <span class="label">Pipeline, comboboxes y tabla pivote</span>
-            </div>
-        </a>
-        <a href="Lixi/3diasporsemana/dashboard_3diasporsemana.html">
-            <div class="icon">&#128200;</div>
-            <div class="info">
-                <span>3 Dias por Semana</span>
-                <span class="label">Ranking y productividad</span>
-            </div>
-        </a>
-        <a href="Lixi/3diasporsemana/output/dashboard_iphone_promo.html">
-            <div class="icon">&#128176;</div>
-            <div class="info">
-                <span>iPhone Promo</span>
-                <span class="label">Dashboard promocional</span>
-            </div>
-        </a>
-        <a href="Amir/soho/index.html" style="border-color: rgba(26,26,46,0.5);">
-            <div class="icon" style="background: linear-gradient(135deg, #1a1a2e, #16213e);">&#128202;</div>
-            <div class="info">
-                <span>Amir_reporte provisional</span>
-                <span class="label">SOHO · Winback · Consolidado Nextphone</span>
-            </div>
-        </a>
+    <div class="header">
+        <div class="logo">NEXTPHONE</div>
+        <div class="subtitle">CENTRO DE DASHBOARDS</div>
+        <div class="header-bar"></div>
     </div>
 
-    <div class="footer">Nextphone &copy; 2026</div>
+    <div class="search-wrap">
+        <input type="text" id="buscador" placeholder="Buscar dashboard..." oninput="filtrar()">
+    </div>
+
+    <div class="container" id="container">
+
+        <!-- ============ LIXI - COBROS ============ -->
+        <div class="dept-section lixi" data-dept="lixi">
+            <div class="dept-header">
+                <div class="dept-icon">&#128176;</div>
+                <div class="dept-title">LIXI</div>
+                <div class="dept-count">6 dashboards</div>
+            </div>
+            <div class="cards-grid">
+
+                <a href="Lixi/ENTREGA/Dashboard_Cobros_Julio.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128202;</div>
+                        <div class="card-title">Dashboard Cobros Julio</div>
+                    </div>
+                    <div class="card-desc">Reporte completo de cobros julio 2026. SVG donuts, funnel de llamadas, tabla paginada con 33,969 registros, export CSV.</div>
+                    <span class="card-tag">COBROS</span>
+                </a>
+
+                <a href="dashboard.php" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128187;</div>
+                        <div class="card-title">Dashboard Cobros (PHP)</div>
+                    </div>
+                    <div class="card-desc">Version dinamica con filtros de fecha, consultas SQLite, Chart.js y KPIs en tiempo real.</div>
+                    <span class="card-tag">PHP + SQLITE</span>
+                </a>
+
+                <a href="dashboard.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128196;</div>
+                        <div class="card-title">Dashboard Cobros (HTML)</div>
+                    </div>
+                    <div class="card-desc">Version estatica con datos hardcodeados. Doughnut de estado, barras de llamadas, top deudores.</div>
+                    <span class="card-tag">ESTATICO</span>
+                </a>
+
+                <a href="Lixi/emergencia/dashboard_resultados.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#9889;</div>
+                        <div class="card-title">Resultados por Campana</div>
+                    </div>
+                    <div class="card-desc">Dashboard emergente para reunion Puyol. KPIs, comparativa mensual por campana, Chart.js.</div>
+                    <span class="card-tag">EMERGENCIA</span>
+                </a>
+
+                <a href="Lixi/3diasporsemana/dashboard_3diasporsemana.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128200;</div>
+                        <div class="card-title">3 Dias por Semana</div>
+                    </div>
+                    <div class="card-desc">Ranking de productividad por dia (Lunes, Miercoles, Viernes). Medallas oro, plata, bronce.</div>
+                    <span class="card-tag">PROMO</span>
+                </a>
+
+                <a href="Lixi/3diasporsemana/dashboard_iphone_julio_7_24.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128241;</div>
+                        <div class="card-title">iPhone Julio - Pivot Table</div>
+                    </div>
+                    <div class="card-desc">Tabla pivote dinamica de ventas iPhone. Combobox de filtros por fecha y modelo.</div>
+                    <span class="card-tag">IPHONE</span>
+                </a>
+
+                <a href="Lixi/3diasporsemana/output/dashboard_iphone_promo.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#127873;</div>
+                        <div class="card-title">iPhone Promo Dashboard</div>
+                    </div>
+                    <div class="card-desc">Dashboard promocional iPhone con rankings por dia de la semana y graficos.</div>
+                    <span class="card-tag">PROMO</span>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- ============ AMIR - SOHO ============ -->
+        <div class="dept-section amir" data-dept="amir">
+            <div class="dept-header">
+                <div class="dept-icon">&#128202;</div>
+                <div class="dept-title">AMIR - SOHO</div>
+                <div class="dept-count">6 dashboards</div>
+            </div>
+            <div class="cards-grid">
+
+                <a href="Amir/soho_prod/dash_prod/index.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#127919;</div>
+                        <div class="card-title">Dashboard Campanas SOHO</div>
+                    </div>
+                    <div class="card-desc">Mega dashboard: Renovacion, Winback, Cross-selling y Global. 20+ sub-pestanas, KPIs, rankings, MRC, RGU, metas editables.</div>
+                    <span class="card-tag">PRODUCCION</span>
+                </a>
+
+                <a href="Amir/soho/index.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128194;</div>
+                        <div class="card-title">SOHO - Menu Principal</div>
+                    </div>
+                    <div class="card-desc">Hub de navegacion SOHO con links a cruce, proyecciones, consolidado y winback.</div>
+                    <span class="card-tag">NAVEGACION</span>
+                </a>
+
+                <a href="Amir/soho/cruce.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128256;</div>
+                        <div class="card-title">Cruce de Bases</div>
+                    </div>
+                    <div class="card-desc">Cruce de 4 bases de clientes: Nextphone, Movil, Cross-sell, Winback. Clientes unicos y solapamientos.</div>
+                    <span class="card-tag">ANALISIS</span>
+                </a>
+
+                <a href="Amir/soho/proyecciones.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128200;</div>
+                        <div class="card-title">Proyecciones de Venta</div>
+                    </div>
+                    <div class="card-desc">Modelado de escenarios con sliders: conservador, moderado, agresivo. Comparativa visual.</div>
+                    <span class="card-tag">PROYECCION</span>
+                </a>
+
+                <a href="Amir/soho/consolidado.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128203;</div>
+                        <div class="card-title">Consolidado SOHO</div>
+                    </div>
+                    <div class="card-desc">Reporte consolidado multi-fuente con filtros por supervisor, canal y estado.</div>
+                    <span class="card-tag">CONSOLIDADO</span>
+                </a>
+
+                <a href="Amir/soho/reporte_winback.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128260;</div>
+                        <div class="card-title">Reporte Winback</div>
+                    </div>
+                    <div class="card-desc">Analisis de recuperacion de clientes: motivos de salida, asignacion, tasas de contacto, propuestas.</div>
+                    <span class="card-tag">WINBACK</span>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- ============ INGRIS - CALIDAD ============ -->
+        <div class="dept-section ingris" data-dept="ingris">
+            <div class="dept-header">
+                <div class="dept-icon">&#9989;</div>
+                <div class="dept-title">INGRIS - CALIDAD</div>
+                <div class="dept-count">1 dashboard</div>
+            </div>
+            <div class="cards-grid">
+
+                <a href="Ingris/dashboard/index.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128737;</div>
+                        <div class="card-title">Quality Dashboard</div>
+                    </div>
+                    <div class="card-desc">Dashboard SPA con sidebar: Resumen, Supervisores, Agentes, Campanas, Atributos (PENC/PECUF/PECNE/PECCUM), Historico, Criticas.</div>
+                    <span class="card-tag">CALIDAD</span>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- ============ ENRIQUE - VENTAS ============ -->
+        <div class="dept-section enrique" data-dept="enrique">
+            <div class="dept-header">
+                <div class="dept-icon">&#128188;</div>
+                <div class="dept-title">ENRIQUE - OPERACIONES</div>
+                <div class="dept-count">1 dashboard</div>
+            </div>
+            <div class="cards-grid">
+
+                <a href="Enrique/Informe emergente/dashboard_ventas.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128200;</div>
+                        <div class="card-title">Dashboard Ventas Sharep</div>
+                    </div>
+                    <div class="card-desc">Reporte de ventas emergente. Filtros por fecha, supervisor, asesor, tipo de venta. Chart.js, export Excel via SheetJS.</div>
+                    <span class="card-tag">VENTAS</span>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- ============ GENERAL / REPORTES ============ -->
+        <div class="dept-section general" data-dept="general">
+            <div class="dept-header">
+                <div class="dept-icon">&#128193;</div>
+                <div class="dept-title">REPORTES Y HERRAMIENTAS</div>
+                <div class="dept-count">extras</div>
+            </div>
+            <div class="cards-grid">
+
+                <a href="Lixi/3diasporsemana/output/dashboard_3diasporsemana.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128200;</div>
+                        <div class="card-title">3 Dias (Output)</div>
+                    </div>
+                    <div class="card-desc">Version generada del dashboard de productividad 3 dias por semana.</div>
+                    <span class="card-tag">GENERADO</span>
+                </a>
+
+                <a href="Transcripcion/" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#127908;</div>
+                        <div class="card-title">Transcripcion de Audio</div>
+                    </div>
+                    <div class="card-desc">Sistema de transcripcion de llamadas MP3/WAV a texto usando faster-whisper.</div>
+                    <span class="card-tag">HERRAMIENTA</span>
+                </a>
+
+                <a href="Amir/soho_prod/Respaldo_Renovacion_2026-08-06/index.html" class="card">
+                    <div class="card-top">
+                        <div class="card-icon">&#128274;</div>
+                        <div class="card-title">Respaldo Renovacion</div>
+                    </div>
+                    <div class="card-desc">Copia inmutable del dashboard de Renovacion al 06/08/2026.</div>
+                    <span class="card-tag">RESPALDO</span>
+                </a>
+
+            </div>
+        </div>
+
+        <div class="no-results" id="noResults">
+            No se encontraron dashboards.
+        </div>
+
+    </div>
+
+    <div class="footer">
+        <span>Nextphone &copy; 2026 - Centro de Dashboards</span>
+    </div>
+
+    <script>
+        function filtrar() {
+            const query = document.getElementById('buscador').value.toLowerCase();
+            const cards = document.querySelectorAll('.card');
+            const sections = document.querySelectorAll('.dept-section');
+            let totalVisible = 0;
+
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const match = text.includes(query);
+                card.style.display = match ? '' : 'none';
+                if (match) totalVisible++;
+            });
+
+            sections.forEach(sec => {
+                const visibleCards = sec.querySelectorAll('.card:not([style*="display: none"])');
+                sec.style.display = visibleCards.length > 0 ? '' : 'none';
+            });
+
+            document.getElementById('noResults').classList.toggle('visible', totalVisible === 0);
+        }
+    </script>
+
 </body>
 </html>
