@@ -1,0 +1,25 @@
+REGISTRO DE TAREA 1 - LIMPIEZA DE BASE DE DATOS
+Fecha: 19/08/2026
+Archivo: Base Movil sin Fijo 19082026 (1).xlsx
+
+PROCEDIMIENTO REALIZADO:
+1. Se abrió la base de datos original
+2. Se filtró la columna ACCT_STAT, dejando solo los registros con estado "W"
+3. Se eliminaron los duplicados basándose en CUST_NO y ACCT_NO
+
+RESULTADOS:
+- Filas originales: 1,999
+- Distribución ACCT_STAT original:
+  W: 1,786
+  B: 67
+  S: 67
+  D: 44
+  T: 26
+  P: 9
+- Filas con estado W: 1,786
+- Duplicados eliminados: 127
+- Filas finales: 1,659
+
+ARCHIVO GUARDADO:
+Base Movil sin Fijo 19082026 (1) filtrada.xlsx
+Ubicación: amir\emergencia 19 08 2026\tarea 1 duplicados\

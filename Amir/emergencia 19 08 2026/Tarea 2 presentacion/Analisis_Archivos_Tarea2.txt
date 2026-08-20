@@ -1,0 +1,49 @@
+ANÁLISIS DE ARCHIVOS - TAREA 2 PRESENTACION
+=============================================
+
+Solo se trabaja con: Base 2025, Jan-Feb, Mar-Jun, Julio y Agosto 2026.
+
+ARCHIVOS REVISADOS:
+1. LIKE - JULIO Y AGOSTO.xlsx
+2. Produccion.xlsx
+3. VICI - JULIO Y AGOSTO.xlsx
+4. Recorrido de las bases Soho Renovaciones.xlsx (VACÍA)
+5. -Recorrido de base SOHO (1).xlsx
+
+HALLAZGOS:
+----------
+- Hoja RECORRIDO y TABLA DE TIPIFICACIONES: SÍ tienen datos por campaña
+- Hoja VICI/LLAMADAS UNICAS: solo datos de ENERO a JUNIO 2026
+- Hoja MATRIX: tipificaciones detalladas pero NO desglosadas por mes
+
+TABLA COMPLETA PARA LLENAR:
+============================
+
+Campaña             Asignados  GESTION  Sin Gestion  EFECTIVO  RPC  WPC  NPC   %RPC    %WPC    %NPC    %EFEC   Prom %CONV  %CONTACTO  %NO CIERRE  %NO CUMPLE
+Base 2025              4991      348       4776         49      78   64  206  22.41%  18.39%  59.20%  14.08%   159.18%     40.80%     182.05%      2.56%
+Jan-Feb 2026           1140       72       1091          7      11   14   47  15.28%  19.44%  65.28%   9.72%   157.14%     34.72%     227.27%      9.09%
+Mar-Jun 2026           3239      177       3141         16      25   36  116  14.12%  20.34%  65.54%   9.04%   156.25%     34.46%     244.00%      8.00%
+
+July 2026               405       17        400          1       1    2   14   5.88%  11.76%  82.35%   5.88%   100.00%     17.65%     300.00%    100.00%
+  Se envía propuesta     1         1          0          1       1    0    0  100.00%   0.00%   0.00%  100.00%   100.00%     100.00%    100.00%      0.00%
+  Seguimiento            1         1          0          0       0    1    0    0.00% 100.00%   0.00%    0.00%     0.00%     100.00%      0.00%      0.00%
+  Volver a llamar        1         1          0          0       0    0    1    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Ya tiene servicio      1         1          0          0       0    1    0    0.00% 100.00%   0.00%    0.00%     0.00%     100.00%      0.00%      0.00%
+  No contesta            6         6          0          0       0    0    6    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Llamada no contesta    3         3          0          0       0    0    3    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Contestador Auto       2         2          0          0       0    0    2    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Cierra Llamada         2         2          0          0       0    0    2    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Sin Gestion          388         0        400          0       0    0    0    0.00%   0.00%   0.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+
+August 2026             538       18        534          0       1    5   12   5.56%  27.78%  66.67%   0.00%     0.00%      33.33%     600.00%    100.00%
+  No aplica renovar      1         1          0          0       1    0    0  100.00%   0.00%   0.00%    0.00%     0.00%      100.00%    100.00%    100.00%
+  Seguimiento            1         1          0          0       0    1    0    0.00% 100.00%   0.00%    0.00%     0.00%      100.00%      0.00%      0.00%
+  Cliente cuelga         1         1          0          0       0    1    0    0.00% 100.00%   0.00%    0.00%     0.00%      100.00%      0.00%      0.00%
+  Volver a llamar        4         4          0          0       0    3    1    0.00%  75.00%  25.00%    0.00%     0.00%       75.00%      0.00%      0.00%
+  Se envía propuesta     1         1          0          0       0    0    1    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  No contesta            3         3          0          0       0    0    3    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Llamada no contesta    3         3          0          0       0    0    3    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Contestador Auto       2         2          0          0       0    0    2    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Buzón de voz           1         1          0          0       0    0    1    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Cierra Llamada         1         1          0          0       0    0    1    0.00%   0.00% 100.00%    0.00%     0.00%       0.00%      0.00%      0.00%
+  Sin Gestion          520         0        534          0       0    0    0    0.00%   0.00%   0.00%    0.00%     0.00%       0.00%      0.00%      0.00%
