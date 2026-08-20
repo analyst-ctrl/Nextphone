@@ -1,0 +1,45 @@
+RAZONAMIENTO - PLAN DE ACCION DEL DEPARTAMENTO
+================================================
+
+CONTEXTO:
+- Yo y mi jefe llevamos solo 1 MES en el cargo
+- Tenemos 2 empleados part-time nuevos
+- Hay reportes repetitivos que deben normalizarse
+- Hay que redistribuir el trabajo
+
+PROBLEMA 1: REPORTES REPETITIVOS / DESORGANIZADOS
+- Que reportes existen actualmente? (hay que listarlos)
+- Cuales se repiten con la misma informacion?
+- Cuales pueden fusionarse o eliminarse?
+- Cuales estan mal estructurados y necesitan normalizacion?
+
+PROBLEMA 2: DOS PART-TIME NUEVOS
+- Que tareas pueden delegarse?
+- Que areas pueden absorber trabajo?
+- Como capacitarlos rapidamente?
+- Evitar que se sobrecarguen o queden sin nada que hacer
+
+PROBLEMA 3: SOLO 1 MES EN EL CARGO
+- Todavia estamos conociendo el flujo de trabajo
+- No conocemos todos los reportes que maneja el departamento
+- Necesitamos mapear todo antes de cambiar anything
+- Hay que ser estrategicos: primero entender, luego ajustar
+
+PASOS A SEGUIR:
+1. LISTAR todos los reportes que el departamento recibe
+2. CLASIFICAR: cuales son repetitivos, cuales son unicos
+3. IDENTIFICAR: cuales se pueden fusionar o eliminar
+4. DISTRIBUIR: asignar tareas a los part-time nuevos
+5. NORMALIZAR: estandarizar formatos y flujos de reportes
+6. CAPACITAR: entrenar a los nuevos en sus tareas asignadas
+7. SEGUIR:Revision mensual del progreso
+
+ESTRUCTURA DEL PPTX:
+- Diapositiva 1: Portada
+- Diapositiva 2: Contexto actual del departamento
+- Diapositiva 3: Problema - Reportes repetitivos/desorganizados
+- Diapositiva 4: Estrategia de normalizacion de reportes
+- Diapositiva 5: Redistribucion del trabajo con part-time
+- Diapositiva 6: Cronograma de acciones
+- Diapositiva 7: Conclusiones y proximos pasos
+

@@ -1,0 +1,23 @@
+REPORTE DE DEPURACION - CRUCE DE NUMEROS TELEFONICOS
+=====================================================
+Fecha: 18 de Agosto de 2026
+
+ARCHIVOS UTILIZADOS:
+- Archivo ligero: BD_PRETOPOST_JUN #1 (Dataphone) PREUBA BOT.xlsx (13,127 filas, 17 columnas)
+- Archivo pesado: Port Internas.xlsx (41,072 filas, 41 columnas)
+
+METODO:
+- Se extrajeron los numeros unicos de la columna "mobile_phone" del archivo ligero (13,126 numeros unicos)
+- Se compararon con la columna F "Numero a portar o renovar" del archivo pesado
+- Las filas con numeros coincidentes fueron eliminadas del archivo pesado
+
+RESULTADOS:
+- Filas originales en Port Internas: 41,072
+- Numeros unicos en archivo ligero: 13,126
+- Filas duplicadas encontradas: 462
+- Filas eliminadas: 462
+- Filas restantes: 40,610
+
+ARCHIVO GENERADO:
+- Port Internas cruce.xlsx (resultado final)
+- Port Internas (BACKUP).xlsx (copia de seguridad del original)

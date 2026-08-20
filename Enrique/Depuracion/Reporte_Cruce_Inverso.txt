@@ -1,0 +1,22 @@
+REPORTE DE DEPURACION - CRUCE INVERSO
+======================================
+Fecha: 18 de Agosto de 2026
+
+ARCHIVOS UTILIZADOS:
+- Archivo fuente: old.xlsx (41,072 filas, 41 columnas)
+- Archivo a depurar: BD_PRETOPOST_JUN #1 (Dataphone) PREUBA BOT.xlsx (13,126 filas, 17 columnas)
+
+METODO:
+- Se extrajeron los numeros unicos de la columna F "Numero a portar o renovar" del archivo old.xlsx (39,417 numeros unicos)
+- Se compararon con la columna "mobile_phone" del archivo BD_PRETOPOST
+- Las filas con numeros coincidentes fueron eliminadas del archivo BD_PRETOPOST
+
+RESULTADOS:
+- Filas originales en BD_PRETOPOST: 13,126
+- Numeros unicos en old.xlsx: 39,417
+- Filas duplicadas encontradas: 453
+- Filas eliminadas: 453
+- Filas restantes: 12,673
+
+ARCHIVO GENERADO:
+- BD_PRETOPOST_JUN #1 (Dataphone) PREUBA BOT.xlsx (depurado, sin duplicados)

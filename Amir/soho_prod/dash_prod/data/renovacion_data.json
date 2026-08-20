@@ -1,5 +1,5 @@
 {
- "generado": "2026-08-06",
+ "generado": "2026-08-07",
  "fuente": "Reporte_soho_junio_25 (1).xlsb + extrainfo/HC + bases",
  "global_vici": {
   "llamadas": 15796,
@@ -41166,6 +41166,18 @@
     "contactados": 38
    },
    {
+    "agente": "MARINEL MORENO",
+    "telefonos": 21,
+    "llamadas": 38,
+    "contactados": 8
+   },
+   {
+    "agente": "LIZNETH RUIZ",
+    "telefonos": 12,
+    "llamadas": 129,
+    "contactados": 7
+   },
+   {
     "agente": "PURA MORENO",
     "telefonos": 18,
     "llamadas": 41,
@@ -41178,22 +41190,10 @@
     "contactados": 9
    },
    {
-    "agente": "LIZNETH RUIZ",
-    "telefonos": 12,
-    "llamadas": 129,
-    "contactados": 7
-   },
-   {
     "agente": "LILIAN MILENA MOJICA DE LAS SALAS",
     "telefonos": 5,
     "llamadas": 12,
     "contactados": 5
-   },
-   {
-    "agente": "MARINEL MORENO",
-    "telefonos": 21,
-    "llamadas": 38,
-    "contactados": 8
    }
   ],
   "detalle": [

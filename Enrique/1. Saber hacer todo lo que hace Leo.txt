@@ -1,6 +1,137 @@
-1. Saber hacer todo lo que hace Leo
-2. PowerBI Luis Escarpeta - Traer la data y generar todo el dashboard en PowerBi - PowerBi - Aprender
+1. Saber hacer todo lo que hace Leo - hoy y manana - 90%
+2. PowerBI Luis Escarpeta - Traer la data y generar todo el dashboard en PowerBi - PowerBi - Aprender 20%n- Sesiones - primero lo revisamos
 2.1 Hacweer tutorial de powerBI
 2.2 Capaitar al equipo en power BI - New environment about job
-3. Dejar operativo y ver lo estrategico como automatizaciones y con AI con procesos de empresa.
-3.1 Chatgpt pro - jefe cobros
+3. Dejar operativo y ver lo estrategico como automatizaciones y con AI con procesos de empresa. 8n8 - Google - Inevestigar - email con los puntos porcentaje de avance
+3.1 Chatgpt pro - jefe cobros - ya esta 100%
+
+
+4. Entrevistas
+Luis Tapia - 650 part time **
+Jose Vasquez - 400  part time *****
+Hilda - part time - inmediata - 600-650 part
+Astrid - 6621-7478 - Descartada
+Linnet - trabaja en bienes raices, 300-400 **-******
+David Camarena - +4 experiencia - part time - 400 *** TI*****
+Yahanis Escalante - part time - 300 -400 ****
+Dimas Guardia - part time - 500 *** TI****
+Anel - part time - 400 -450 *** TI****
+Jorge Yanez - - ***** TI
+Randall Briton - 600-700 - * ya habia pasado
+Judibeth Coronado -- 450 - 500 -- * TI - freshmenv ******
+Yessible Bedoya - ********
+Carolyne Chavez- IT - *****yes
+Jonathan Montenegro - - ***********
+
+90% ----Judibeth response
+
+5. Whatapp - loco***********
+
+Select * from table where nombre like '%Ariel%'
+
+6. ***Leo GTR***
+alarmas de agentes sin llamadas
+alertas
+
+GTR 10 min un status que atienda llamadas
+
+Vizualizaciones explicar a LF y RZ y yo - pendiente - videos y diferente al cierre de back office -
+
+Meeting Daniel C.
+No hay permiso para Raziel Nogal - Menu Admon campana- Administracion de campana - Recorridos de las bases
+Lo de los 10 min
+daniel.anaya@cwpanama.com
+Emilio Nunez -> Genesys
+
+50%
+
+Soho Leo remitentes y cada cuanto lo manda - 90%
+Tareas de Leo y Luis -100%
+
+incidencxias gtr
+
+Bitacora Leo
+Genesys
+Cobros - 30% - falta analizar - Tentativa el jueves 13 ago 2026
+Reportes divididos
+Arbol de productividad - Lixi - EG and AO - 100 % capacitacion Miguel y con eso se hace el arbol
+
+los de Genesys ****** 70%
+Lo de andres cierre back office - drive analizar Running - Nedier charla que vendemos aca de que se vende aca y servicios
+
+Soho ver lo de las correciones del dashboard - 80% - seguimiento Leo Y Amir
+
+Cargar la base de datos en genesis
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+You to be dont
+Lo que se espera del entregable
+
+Entregable
+Entendimiento del entregable
+
+Panel sencillo
+15 Agosto mandar un informe sencillo
+
+++++++++++++++++
+Wendi info
+cambiar mi info de ia y componer arriba reparar
+
+Viernes 14 ago
+
+Ranking Lunes miercoles y Viernes - manana
+Ranking por supervisor martes y jueves - manana
+Sinergia y pretopost -> genesis - Miguel y Daniel
+Genesys - Llamadas a cada cola - Corte 1 y 5pm, proyeccion cierre 
+Revisar cuartiles de los reportes
+Ventas - Sharep - participar en la reunion - esta en GTR - Leo
+Genesys - reporte interno y externo
+
+Las metas reporte
+
+Hablar con Jose Joel - es importante que su condicion su modelo y es de el solo - discrete con la info
+
+B2C Lixi - Amir - Dashboard
+
+
+presentacion de propuesta tecnbologica, 33 vertical lo que pasa, 33 dificultades y 33 + 1 Propuestas soluciones
+
+APi para conexiones a Genesys
+
+******************************************************************
+Leo y Soho validaciones
+3 tipo de 
+proyc lineal como cerrar
+proyc calendariazada con el horario Proc con dias habiles para proyectar
+Proyecta tomando en cuenta el historico del mes anterior
+
+Sharep
+
+************************************************************
+Agosto 15 2026
+************************************************************
+Leo piso 
+Raziel y los 5 solicitudes de reports que se hicieron
+Sombra y apoyo a Raziel - ver que Leo haga GTR
+Joel - Cobros 
+
+Reunion 1 form, encuesta interna
+
+Figueroa - Jose Joel - Cobros
+
+como te va con el jefe y que Podemos mejorar - preguntas a los chicos
+
+cuantas ventas llevamos
+cuantas hicimos, cuantas son correctas
+ventas por agentes
+
+Agosto 17 2026
+Actualiuzacion de la bitacora incidencias, con Raziel quye le de seguimiento Leo
+Estaciuonalidad de ventas - verlo con Raziel 
+Juliana - rpeorte de recorriedo de bases de datos
+Gestion de base de datos
+
+Cargar base de datos Soho - Leo
+Defininir los estregables de Soho - Martes 18 tarde o Miercoles Manana 
+
+Ayudar con el resumen cuantos reports estamos hacienda entregando,  powerpint  para presentable y mostrar lo que hacen los chicos y ver los pesos de tareas de cada uno de ellos

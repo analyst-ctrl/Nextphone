@@ -1,0 +1,85 @@
+================================================================================
+        RESUMEN RECORRIDO Y TIPIFICACIONES BASES SOHO - RENOVACIONES
+                        Fecha: 19 de Agosto 2026
+================================================================================
+
+1. RECORRIDO POR CAMPAÑA
+--------------------------------------------------------------------------------
+Campaña         Base Cant  No Asignados  Asignados  Recorrido  % Recorrido  Marcaciones  Contacto  % Contacto  RPC  % RPC
+Base 2025           4991           133       4858        322       6.63%          683       236      4.86%     41   17.37%
+Jan-Feb 2026        1140            23       1117         63       5.64%          133        38      3.33%      8   21.05%
+Mar-Jun 2026        3239            79       3160        151       4.78%          275        90      2.78%     14   15.56%
+July 2026            405            12        393         14       3.56%           37         7      1.73%      0    0.00%
+August 2026          538            31        507         17       3.35%           34        13      2.42%      1    7.69%
+Septembre 2026       521            14        507         21       4.14%           36        16      3.07%      6   37.50%
+October 2026         680            14        666         11       1.65%           32        18      2.65%      5   27.78%
+--------------------------------------------------------------------------------
+TOTAL              11514           306      11208        599       5.34%         1230       418      3.63%     75   17.94%
+
+
+2. TIPIFICACIONES POR CAMPAÑA
+--------------------------------------------------------------------------------
+Campaña         Asignados  GESTION  Sin Gestion  EFECTIVO  RPC   WPC   NPC    %RPC    %WPC    %NPC   %EFEC
+Base 2025          4991      348       4776         49      78    64   206   22.41%  18.39%  59.20%  14.08%
+Jan-Feb 2026       1140       72       1091          7      11    14    47   15.28%  19.44%  65.28%   9.72%
+Mar-Jun 2026       3239      177       3141         16      25    36   116   14.12%  20.34%  65.54%   9.04%
+July 2026           405       17        400          1       1     2    14    5.88%  11.76%  82.35%   5.88%
+August 2026         538       18        534          0       1     5    12    5.56%  27.78%  66.67%   0.00%
+Septembre 2026      521       23        512          1       7     3    13   30.43%  13.04%  56.52%   4.35%
+October 2026        680       13        681          2       4     2     7   30.77%  15.38%  53.85%  15.38%
+--------------------------------------------------------------------------------
+TOTAL GENERAL     11514      668      11135         76     127   126   415   19.01%  18.86%  62.13%  11.38%
+
+
+3. RESUMEN TIPIFICACIONES DETALLADAS (Hoja matrix)
+--------------------------------------------------------------------------------
+Tipo                  Cantidad   Clasificación
+Venta TV                  64     Efectivo
+Venta BB                  25     Efectivo
+Venta FL                  47     Efectivo
+Venta Dúo (BB+FL)         --     Efectivo
+Venta Dúo (BB+TV)         --     Efectivo
+Venta Triple (TV+BB+FL)   --     Efectivo
+Venta Móvil               --     Efectivo
+Renovación                --     Efectivo
+Renovación + Venta Móvil  --     Efectivo
+Se envía propuesta        --     Efectivo
+Por Aprobación            --     Efectivo
+Pendiente envío docs      --     Efectivo
+En espera de documentos   --     Efectivo
+
+Total Efectivo:           25     (de las tipificaciones muestreadas)
+
+RPC (Rechaza/Pide Call):
+  - Cliente no interesado, Ya tiene servicio, No es tomador de decisión,
+    Solicita contacto posterior, Rechaza oferta, No desea la oferta,
+    Situación económica, Mala experiencia, Cliente desinteresado,
+    Cliente desconfiado, No es autorizado, No aplica para renovar,
+    Evaluando propuesta, Fidelidad con otro proveedor, etc.
+
+WPC (Wrong Person Contact):
+  - No es tomador de decisión, Cliente cuelga, Número equivocado,
+    Estoy ocupado, Llámame después, No manejo ese tema, Referido,
+    Call Back, No es titular, Seguimiento, etc.
+
+NPC (No Positive Contact):
+  - Llamada no contesta, Buzón de voz, Número inexistente,
+    Fuera de servicio, Línea ocupada, Restricción de llamadas,
+    Problemas técnicos, Contacto duplicado, Número inválido,
+    Cliente corta, BlackList/Deuda, Busy, Abandoned, etc.
+
+
+4. OBSERVACIONES
+--------------------------------------------------------------------------------
+- La base total es de 11,514 contactos, de los cuales 11,208 están asignados.
+- Solo se ha gestionado el 5.88% de los contactos asignados (668 de 11,514).
+- El 62.13% de las gestiones son NPC (no positivo), principalmente
+  "no contesta" y "buzón de voz".
+- El %RPC general es del 19.01%, y el %EFECTIVO del 11.38%.
+- La campaña con mejor RPC es Septembre 2026 (37.50%) y October 2026 (27.78%).
+- La campaña con peor rendimiento es July 2026 (0% RPC, 0% efectivo en agosto).
+- Base 2025 concentra la mayor cantidad de contactos (4,991) y gestionó 348.
+
+================================================================================
+                          FIN DEL REPORTE
+================================================================================

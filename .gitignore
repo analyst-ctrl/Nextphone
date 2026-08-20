@@ -7,6 +7,7 @@ Lixi/3diasporsemana/excels/
 # Large Excel source files (Sharep.xlsx ~20MB)
 Lixi/3diasporsemana/Sharep.xlsx
 Lixi/3diasporsemana/modelos/
+Enrique/Informe emergente/*.xlsx
 
 # Databases (se regeneran con los pipelines)
 *.db

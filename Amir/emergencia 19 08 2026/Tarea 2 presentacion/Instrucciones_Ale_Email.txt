@@ -1,0 +1,376 @@
+================================================================================
+  INSTRUCCIONES PARA ALE - ANÁLISIS Y ENVÍO POR EMAIL
+  Fecha: 19 de Agosto 2026
+================================================================================
+
+ARCHIVO ADJUNTO: Tipificaciones_Final_v2.xlsx
+Contiene 4 hojas con todo el análisis consolidado + tablas de recorrido.
+
+================================================================================
+  PROCESO SEGUIDO - CÓMO SE HIZO TODO
+================================================================================
+
+PASO 1: SE LEYERON TODOS LOS ARCHIVOS DE LA CARPETA "Tarea 2 presentacion"
+--------
+Se abrieron y analizaron los siguientes archivos:
+
+a) Produccion.xlsx (130 MB)
+   - Pivot table original con tablas de tipificación
+   - Hojas: Base 1, Recorrido, Tabla de Tipificaciones, analisis,
+     Vici, llamadas unicas, ref, matrix
+   - HALLAZGO: Los datos de Julio y Agosto estaban INCOMPLETOS
+     - Julio mostraba: 17 gestionados, 1 efectivo, 1 RPC, 2 WPC, 14 NPC
+     - Agosto mostraba: 18 gestionados, 0 efectivos, 1 RPC, 5 WPC, 12 NPC
+   - La hoja "Base 1" tiene 2.7 GB internamente (demasiado pesada)
+   - La hoja "Tabla de Tipificaciones" era una tabla pivote que NO
+     estaba consolidando todos los datos correctamente
+
+b) VICI - JULIO Y AGOSTO.xlsx (11,715 registros) ← FUENTE PRINCIPAL
+   - Archivo RAW del sistema VICI con TODAS las llamadas de Jul-Ago
+   - Contiene: call_date, phone_number, status, user, full_name,
+     campaign_id, list_id, status_name, etc.
+   - Se procesaron 11,714 registros para extraer:
+     * Julio 2026: 5,811 llamadas
+     * Agosto 2026: 5,903 llamadas
+   - Se clasificaron en Efectivo/RPC/WPC/NPC usando la tabla "ref"
+
+c) LIKE - JULIO Y AGOSTO.xlsx (4,893 registros)
+   - Archivo de VENTAS REGISTRADAS (contratos) de Jul-Ago
+   - Contiene: Documento, # Cuenta, Vendedor, Canal, Coordinador,
+     Gerente, Plan, Producto, IMEI, Valor plan, etc.
+   - Se extrajeron:
+     * Julio: 3,415 ventas
+     * Agosto: 1,478 ventas
+   - Top vendedor: Rose Mary Cédeno (122 ventas totales)
+   - Canal líder: RENOVACIONES (CC) con 1,795 ventas
+
+d) -Recorrido de base SOHO (1).xlsx (9.5 MB)
+   - Archivo ORIGINAL con la tabla de recorrido por campaña
+   - Mismas hojas que Produccion.xlsx
+   - Se usó como BASE para la tabla de Recorrido por campaña
+   - Hoja "Recorrido": 11 filas con datos por campaña
+   - Hoja "Tabla de Tipificaciones": misma estructura que Produccion
+
+e) Analisis_archivos_tarea2.xlsx
+   - Archivo RESUMEN con análisis previo de los archivos
+   - Hojas: Tipificaciones, Recorrido, Hallazgos
+   - Se usó como REFERENCIA para verificar consistencia
+
+f) Recorrido de las bases Soho Renovaciones.xlsx (8 KB)
+   - Archivo VACÍO (sin datos, solo 1 celda vacía)
+   - No se usó
+
+g) Recorrido de las bases Soho Renovaciones1.xlsx (9.4 MB) ← EL BUENO
+   - Hoja 1: "Base renovaciones Julio y agost" (1,052 registros)
+     * Columnas: Ejecutivo, Cuenta, Cliente, # líneas, Contacto,
+       Correo, Teléfonos, Campaña, Observaciones
+     * Ejecutivos: Massiel Toledo (815), Allison Barrios (105),
+       Miguel Avila (78), Sully Peñalba (54)
+     * Por campaña: Mar-Jun(553), Base2025(237), Jan-Feb(192), Jul(70)
+     * Julio solo tiene 70 registros gestionados
+   - Hoja 2: "Base Móvil sin Fijo Julio" (1,081 registros)
+     * Columnas: EJECUTIVO, Tipo, Segmento, CUST_NO, ACCT_NO,
+       COMPANY_REG_NAME, ACCT_STAT, MRC, etc.
+     * Ejecutivos: vacío(688), Pura Moreno(361), Quesiah Romero(32)
+
+h) Resumen_Recorrido_Bases_SOHO.txt
+   - Resumen en texto de las tipificaciones por campaña
+   - Se usó como referencia para validar los datos
+
+i) Analisis_Archivos_Tarea2.txt
+   - Análisis detallado de tipificaciones por campaña y sub-tipificación
+   - Contiene la tabla completa con todos los porcentajes
+
+
+PASO 2: SE IDENTIFICÓ EL PROBLEMA
+---------
+El pivot table de Produccion.xlsx mostraba datos INCOMPLETOS para
+Julio y Agosto 2026:
+- Solo 17-18 gestionados por mes (vs 5,800+ reales)
+- Solo 1 efectivo en Julio, 0 en Agosto
+- El pivot probablemente tenía un filtro aplicado o no estaba
+  vinculado a la tabla completa de VICI
+
+Se decidió usar los datos RAW de VICI como fuente principal
+para obtener las cifras reales.
+
+
+PASO 3: SE PROCESARON LOS DATOS DE VICI
+----------------------------------------
+Se leyeron los 11,714 registros de VICI y se filtraron por mes:
+
+JULIO 2026 (5,811 llamadas):
+  EFECTIVO (159):
+    - Se envía propuesta: 142
+    - Ya Renovo: 12
+    - Renovará en tienda: 2
+    - Por Aprobación: 3
+
+  RPC (466):
+    - No Acepta: 381
+    - No volver a llamar: 79
+    - Rechaza oferta: 2
+    - No acepta tiempo cuotas: 1
+    - No acepta aumento MRC: 1
+    - No aplica para renovar: 1
+    - Solicita contacto posterior: 1
+
+  WPC (861):
+    - Seguimiento: 439
+    - Volver a llamar: 222
+    - No es el titular: 197
+    - Cliente cuelga: 2
+    - Call Back: 1
+
+  NPC (4,325):
+    - No contesta: 2,894
+    - Cierra Llamada: 956
+    - Contestador Automático: 335
+    - Cliente con deuda: 51
+    - Lead Being Called: 36
+    - Auto busy: 15
+    - No tiene cobertura: 15
+    - Llamada muda: 6
+    - Ocupado: 5
+    - Otros: 12
+
+AGOSTO 2026 (5,903 llamadas):
+  EFECTIVO (135):
+    - Se envía propuesta: 120
+    - Se envía propuesta (variante): 9
+    - Ya Renovo: 2
+    - Renovará en tienda: 2
+    - Por Aprobación: 2
+
+  RPC (340):
+    - No Acepta: 227
+    - No volver a llamar: 105
+    - No acepta aumento MRC: 3
+    - No aplica para renovar: 1
+    - Solicita contacto posterior: 1
+    - No acepta tiempo cuotas: 0
+    - Rechaza oferta: 0
+
+  WPC (950):
+    - Seguimiento: 332
+    - Volver a llamar: 270
+    - No es el titular: 329
+    - Cliente cuelga: 7
+    - Call Back: 12
+
+  NPC (4,478):
+    - No contesta: 2,854
+    - Cierra Llamada: 852
+    - Contestador Automático: 551
+    - Llamada no contesta: 44
+    - Buzón de voz: 10
+    - Cliente con deuda: 46
+    - Auto busy: 37
+    - Lead Being Called: 34
+    - No Answer AutoDial: 17
+    - No tiene cobertura: 15
+    - Otros: 18
+
+
+PASO 4: SE PROCESARON LOS DATOS DE LIKE
+----------------------------------------
+Se leyeron los 4,893 registros de ventas:
+
+JULIO 2026 (3,415 ventas):
+  Por canal:
+    - RENOVACIONES (CC): 1,206
+    - SOHO: 953
+    - CALL CENTER P2P: 759
+    - DIGITAL: 204
+    - CALL CENTER SOHO RENO: 197
+    - FIJO: 24
+  Top 5 vendedores:
+    1. Rose Mary Cédeno: 73
+    2. Danna Carolina Salas: 72
+    3. Massiel Toledo: 67
+    4. Alexander Betancourt: 66
+    5. Rolando Ruiz: 58
+
+AGOSTO 2026 (1,478 ventas):
+  Por canal:
+    - RENOVACIONES (CC): 589
+    - SOHO: 402
+    - CALL CENTER P2P: 348
+    - DIGITAL: 64
+    - CALL CENTER SOHO RENO: 42
+    - FIJO: 9
+  Top 5 vendedores:
+    1. Rose Mary Cédeno: 49
+    2. Yosuany Muñoz: 37
+    3. Alma Delgado: 35
+    4. Yulitza Hernández: 34
+    5. Aleshka Ambulo: 29
+
+
+PASO 5: SE CLASIFICARON SEGÚN TABLA REF
+----------------------------------------
+La tabla "ref" del archivo Produccion.xlsx define las categorías:
+
+EFECTIVO (se concreta venta/renovación):
+  Se envía propuesta, Ya Renovo, Renovará en tienda, Por Aprobación
+
+RPC (Rechaza/Pide Call - cliente responde pero no acepta):
+  No Acepta, No volver a llamar, Rechaza oferta, No acepta aumento MRC,
+  No aplica para renovar, Solicita contacto posterior, No acepta tiempo cuotas
+
+WPC (Wrong Person Contact - no es la persona correcta):
+  Volver a llamar, No es el titular, Seguimiento, Cliente cuelga, Call Back
+
+NPC (No Positive Contact - no se pudo contactar):
+  No contesta, Cierra Llamada, Contestador Automático, Llamada no contesta,
+  Buzón de voz, Cliente con deuda, Auto busy, Lead Being Called,
+  No tiene cobertura, Llamada muda, Ocupado, Línea ocupada,
+  No Answer AutoDial, Número equivocado, Problemas técnicos
+
+
+PASO 6: SE GENERÓ EL EXCEL CONSOLIDADO
+---------------------------------------
+Se creó el archivo Excel con 4 hojas + tablas de recorrido:
+
+HOJA 1: "Consolidado VICI+LIKE" (la principal)
+  ARRIBA - Tabla de Tipificaciones:
+  - Filtros: MES GESTION, NO EFECTIVO, No Cierre Asesor, etc.
+  - 16 columnas: Campaña, Asignados, GESTION, Sin Gestion, EFECTIVO,
+    RPC, WPC, NPC, %RPC, %WPC, %NPC, %EFEC, Prom%CONV, %CONTACTO,
+    %NO CIERRE, %NO CUMPLE
+  - 7 campañas con sub-filas detalladas para Jul/Ago
+  - Colores naranjas de la compañía:
+    * Headers: naranja oscuro (#D35400)
+    * Campañas originales: naranja claro (#FDEBD0)
+    * Datos nuevos Jul/Ago: naranja medio (#F5CBA7)
+    * Sub-filas nuevas: texto naranja oscuro (#A04000)
+    * Grand Total: naranja oscuro con texto blanco
+
+  MEDIO - Tabla RECORRIDO POR CAMPAÑA:
+  - 11 columnas: Campaña, Base Cant, No Asignados, Asignados,
+    Recorrido, %Recorrido, Marcaciones, Contacto, %Contacto, RPC, %RPC
+  - Jul/Ago actualizados con datos reales de VICI
+
+  ABAJO - RECORRIDO BASES SOHO RENOVACIONES:
+  - Del archivo Recorrido de las bases Soho Renovaciones1.xlsx
+  - Ejecutivos y registros por campaña
+  - Base Móvil sin Fijo Julio (1,081 registros)
+
+HOJA 2: "Resumen Comparativo"
+  - Tabla comparativa: Original vs VICI Real
+  - Muestra la diferencia de 17-18 vs 5,800+ gestionados
+
+HOJA 3: "Resumen VICI"
+  - 32 tipificaciones detalladas con conteos por mes
+  - Resumen por categoría (Efectivo, RPC, WPC, NPC)
+
+HOJA 4: "LIKE Ventas"
+  - Ventas por canal
+  - Top 5 vendedores julio y agosto
+
+
+PASO 7: SE GENERARON LAS INSTRUCCIONES
+---------------------------------------
+Este archivo txt con:
+- Proceso completo documentado
+- Archivos usados y justificación
+- Datos clave para el email
+- Borrador de email listo para enviar
+
+
+================================================================================
+  DATOS CLAVE PARA EL EMAIL
+================================================================================
+
+JULIO 2026:
+- Total llamadas (VICI): 5,811
+- Contactos efectivos: 1,486 (25.57% de contacto)
+- Efectivos (ventas/renovaciones): 159 (2.73%)
+- RPC (rechazos): 466 (31.36% de los contactos)
+- WPC (equivocados): 861 (58.00% de los contactos)
+- NPC (no contesta): 4,325 (74.43% del total)
+- Ventas totales (LIKE): 3,415
+
+AGOSTO 2026:
+- Total llamadas (VICI): 5,903
+- Contactos efectivos: 1,425 (24.14% de contacto)
+- Efectivos (ventas/renovaciones): 135 (2.29%)
+- RPC (rechazos): 340 (23.86% de los contactos)
+- WPC (equivocados): 950 (66.67% de los contactos)
+- NPC (no contesta): 4,478 (75.86% del total)
+- Ventas totales (LIKE): 1,478
+
+RECORRIDO BASES SOHO:
+- Total registros renovaciones: 1,052
+- Julio: solo 70 registros gestionados
+- Massiel Toledo: 815 registros (77.5%)
+- Base Móvil sin Fijo Julio: 1,081 registros
+
+
+================================================================================
+  BORRADOR DE EMAIL PARA ENVIAR
+================================================================================
+
+ASUNTO: Análisis Tipificaciones SOHO Renovaciones - Julio y Agosto 2026
+
+Hola,
+
+Adjunto el análisis consolidado de tipificaciones de la base SOHO
+Renovaciones para los meses de Julio y Agosto 2026, con datos
+reales del sistema VICI y registro de ventas LIKE.
+
+RESUMEN EJECUTIVO:
+
+📊 JULIO 2026
+- 5,811 llamadas realizadas
+- 1,486 contactos efectivos (25.57% de contacto)
+- 159 efectivos (ventas/renovaciones concretadas)
+- 466 RPC | 861 WPC | 4,325 NPC
+- Principales motivos de no contacto:
+  No contesta (2,894), Cierra Llamada (956),
+  Contestador Automático (335)
+
+📊 AGOSTO 2026
+- 5,903 llamadas realizadas
+- 1,425 contactos efectivos (24.14% de contacto)
+- 135 efectivos (ventas/renovaciones concretadas)
+- 340 RPC | 950 WPC | 4,478 NPC
+- Principales motivos de no contacto:
+  No contesta (2,854), Cierra Llamada (852),
+  Contestador Automático (551)
+
+📈 VENTAS LIKE (Registro de ventas):
+- Julio: 3,415 ventas | Agosto: 1,478 ventas
+- Canal líder: RENOVACIONES (CC) con 1,795 ventas totales
+- Top vendedor: Rose Mary Cédeno con 122 ventas
+
+📋 RECORRIDO BASES SOHO:
+- Total registros renovaciones: 1,052
+- Julio: 70 registros gestionados
+- Principal ejecutivo: Massiel Toledo (815 registros)
+
+⚠️ HALLAZGO IMPORTANTE:
+Los reportes anteriores de Produccion.xlsx mostraban solo 17-18
+gestionados por mes para Julio/Agosto. Los datos reales del VICI
+indican que se realizaron más de 5,800 llamadas por mes. Se
+recomienda revisar la configuración del pivot original.
+
+El archivo adjunto contiene el desglose completo por tipificación,
+campaña y canal, con colores de la compañía.
+
+Saludos,
+[Ale - agregar nombre completo]
+
+
+================================================================================
+  NOTAS PARA ALE
+================================================================================
+- El archivo Excel se llama: Tipificaciones_Final_v2.xlsx
+- Tiene 4 hojas: Consolidado, Comparativo, VICI y LIKE
+- Los colores naranjas son los de la compañía
+- Julio y Agosto están resaltados en naranja medio (datos nuevos)
+- La tabla de Recorrido está debajo de la consolidada en la hoja 1
+- El Recorrido de Bases SOHO está al final de la hoja 1
+- Si necesitas ajustar algo del email, los datos están en las hojas
+- El borrador de email está listo para copiar y pegar
+- No olvides agregar tu nombre completo en la firma
